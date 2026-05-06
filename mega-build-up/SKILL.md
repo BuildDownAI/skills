@@ -124,14 +124,42 @@ Mega-build-up's grilling and detailed-plan phases apply most strongly to **Mode 
 
 ## Phase 1: Orient
 
-Same as `build-up` Phase 1. Understand current state before drafting anything.
+Understand current state before drafting anything.
 
 - Read prototype + production codebases (Mode 1) or research the codebase for adjacent patterns (Mode 2).
-- Check Linear for in-flight overlapping work via `list_issues`.
 - List existing projects via `list_projects` so you know whether this build-up creates a new project or attaches to an existing one.
+- **Run the Backlog Overlap Scan** (below). This is not optional — there is almost always existing Linear work that overlaps, and unaddressed overlap produces duplicate issues, file conflicts, and superseded work that lingers forever.
 - Ask **at most 2** clarifying questions before moving on. After that, state assumptions and proceed.
 
 The orient phase produces a **working understanding**, not a plan. Don't draft issues yet.
+
+### Backlog Overlap Scan
+
+Search the Linear backlog for existing work that intersects with this build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
+
+**Search strategy:**
+
+1. **Keyword search.** Extract 5–10 domain terms from the objective (entity names, feature names, route paths, table names). Search Linear via `search_issues` (or `list_issues` + filter) across **all states** including Backlog. Don't restrict to In Progress — stale Backlog issues are exactly the overlap that gets missed.
+2. **Label search.** If the build-up touches a known feature area with a label (e.g., `billing`, `auth`, `onboarding`), list all open issues with that label.
+3. **Project search.** Check related existing projects via `list_projects`. Pull the issue list for any project whose scope plausibly overlaps.
+4. **File-path heuristic.** If Phase 1 codebase research identified specific files this build-up will modify, search issue bodies for those paths.
+
+**Search defaults:** narrow to the user's team and any teams the build-up obviously touches. If signals suggest cross-team overlap, expand. Better to over-search and discard than to miss a duplicate.
+
+**Classify each hit** into one of these categories. Each category has a default action:
+
+| Classification | Definition | Default action |
+|---|---|---|
+| **Duplicate** | Existing issue describes the same work | Don't re-file. Reference the existing issue ID. If stale, revive it (move to Todo + `AI-Implement`) instead of filing fresh. |
+| **Subset** | Existing issue is broader; our work is a piece of it | Either fold our work into existing scope, OR split the existing issue and replace one piece with ours. |
+| **Superset** | Our planned work covers what the existing issue describes | File ours. Close the existing as superseded, link to the new issue. |
+| **Adjacent** | Same files/area, different intent | Risk: file conflicts when both run via the pipeline. Add `Blocked by:` to one or coordinate sequencing in the plan. |
+| **Dependency** | Existing issue must complete before ours can start | Add `Blocked by: {existing-id}` to our new issue. Don't duplicate the existing work. |
+| **Stale** | Existing issue is in scope but sitting in Backlog with no activity (> 60 days, no recent comments) | Decide: revive, supersede, or close as won't-do. Don't ignore. |
+
+**No silent overlap.** Every classified hit produces a decision before Phase 2 ends. Carry the list into Phase 2 grilling — overlap decisions are explicit grill questions.
+
+**Output:** an `Overlap Inventory` — a short list of `{existing-issue-id, title, classification, proposed action}` rows. This feeds the design doc's Overlap & Reconciliation section (Phase 2) and the filing actions (Phase 4).
 
 ---
 
@@ -167,6 +195,7 @@ Cover at least these branches before declaring the design decided:
 8. **Testing strategy.** Unit, integration, e2e? What's the minimum bar? Where are the load-bearing tests?
 9. **Observability.** What logs/metrics do we need to verify it's working in production?
 10. **Out-of-scope confirmations.** "We are NOT doing X, Y, Z in this build-up. Confirm?"
+11. **Backlog overlap decisions.** For each hit in the Overlap Inventory, walk through the classification and confirm the action. "Issue ABC-123 is a Subset — fold ours in, or split theirs?" Don't let stale Backlog issues haunt the build-up.
 
 You don't need all 10 every time. You do need to walk the tree and stop at "we have enough to write a plan that won't surprise us."
 
@@ -202,6 +231,12 @@ One-paragraph statement of what this build-up achieves.
 - **Rollout:** {flag/migration/backfill plan}
 - **Testing:** {strategy and minimum bar}
 - **Observability:** {logs/metrics}
+
+## Overlap & Reconciliation
+For each overlapping existing Linear issue:
+- **{ISSUE-ID} {title}** — Classification: {Duplicate | Subset | Superset | Adjacent | Dependency | Stale}. Action: {revive | fold in | supersede | block-by | close | ignore-with-rationale}.
+
+If "ignore-with-rationale," state the rationale. Silence is not a valid entry.
 
 ## Open Questions
 Anything genuinely undecided, with the proposed default if not answered.
@@ -409,6 +444,19 @@ Observability: {none | `metric.name`}
 
 The issue body must be **self-contained**. The AI-Implement pipeline reads it cold and won't follow links to fetch context. The "reference design context" link is for humans reviewing the PR, not for the agent.
 
+### Step 3.5: Execute overlap reconciliation actions
+
+Before filing new issues, work through the design doc's Overlap & Reconciliation section. For each entry, take the committed action:
+
+- **Revive (Duplicate, stale):** move the existing issue to `Todo`, add the `AI-Implement` label, attach to this build-up's project, comment with a link to the design doc.
+- **Fold in (Subset):** comment on the existing issue noting it's been absorbed into the new scope; close it once the corresponding new issue is filed and link them.
+- **Split (Subset, opposite direction):** edit the existing issue to narrow its scope; file the remaining piece(s) as part of this build-up.
+- **Supersede (Superset):** after filing the new issue, close the existing one with a comment linking to the superseder.
+- **Block-by (Adjacent or Dependency):** add `Blocked by: {existing-id}` to the new issue's body before filing.
+- **Close (Stale, won't-do):** close with a comment explaining the decision and linking to the build-up's project for context.
+
+These actions are not optional cleanup — they are part of filing the build-up. Skip them and the backlog accumulates ghost issues that conflict with active work.
+
 ### Step 4: Wave staging — file the issues
 
 Same wave model as `build-up`:
@@ -484,6 +532,8 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 - **A task is wide AND deep.** → Shape rule violation. Split into a deep core + a wide propagation that's blocked by it.
 - **Migration or backfill is bundled with code that consumes it.** → Hard rule violation. Migration/backfill becomes its own task; consumer becomes a downstream task with `Blocked by:`.
 - **Atlas (or other declarative-schema) project, and the task is "rename column X to Y".** → Refuse to file as AI-Implement. Recommend manual scripted cutover (add → backfill → cut over reads → cut over writes → drop). Override only if user confirms a single-phase task.
+- **Phase 1 produced no Overlap Inventory.** → Backlog scan was skipped or too narrow. Re-run with broader keywords. Mature backlogs always have hits.
+- **Overlap Inventory entry has no committed action.** → Silent overlap. Force a decision in Phase 2 grilling before approving the design.
 - **Issue body says "see design doc" without inlining the spec.** → Pipeline can't read links. Inline the spec.
 - **Grilling skipped because "the user seemed sure".** → Mega-build-up exists for the grill. If skipping was right, plain `build-up` was the right skill.
 
