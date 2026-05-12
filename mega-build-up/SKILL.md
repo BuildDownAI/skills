@@ -73,6 +73,7 @@ Every task is **either** wide-and-shallow **or** deep-and-targeted. Never both.
 5. **No "while you're there" scope.** The task touches only what its title claims. Drive-by refactors are separate tasks.
 6. **Spec readable cold.** Title, files, steps, acceptance criteria all in the issue body. No "see design doc" without inlining the load-bearing parts. The AI-Implement pipeline reads the issue body cold and does not follow links.
 7. **Acceptance criteria are testable.** Each criterion is a checkbox with a verifiable outcome. "Works correctly" is rejected.
+8. **Information-coupled tasks count as deep.** If a task's per-touch decision requires reading code or context outside that task's named files (e.g. "for each viewset, decide whether to paginate based on what the FE expects"), the task is **deep-and-targeted scoped to a smaller surface**, not wide-and-shallow — even if each individual edit is one line. The agent's per-touch cognitive load is `per-file edit + inter-task lookup`, not just `per-file edit`. Symptom: the spec contains the phrase *"for each X, decide whether…"* with no inlined heuristic. Fix: either inline the decision rule so each touch is truly mechanical, or split into one deep-and-targeted task per surface.
 
 ### Soft signals (every task answers every signal)
 
@@ -80,7 +81,7 @@ Each task explicitly answers each signal in the plan. "No, and that's OK because
 
 | Signal | Question | Action if "no" |
 |---|---|---|
-| **Pattern anchor** | Is there an existing file/PR the agent can mirror? | If genuinely novel, call it out in Notes. If novel by accident, find the closest analog. |
+| **Pattern anchor** | Is there an existing file/PR the agent can mirror? | If genuinely novel, call it out in Notes. If novel by accident, find the closest analog. **For new files specifically: the spec MUST cite an existing sibling file by exact path** (e.g., *"create `django/X/tests_pagination.py` (sibling to existing `tests_lifecycle.py`)"*), not by description (*"create a pagination test file"*). Agents do not infer file-path conventions reliably — even when a convention is obvious from a `ls` of the directory, three parallel agents will pick three different paths. When sibling issues are parallel, each must anchor to a sibling file in **its own** app surface, not in a peer issue's app. |
 | **Test fixture** | Is there an analogous test the agent can copy? | If first-of-its-kind, the spec must include the full test code. |
 | **Trust boundary** | Does the task cross a trust boundary (user input, external API, cross-tenant)? | If yes, boundary must be explicit in the spec — what's validated where, what's authorized where. |
 | **Rollback path** | If this breaks in prod, what's the recovery? | Risky changes need a feature flag or rollback note. Mechanical changes don't. |
@@ -467,6 +468,22 @@ Same wave model as `build-up`:
 
 File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
+#### Pilot-first sequencing for repeated patterns
+
+**Trigger:** the wave contains **≥ 3 issues applying the same task template to different surfaces** (e.g., "enable pagination on `/employees/`", "…on `/assignments/`", "…on `/calculations/`"; or "convert app X serializers to explicit fields", same for app Y, app Z).
+
+When the trigger fires, **file them all** but only label the **first** with `AI-Implement`. The rest stay in their natural state (Todo or Backlog) **without** the `AI-Implement` label. Pick the pilot to be the one whose surface is smallest or best-understood — it sets the pattern.
+
+Then in build-down, after the pilot's PR lands:
+
+1. Inspect the PR for unspecified-but-load-bearing details the agent had to invent — file paths, naming, edge cases, peripheral updates (MCP sync, type exports, mock fixtures) the spec didn't enumerate.
+2. Update the remaining N-1 issue bodies to **inline whatever the pilot got right** (and correct whatever it got wrong). The earlier issues' "Pattern anchor" should now point at the freshly-merged PR.
+3. **Then** add the `AI-Implement` label to release the rest in parallel.
+
+**Cost:** one extra build-down checkpoint (a few minutes after the pilot merges). **Benefit:** N-1 issues land cleanly the first time instead of N issues hitting the same systemic miss in parallel and producing N PRs to gap-fill.
+
+**When NOT to apply pilot-first:** the wave contains ≤ 2 same-pattern siblings (parallel-safety rules already cover that), or the issues only superficially resemble each other (different app, different shape, different decisions — no reusable pattern). The trigger is *same task template*, not *same project area*.
+
 **Approval gate 3:** Present the issue manifest before filing — don't file then ask. Issue manifest format:
 
 ```
@@ -530,6 +547,9 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 - **Two tasks edit the same file but are marked parallel-safe.** → Parallel-safety bug. One must block the other or they merge.
 - **Schema and UI in one task.** → Backend-before-frontend violation. Split.
 - **A task is wide AND deep.** → Shape rule violation. Split into a deep core + a wide propagation that's blocked by it.
+- **Spec contains a per-touch decision rule whose inputs aren't in the spec** (e.g., *"for each viewset, decide whether to paginate based on what the FE expects"*, but the FE audit is in a different deferred task). → Hard-rule-8 violation: the task is wide-and-deep in disguise. Fix: either inline the decision heuristic so each touch is mechanical (often by *preserving* current behavior across the board and deferring the real decisions to per-surface follow-ups), or split into one deep-and-targeted task per surface.
+- **New-file path specified only by description** (e.g., *"create a pagination test file"* with no exact sibling path cited). → Pattern-anchor violation. Three agents will produce three different paths; one of them will likely collide with an existing module. Cite an exact sibling file by full path.
+- **≥ 3 same-pattern sibling issues filed all with `AI-Implement` at once.** → You're betting the spec is complete enough that three cold agents converge. They usually don't, and the failure mode is N parallel PRs all making the same omission (MCP sync, file-path convention, peripheral consumer) at once. Demote all but one to no-label, run the pilot, learn from its PR, then re-label the rest. (See Phase 4 → Pilot-first sequencing.)
 - **Migration or backfill is bundled with code that consumes it.** → Hard rule violation. Migration/backfill becomes its own task; consumer becomes a downstream task with `Blocked by:`.
 - **Atlas (or other declarative-schema) project, and the task is "rename column X to Y".** → Refuse to file as AI-Implement. Recommend manual scripted cutover (add → backfill → cut over reads → cut over writes → drop). Override only if user confirms a single-phase task.
 - **Phase 1 produced no Overlap Inventory.** → Backlog scan was skipped or too narrow. Re-run with broader keywords. Mature backlogs always have hits.
