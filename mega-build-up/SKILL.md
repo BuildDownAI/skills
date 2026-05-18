@@ -481,6 +481,21 @@ Same wave model as `build-up`:
 
 File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
+#### Umbrella decomposition: parent-child wiring (`parentId`)
+
+When the build-up decomposes an existing umbrella issue (parent → N children — the natural shape of mega-build-up output), set each child's `parentId` to the umbrella's id at `save_issue` time. This makes the umbrella's "Sub-issues" section in Linear act as the canonical manifest — children render with a progress-bar rollup, breadcrumb on each child, and parent-state propagation.
+
+The AI-Implement orchestrator does not consider `parentId` when filtering for pickup. Setting `parentId` is purely a Linear UX choice — zero operational risk, significant UI win for reviewers tracking umbrella progress.
+
+**Convention:**
+
+- File children in dependency order (so `blockedBy` resolves to real IDs).
+- Pass `parentId: <umbrella-id>` on every `save_issue` call for an umbrella child.
+- The `relatedTo: <umbrella-id>` convention some earlier build-ups used is redundant once `parentId` is set — parent-child supersedes the related link in Linear's UI.
+- Post the manifest comment on the umbrella itself (Phase 4 Step 5 "Post-filing manifest") so reviewers landing on the umbrella have both the visual sub-issue list AND the prose summary.
+
+**When NOT to set `parentId`:** build-ups that don't decompose an existing umbrella (i.e., the build-up creates a fresh set of independent issues with no overarching tracking issue) don't need it. The `parentId` convention is specifically for the umbrella case.
+
 #### Pilot-first sequencing for repeated patterns
 
 **Trigger:** the wave contains **≥ 3 issues applying the same task template to different surfaces** (e.g., "enable pagination on `/employees/`", "…on `/assignments/`", "…on `/calculations/`"; or "convert app X serializers to explicit fields", same for app Y, app Z).
