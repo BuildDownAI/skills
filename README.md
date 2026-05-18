@@ -21,37 +21,37 @@ Each skill in this repo answers one of those questions, with a consistent autono
 
 ## The skills
 
-### `build-up` — plan a milestone's worth of issues
+### `bd-build-up` — plan a milestone's worth of issues
 
 Turns a product objective, design handoff, or convergence plan into a sequenced, dependency-aware set of tracker issues ready for the AI coding agent. **Plan first, file second** — build-up always presents the proposed breakdown for your review before creating anything in the tracker.
 
 Trigger: *"build-up"*, *"plan the issues"*, *"break this down into issues"*, *"convergence plan"*, *"build from this design"*.
 
-### `summit-push` — strategize the batch before sending
+### `bd-summit-push` — strategize the batch before sending
 
 Sits between build-up (planning) and build-down (landing). Takes a set of planned or filed issues and optimizes their sequencing, dependency graph, and issue-body quality for maximum one-shot success rate through the agent pipeline. Also runs pre-flight risk scans during build-down to anticipate architectural blindspots.
 
 Trigger: *"summit-push"*, *"optimize the push"*, *"plan the assault"*, *"what order should we send these"*.
 
-### `build-down` — drive open PRs to merge
+### `bd-build-down` — drive open PRs to merge
 
 An active sprint-closure session: survey the tracker and open PRs, assess each against its gap analysis, drive gaps to resolution autonomously via PR comments to the agent, merge clean PRs, file minimal follow-up issues only for real blockers. Runs autonomously by default; escalates only on pattern breaks.
 
 Trigger: *"build-down"*, *"drive PRs to merge"*, *"PR triage"*.
 
-### `super-build-down` — autonomous, lean-back build-down
+### `bd-super-build-down` — autonomous, lean-back build-down
 
 Build-down's faster cousin. Same mission and rules, tuned for throughput: batch escalations (presented once at the end), minimal narration, mandatory smoke-jumper dispatch, explicit session-abort triggers for unattended runs. Use when you've got 5+ PRs and won't be watching every step.
 
 Trigger: *"super-build-down"*, *"autonomous build-down"*, *"overnight build-down"*, *"just land everything"*.
 
-### `smoke-jumper` — autonomous PR smoke-testing
+### `bd-smoke-jumper` — autonomous PR smoke-testing
 
 Parachutes onto one or more PRs, reads the gap analysis to figure out what to test, logs into the preview deploy, runs adaptive smoke tests, posts a verdict comment, and files tracker issues for failures. Build-down does quick inline checks; smoke-jumper does the deeper feature-aware verification. Runs standalone or is dispatched per-PR by the build-down skills.
 
 Trigger: *"smoke-jump"*, *"smoke test"*, *"test this PR"*, *"verify the preview"*.
 
-### `belay-on` — formalize tool handoffs mid-session
+### `bd-belay-on` — formalize tool handoffs mid-session
 
 A climbing term: *belay on* means the safety system is engaged and the climber can proceed. This skill formalizes pausing one tool (chat, CLI, code-execution) to gather information from another (code-reading agent, browser, etc.) and resuming cleanly when results come back. Each build skill anticipates belay-on points; this skill is what produces the handoff prompt and integrates the results.
 

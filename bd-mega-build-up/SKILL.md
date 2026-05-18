@@ -1,5 +1,5 @@
 ---
-name: mega-build-up
+name: bd-mega-build-up
 description: "Plan a milestone in depth, grill the user adversarially on the design, then file a Linear project with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'mega-build-up', 'mega build-up', 'deep build-up', 'thorough build-up', 'grill me on this build-up', or describes an objective and wants the design pressure-tested before any issues get filed. Mega-build-up is build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and Linear documents attached to the project so the design and plan travel with the work."
 ---
 
@@ -9,17 +9,17 @@ A mega-build-up is build-up with senior-engineer pushback and a written-plan del
 
 **Cardinal rule: grill, then plan, then file.** Three approval gates: (1) design after grilling, (2) plan after drafting, (3) issue list before filing. Don't skip gates to save time — the cost of bad scope filed into Linear is much higher than the cost of one more question.
 
-**Use this over plain `build-up` when:**
+**Use this over plain `bd-build-up` when:**
 - Scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture)
 - The user explicitly wants pushback ("grill me," "stress-test this," "I want the senior eng review")
 - The plan needs to live as documentation (regulated work, multi-week effort, multiple operators handing off)
 
-**Use plain `build-up` instead when:**
+**Use plain `bd-build-up` instead when:**
 - Scope is small (< 5 issues, well-trodden territory)
 - The user is confident and wants speed
 - It's a convergence pass over an already-reviewed prototype
 
-If unclear which to use, ask once. Default to `build-up` for speed.
+If unclear which to use, ask once. Default to `bd-build-up` for speed.
 
 ---
 
@@ -125,7 +125,7 @@ State the environment at session start.
 
 ## Mode Detection
 
-Same modes as `build-up`. Infer from framing; ask only on conflicting signals.
+Same modes as `bd-build-up`. Infer from framing; ask only on conflicting signals.
 
 - **Mode 1: Convergence** — code-prototype repo → production. User mentions a prototype path or says "converge."
 - **Mode 2: New Design** — objective → issues. Default when no prototype is mentioned. *Handoff-bundle variant:* user provides a design tool's export.
@@ -473,7 +473,7 @@ These actions are not optional cleanup — they are part of filing the build-up.
 
 ### Step 4: Wave staging — file the issues
 
-Same wave model as `build-up`:
+Same wave model as `bd-build-up`:
 
 - **Wave 1** (no `Blocked by`) → `state: Todo` + label `AI-Implement`. Pipeline picks up within minutes.
 - **Wave 2+** (has `Blocked by`) → `state: Backlog`. Promote to `Todo` during build-down as blockers merge.
@@ -519,7 +519,7 @@ After all issues are filed, present:
 
 ## Status Check Mode
 
-Same as `build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
+Same as `bd-build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
 
 If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents and surface them, don't reconstruct from issue bodies.
 
@@ -535,7 +535,7 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 
 **Dependency phrasing:** Always `Blocked by: {ISSUE-ID} (reason)`. Not "Depends on," not "Requires." One phrase, one pattern.
 
-**Sizing:** see Issue Design Rubric. (Skill archaeology note: earlier versions used a 1/2/3/5/8 story-point scale inherited from `build-up`. It was dropped because abstract sizing didn't capture codebase friction.)
+**Sizing:** see Issue Design Rubric. (Skill archaeology note: earlier versions used a 1/2/3/5/8 story-point scale inherited from `bd-build-up`. It was dropped because abstract sizing didn't capture codebase friction.)
 
 **Plan file naming:** `{{PLAN_DIR}}/{YYYY-MM-DD}-{slug}-design.md` and `-plan.md`. Same date prefix so they sort together.
 
@@ -549,7 +549,7 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 4. **One task = one issue.** Plan tasks are sized for parallel pipeline execution. Issue bodies are self-contained because the pipeline reads them cold.
 5. **Backend before frontend, always.** Schema → API → UI. Never combined.
 6. **Wave 1 to Todo + `AI-Implement`. Get the agents going.** Build-up's job is to launch work, not park it.
-7. **Mega vs. plain build-up is a choice about rigor, not a default.** Use plain `build-up` for small, well-trodden scope. Use this when the design needs pressure-testing or the plan needs to live as documentation.
+7. **Mega vs. plain build-up is a choice about rigor, not a default.** Use plain `bd-build-up` for small, well-trodden scope. Use this when the design needs pressure-testing or the plan needs to live as documentation.
 
 ---
 
@@ -569,14 +569,14 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 - **Phase 1 produced no Overlap Inventory.** → Backlog scan was skipped or too narrow. Re-run with broader keywords. Mature backlogs always have hits.
 - **Overlap Inventory entry has no committed action.** → Silent overlap. Force a decision in Phase 2 grilling before approving the design.
 - **Issue body says "see design doc" without inlining the spec.** → Pipeline can't read links. Inline the spec.
-- **Grilling skipped because "the user seemed sure".** → Mega-build-up exists for the grill. If skipping was right, plain `build-up` was the right skill.
+- **Grilling skipped because "the user seemed sure".** → Mega-build-up exists for the grill. If skipping was right, plain `bd-build-up` was the right skill.
 
 ---
 
 ## Relationship to Other Skills
 
-- **`build-up`** — lighter version. Same destination (Linear + AI-Implement), no grilling phase, no plan document, issue bodies are written at filing time rather than derived from a plan.
-- **`build-down`** — the next session. Drives filed issues to merge. Promotes Backlog issues to Todo as blockers merge.
-- **`super-build-down`** — autonomous build-down. Mega-build-ups produce well-specified issues, which is the input super-build-down needs.
-- **`belay-on`** — use for environment hops. Chat→code-reading agent during Phase 1 codebase reads. Code-execution→chat for filing.
-- **`smoke-jumper`** — use during build-down to validate PRs against the design decisions doc.
+- **`bd-build-up`** — lighter version. Same destination (Linear + AI-Implement), no grilling phase, no plan document, issue bodies are written at filing time rather than derived from a plan.
+- **`bd-build-down`** — the next session. Drives filed issues to merge. Promotes Backlog issues to Todo as blockers merge.
+- **`bd-super-build-down`** — autonomous build-down. Mega-build-ups produce well-specified issues, which is the input super-build-down needs.
+- **`bd-belay-on`** — use for environment hops. Chat→code-reading agent during Phase 1 codebase reads. Code-execution→chat for filing.
+- **`bd-smoke-jumper`** — use during build-down to validate PRs against the design decisions doc.

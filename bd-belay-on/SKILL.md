@@ -1,5 +1,5 @@
 ---
-name: belay-on
+name: bd-belay-on
 description: "Pause-and-recon pattern for multi-tool sessions. Trigger this skill when the user says 'belay-on', 'belay on', 'hold while I check', 'sending to {tool}', 'need code eyes on this', 'back from recon', 'here are the results', or when a session hits a question that can't be answered from the current tool's perspective and needs dispatching to another tool (chat→code-reading agent, chat→code-execution, code-execution→code-reading, etc). Belay-on formalizes the handoff between tools with different capabilities — it generates targeted recon prompts when pausing, and integrates recon results when resuming. Use any time a session needs to pause for information that requires a different tool's perspective."
 ---
 

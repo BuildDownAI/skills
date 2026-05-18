@@ -1,5 +1,5 @@
 ---
-name: build-down
+name: bd-build-down
 description: "Run a build-down session — drive open PRs to merge. Trigger this skill when the user says 'build-down', 'let's do a build-down', 'drive PRs to merge', 'PR triage', or asks to review and merge open pull requests. A build-down is an active sprint-closure session — survey the issue tracker and open GitHub PRs, assess each one against its gap analysis, drive gaps to resolution autonomously via PR comments to the AI coding agent, merge clean PRs, file minimal new tracker issues only when blockers are discovered, and leave the board cleaner than it started. This skill assumes a workflow with an issue tracker (e.g., Linear MCP), GitHub MCP, browser automation MCP for preview testing, and an AI coding agent that opens PRs in response to issues."
 ---
 

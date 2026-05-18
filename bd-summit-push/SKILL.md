@@ -1,5 +1,5 @@
 ---
-name: summit-push
+name: bd-summit-push
 description: "Strategic assault planning for a milestone push. Trigger this skill when the user says 'summit-push', 'summit push', 'strategic push', 'optimize the push', 'plan the assault', 'what order should we send these', or asks to evaluate a build-up plan before filing or sending issues to the AI coding agent. A summit-push sits between build-up (planning) and build-down (landing) — it takes a set of planned or filed issues and optimizes their sequencing, dependency graph, and issue body quality for maximum one-shot success rate through the AI coding agent pipeline. It also runs pre-flight checks during build-down to anticipate architectural blindspots before merging. Use this skill when the user wants to be strategic rather than spray-and-pray with the agent pipeline, or wants to de-risk a merge sequence."
 ---
 

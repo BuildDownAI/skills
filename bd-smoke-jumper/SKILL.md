@@ -1,5 +1,5 @@
 ---
-name: smoke-jumper
+name: bd-smoke-jumper
 description: "Autonomous smoke-testing agent for PRs. Trigger this skill when the user says 'smoke-jump', 'smoke test', 'smoke-jumper', 'test this PR', 'test these PRs', 'verify the preview', 'does this PR actually work', or asks to validate a preview deploy before merge. Smoke-jumper parachutes onto one or more PRs, reads the gap analysis and issue context to figure out what to test, logs into the preview deploy, runs adaptive smoke tests (baseline health + PR-specific verification), posts results as a PR comment, and files tracker issues for any failures. It runs independently or in parallel with build-down, super-build-down, and summit-push — those skills can invoke it per-PR or consume its reports if already run."
 ---
 
