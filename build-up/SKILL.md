@@ -286,6 +286,8 @@ Build-up's job is to launch work, not park it. Get the agents going. File issues
 - **Wave 1** (issues with no dependencies) → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Pipeline picks up within minutes.
 - **Wave 2+** (issues with unmet dependencies) → `state: Backlog`. Promote to Todo during build-down as blockers merge.
 - **Architect-routed issues** (schema, security, infra) → `state: Todo`, assigned to the architect, no `{{IMPLEMENT_LABEL}}`. The architect decides their own sequencing.
+- **Umbrella decomposition** (build-up decomposes an existing umbrella into N children): set `parentId: <umbrella-id>` on each child at `save_issue` time. Makes Linear's "Sub-issues" section act as the canonical manifest with progress-bar rollup. Orchestrator-invisible — no operational risk. See `mega-build-up` Phase 4 Step 4 for the full convention.
+- **Post-deploy human verification** (UX signoff, paper-data confirmation, prod observation): file as a separate sibling child of the umbrella with no `{{IMPLEMENT_LABEL}}`, `blockedBy: <implementation-child>`. Don't bundle as an AC on the implementation issue — pre-merge signoff is impossible when the deploy is triggered by the merge. See `mega-build-up` Phase 4 Step 4.
 
 This is the point of a build-up. A well-staged build-up has Wave 1 running by the time the session ends.
 

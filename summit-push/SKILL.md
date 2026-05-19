@@ -413,6 +413,7 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 - When hardening an issue description, update ONLY the `description` field — preserve labels, state, assignee, estimate
 - `blockedBy` arrays are informational (don't block automation but do drive summit-push's dependency analysis)
 - `relatedTo` accepts arrays of issue ID strings
+- `parentId` for umbrella-decomposition children — set during build-up filing, orchestrator-invisible, pure Linear UX win. Summit-push consistency check: if the wave is an umbrella decomposition, confirm (a) `parentId: <umbrella>` is set on every child AND (b) any post-deploy human verification (UX signoff, paper validation, prod observation) is filed as a separate sibling child, not bundled as ACs on implementation children.
 
 ### Filing states (aligned with build-up)
 

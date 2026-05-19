@@ -481,6 +481,36 @@ Same wave model as `build-up`:
 
 File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
+#### Umbrella decomposition: parent-child wiring (`parentId`)
+
+When the build-up decomposes an existing umbrella issue (parent → N children — the natural shape of mega-build-up output), set each child's `parentId` to the umbrella's id at `save_issue` time. This makes the umbrella's "Sub-issues" section in Linear act as the canonical manifest — children render with a progress-bar rollup, breadcrumb on each child, and parent-state propagation.
+
+The AI-Implement orchestrator does not consider `parentId` when filtering for pickup. Setting `parentId` is purely a Linear UX choice — zero operational risk, significant UI win for reviewers tracking umbrella progress.
+
+**Convention:**
+
+- File children in dependency order (so `blockedBy` resolves to real IDs).
+- Pass `parentId: <umbrella-id>` on every `save_issue` call for an umbrella child.
+- The `relatedTo: <umbrella-id>` convention some earlier build-ups used is redundant once `parentId` is set — parent-child supersedes the related link in Linear's UI.
+- Post the manifest comment on the umbrella itself (Phase 4 Step 5 "Post-filing manifest") so reviewers landing on the umbrella have both the visual sub-issue list AND the prose summary.
+
+**When NOT to set `parentId`:** build-ups that don't decompose an existing umbrella (i.e., the build-up creates a fresh set of independent issues with no overarching tracking issue) don't need it. The `parentId` convention is specifically for the umbrella case.
+
+#### Post-deploy human verification belongs in its own child
+
+When a decomposition includes a step that requires post-deploy validation — UX signoff, paper-data confirmation, prod observation, render verification on a deployed app — file that as a separate sibling child of the umbrella, **not** as an acceptance criterion on the implementation issue.
+
+The implementation issue's PR auto-closes on merge via `Fixes <ID>`, which **triggers** the deploy that makes verification possible. Bundling the verification AC into the implementation issue creates a catch-22: pre-merge signoff is impossible because the deploy is post-merge.
+
+**Shape of the verification child:**
+
+- `parentId: <umbrella-id>` (sibling of the implementation children).
+- `blockedBy: <implementation-child-id>` — naturally surfaces in Linear after the implementation closes.
+- **No `AI-Implement` label** — human-gated; the orchestrator's pickup filter requires the label so unlabeled issues are never dispatched.
+- Acceptance criteria describe the verification runbook (commands to run, UI pages to inspect, screenshots/logs to attach).
+
+Examples that fit this pattern: "verify UI renders correctly on the deployed app", "run `/aw-analyze` on paper data to confirm DB rows populate as expected", "operator sign-off via PR comment after N production trading days observed". If the verification can't be run from a PR diff alone, it belongs in its own child.
+
 #### Pilot-first sequencing for repeated patterns
 
 **Trigger:** the wave contains **≥ 3 issues applying the same task template to different surfaces** (e.g., "enable pagination on `/employees/`", "…on `/assignments/`", "…on `/calculations/`"; or "convert app X serializers to explicit fields", same for app Y, app Z).
