@@ -48,7 +48,7 @@ The downstream consumer of this build-up is the **AI-Implement harness** (https:
 1. **The issue body is the spec.** The pipeline reads it cold — no follow-up questions. Everything must be inline.
 2. **Gap analysis only catches what the spec specified.** Vague acceptance criteria → vague gap analysis → bad PRs.
 3. **Parallel pickup is the default.** Multiple unblocked `AI-Implement` issues run concurrently across separate branches. Issues must be independently mergeable, or use `Blocked by:` to serialize them.
-4. **State + label is the trigger.** The pickup state + `AI-Implement` label = picked up within minutes. Parked state = not picked up. (Exact state names per the active adapter's **Pickup trigger** section.)
+4. **The pickup signal is tracker-specific.** Linear uses state + label; Jira uses a Status field. The pickup signal present = picked up within minutes; parked = not picked up. (Exact mechanism per the active adapter's **Pickup trigger** section.)
 
 ---
 
@@ -167,7 +167,7 @@ Search the tracker backlog for existing work that intersects with this build-up.
 
 | Classification | Definition | Default action |
 |---|---|---|
-| **Duplicate** | Existing issue describes the same work | Don't re-file. Reference the existing issue ID. If stale, revive it (move to Todo + `AI-Implement`) instead of filing fresh. |
+| **Duplicate** | Existing issue describes the same work | Don't re-file. Reference the existing issue ID. If stale, revive it (per the active adapter's **Wave staging** / **Pickup trigger** sections) instead of filing fresh. |
 | **Subset** | Existing issue is broader; our work is a piece of it | Either fold our work into existing scope, OR split the existing issue and replace one piece with ours. |
 | **Superset** | Our planned work covers what the existing issue describes | File ours. Close the existing as superseded, link to the new issue. |
 | **Adjacent** | Same files/area, different intent | Risk: file conflicts when both run via the pipeline. Add `Blocked by:` to one or coordinate sequencing in the plan. |
@@ -475,13 +475,13 @@ File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
 **Trigger:** the wave contains **≥ 3 issues applying the same task template to different surfaces** (e.g., "enable pagination on `/employees/`", "…on `/assignments/`", "…on `/calculations/`"; or "convert app X serializers to explicit fields", same for app Y, app Z).
 
-When the trigger fires, **file them all** but only label the **first** with `AI-Implement`. The rest stay in their natural state (Todo or Backlog) **without** the `AI-Implement` label. Pick the pilot to be the one whose surface is smallest or best-understood — it sets the pattern.
+When the trigger fires, **file them all** but release only the **first** for pickup (per the active adapter's **Pickup trigger** section). The rest stay parked (per the active adapter's **Wave staging** section) until the pilot lands. Pick the pilot to be the one whose surface is smallest or best-understood — it sets the pattern.
 
 Then in build-down, after the pilot's PR lands:
 
 1. Inspect the PR for unspecified-but-load-bearing details the agent had to invent — file paths, naming, edge cases, peripheral updates (MCP sync, type exports, mock fixtures) the spec didn't enumerate.
 2. Update the remaining N-1 issue bodies to **inline whatever the pilot got right** (and correct whatever it got wrong). The earlier issues' "Pattern anchor" should now point at the freshly-merged PR.
-3. **Then** add the `AI-Implement` label to release the rest in parallel.
+3. **Then** release the rest for pickup in parallel (per the active adapter's **Pickup trigger** section).
 
 **Cost:** one extra build-down checkpoint (a few minutes after the pilot merges). **Benefit:** N-1 issues land cleanly the first time instead of N issues hitting the same systemic miss in parallel and producing N PRs to gap-fill.
 
@@ -532,7 +532,7 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 3. **The plan is a document, not a comment thread.** It lives as a tracker container document so it survives the build-up session.
 4. **One task = one issue.** Plan tasks are sized for parallel pipeline execution. Issue bodies are self-contained because the pipeline reads them cold.
 5. **Backend before frontend, always.** Schema → API → UI. Never combined.
-6. **Wave 1 to Todo + `AI-Implement`. Get the agents going.** Build-up's job is to launch work, not park it.
+6. **Wave 1 to the pickup-ready state per the active adapter. Get the agents going.** Build-up's job is to launch work, not park it.
 7. **Mega vs. plain build-up is a choice about rigor, not a default.** Use plain `build-up` for small, well-trodden scope. Use this when the design needs pressure-testing or the plan needs to live as documentation.
 
 ---
