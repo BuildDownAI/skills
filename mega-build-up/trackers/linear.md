@@ -67,59 +67,19 @@ File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
 **Dependency phrasing:** Always `Blocked by: {ISSUE-ID} (reason)`. Not "Depends on," not "Requires." One phrase, one pattern.
 
-**Linear relation mechanic:** use `Blocked by:` in the issue body's Dependencies section. `save_issue` handles create + update (pass `id` to update). Label arrays replace — always pass the full desired list. Documents attach to projects, not to individual issues. One project per build-up.
+**Linear relation mechanic:** use the native blocked-by relation. Add `Blocked by: {ISSUE-ID} (reason)` in the issue body's Dependencies section.
 
 ## Required create fields
 
-For each task in the plan, build an issue body that the AI-Implement pipeline can run cold:
-
-```
-### Problem / Context
-
-{Why this issue exists. Link to the Linear project for full design context.}
-
-### Task
-
-{Direct from the plan task. Files to create/modify, with exact paths.}
-
-Reference design context: {Linear project URL}
-
-### Steps
-
-{Direct from the plan task — the bite-sized step list, including code blocks.}
-
-### Acceptance Criteria
-
-- [ ] {Specific, testable criterion}
-- [ ] {Another}
-- [ ] `{{BUILD_CMD}}` passes
-
-### Dependencies
-
-Blocked by: {ISSUE-ID} (reason)
-Parallel-safe with: {ISSUE-IDs}
-
-### Shape & Rubric
-
-Shape: {wide-and-shallow | deep-and-targeted}
-Migration/backfill: {no | yes — isolated, no consumers in this task}
-Pattern anchor: {file/PR reference or "novel"}
-Test fixture: {test reference or "full test in Steps"}
-Trust boundary: {none | crosses X — handled by Y}
-Rollback: {mechanical | flag `name` | revert}
-Observability: {none | `metric.name`}
-
-### Notes
-
-{Edge cases, gotchas, decisions from the design doc relevant to this task.}
-```
-
-File via `save_issue` (or Linear MCP equivalent) after explicit approval of the issue manifest.
+The issue body itself follows the core's Phase 4 Step 3 template.
 
 **Linear MCP patterns:**
 - `save_issue` handles create + update (pass `id` to update).
 - Label arrays replace — always pass the full desired list.
+- `state: Todo` + `AI-Implement` label = pipeline pickup.
 - Documents attach to projects, not to individual issues. One project per build-up.
+
+File via `save_issue` (or Linear MCP equivalent) after explicit approval of the issue manifest.
 
 ## Issue type
 
@@ -137,6 +97,6 @@ The "reference design context" link is for humans reviewing the PR, not for the 
 
 ## Status check
 
-Same as `build-up` status check. Match the user's reference to a Linear project via `list_projects`, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
+Same as `build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
 
 If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents and surface them, don't reconstruct from issue bodies.
