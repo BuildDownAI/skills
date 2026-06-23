@@ -55,14 +55,22 @@ This skill runs in three environments with different capabilities. Detect which 
 
 **Opening declaration:** At session start, state the environment and primary tools. Example: *"Running in chat. Tracker MCP + GitHub MCP available, will use browser MCP if PR UI interaction is needed."*
 
+### Tracker Selection
+
+Pick the active tracker at session start and load its adapter:
+
+- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-cloudshare` → Linear, `atlassian-cloudshare` → Jira). If ambiguous, ask once.
+- Read `trackers/<tracker>.md`. Every tracker-touching step below (issue scan, pickup trigger, post-merge completion, unblock, follow-up filing) follows that adapter's matching `## ` section.
+- State the tracker in the opening declaration.
+
 ### The AI coding agent pipeline (running system, not manual workflow)
 
 The pipeline runs continuously. Never treat pipeline state as a surprise.
 
-- When an issue is in **Todo** with the `{{IMPLEMENT_LABEL}}` label → the agent picks it up within minutes
-- Agent moves the issue to a working state (e.g., **In Progress** or a custom **Working** state) and opens a PR against a branch named for the issue
-- When the PR is ready, agent moves the issue to **In Review** and posts a gap analysis comment (structure below)
-- A working state is expected, not alarming. **In Review** means work is ready for triage.
+- When an issue carries the pickup signal (per the active adapter's **Pickup trigger** section) → the agent picks it up within minutes
+- Agent moves the issue to a working state and opens a PR against a branch named for the issue (exact states per the active adapter's **Issue scan & states** section)
+- When the PR is ready, agent marks the issue ready for triage and posts a gap analysis comment (structure below)
+- A working state is expected, not alarming. A ready-for-triage state means work is ready for review.
 
 If an issue you expected to act on is already in a working or In Review state, the pipeline beat you to it. Read the PR, don't re-file the work.
 
@@ -85,10 +93,8 @@ If the agent in use doesn't produce a structured gap analysis, build the equival
 Pull current state before assessing anything. Use tracker MCP and GitHub MCP in parallel.
 
 **Tracker scan:**
-- `list_issues` filtered by `state: "In Progress"`
-- `list_issues` filtered by `state: "In Review"`
-- `list_issues` filtered by `state: "Todo"` and label `{{IMPLEMENT_LABEL}}`
-- Note any custom working state (pipeline is actively running)
+
+Scan the tracker per the active adapter's **Issue scan & states** section (working state, ready-for-triage state, and the pickup queue).
 
 **GitHub PR scan:**
 Use GitHub MCP for structured PR data:
@@ -143,7 +149,7 @@ For each gap item, classify:
 - Gap is a net-new feature the agent surfaced as "would be nice"
 - Gap requires a product decision
 
-**Action:** Create a new tracker issue. If the fix is well-scoped and should be worked on soon: `state: Todo`, label `{{IMPLEMENT_LABEL}}`, full context in the body. If it needs planning or discussion: `state: Backlog` with a note about why it was deferred. Never drop a gap silently — either fix it or file it.
+**Action:** Create a new tracker issue. If the fix is well-scoped and should be worked on soon: pickup-ready (per the active adapter's **Follow-up filing** section), full context in the body. If it needs planning or discussion: parked with a note about why it was deferred. Never drop a gap silently — either fix it or file it.
 
 **Acceptable as-is (log only):**
 - Gap is cosmetic or describes an edge case outside acceptance criteria
@@ -340,8 +346,8 @@ A PR is clean to merge when all of these are true:
 Merge via GitHub MCP using squash merge as the default method. After merging:
 
 - Verify the PR status shows merged
-- Move the linked tracker issue to `Done`
-- Check if the merge unblocks any `blockedBy` issues — update those to `Todo` if they have `{{IMPLEMENT_LABEL}}` and all blockers are now done
+- Complete the linked issue per the active adapter's **Post-merge completion** section.
+- Release any issues the merge unblocks, per the active adapter's **Unblock dependents** section.
 
 ### Post-merge sweep
 
@@ -368,14 +374,14 @@ File a new tracker issue when:
 
 ### Filing context matters
 
-The filing context determines the initial state:
+The filing context determines whether the issue is pickup-ready or parked — set state and labels per the active adapter's **Follow-up filing** section:
 
-- **Mid-session discovery, scoped fix:** `state: Todo`, labels include `{{IMPLEMENT_LABEL}}`, full context in body. The pipeline picks it up within minutes.
-- **Mid-session discovery, needs planning:** `state: Backlog`, note in body why it was deferred from immediate pickup.
-- **Out-of-scope gap from a PR:** `state: Todo` if it's a clean scoped fix, otherwise `Backlog`.
-- **Architectural finding:** `state: Backlog`, assign to the architect, no `{{IMPLEMENT_LABEL}}`.
+- **Mid-session discovery, scoped fix:** pickup-ready. Full context in body. The pipeline picks it up within minutes.
+- **Mid-session discovery, needs planning:** parked, note in body why it was deferred from immediate pickup.
+- **Out-of-scope gap from a PR:** pickup-ready if it's a clean scoped fix, otherwise parked.
+- **Architectural finding:** parked, assign to the architect, no `{{IMPLEMENT_LABEL}}`.
 
-Default toward Todo + `{{IMPLEMENT_LABEL}}` when the work is scoped and deterministic. Backlog is for planning, not parking.
+Default toward pickup-ready when the work is scoped and deterministic. Parked is for planning, not parking.
 
 ### What not to file
 
@@ -462,7 +468,7 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 
 2. **Drive to standard now.** If a gap is scoped and the agent can fix it in-session, post the comment. Don't defer real work to "future build-up."
 
-3. **Follow-up context determines state.** Discovery in build-down → Todo + `{{IMPLEMENT_LABEL}}` if scoped. Backlog only for planning.
+3. **Follow-up context determines state.** Discovery in build-down → pickup-ready (per the active adapter) if scoped. Parked only for planning.
 
 4. **Autonomous by default, escalate only on pattern breaks.** See the Phase 2d list. Everything else, act.
 
@@ -490,11 +496,7 @@ If a symptom doesn't clearly match a row, don't force-fit. Investigate and escal
 
 ## Conventions
 
-**Tracker MCP patterns (assuming Linear-style):**
-- `save_issue` handles both create and update (pass `id` to update)
-- Label arrays replace rather than append — always pass the full desired label list
-- `state: "Todo"` triggers agent pickup within minutes
-- `state: "In Progress"` + PR attachment = agent is working
+**Tracker MCP patterns:** see the active adapter's **MCP & discovery**, **Pickup trigger**, and **Issue scan & states** sections.
 
 **Label conventions (adapt names to your tracker):**
 - `{{IMPLEMENT_LABEL}}` — the AI coding agent should implement this
