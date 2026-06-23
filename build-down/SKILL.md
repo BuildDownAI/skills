@@ -368,9 +368,9 @@ A timeout or infrastructure error on the preview deploy is transient, not a code
 
 File a new tracker issue when:
 
-1. A gap is out of scope for the current PR but needs work soon (→ Todo + `{{IMPLEMENT_LABEL}}`)
-2. A blocker is discovered during testing that needs planning (→ Backlog)
-3. A pattern of failures points to a root cause needing architectural attention (→ Backlog, route to the architect)
+1. A gap is out of scope for the current PR but needs work soon (→ pickup-ready, per the active adapter's **Follow-up filing** section)
+2. A blocker is discovered during testing that needs planning (→ parked)
+3. A pattern of failures points to a root cause needing architectural attention (→ parked, route to the architect)
 
 ### Filing context matters
 
@@ -451,10 +451,11 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 | Issue | Was blocked by | Now in state |
 
 ## Board State After Session
-- In Progress: {count}
-- In Review: {count}
+(Use the active adapter's state names — see its **Issue scan & states** section.)
+- Working / in-progress: {count}
+- Ready for triage: {count}
 - Open PRs: {count}
-- Todo (agent queue): {count}
+- Pickup queue: {count}
 
 ## Observations
 {Patterns noticed — recurring gap types, pipeline health signals, anything worth flagging for next session}
