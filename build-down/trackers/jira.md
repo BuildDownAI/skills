@@ -50,20 +50,22 @@ After build-down merges a PR, complete the linked Jira issue explicitly:
 4. **Verify.** Re-fetch the issue and confirm `statusCategory === "done"`. If it
    did not transition, report it — this is exactly the unreliability this step
    exists to catch.
-5. **Confirm dependents unblock.** Re-check issues `Blocks`-linked to this one;
-   now that it is `done` they are no longer blocked by it. Feed any newly
-   eligible issues to **Unblock dependents** and the session summary's "Unblocked
-   Work".
+5. **Confirm dependents unblock.** Re-check the issues that this one *blocks* —
+   the outward side of its `Blocks` links (a dependent's *inward* `Blocks` link is
+   what `isBlockedByIncomplete` gates on). Now that it is `done` they are no longer
+   blocked by it. Feed any newly eligible issues to **Unblock dependents** and the
+   session summary's "Unblocked Work".
 
 ## Unblock dependents
-For each issue that was `Blocks`-linked to the just-completed issue and now has
-all its blockers in a `done` status category: release it via **Pickup trigger**
+For each issue that this one *blocks* (the outward side of its `Blocks` links) and
+that now has all its blockers in a `done` status category: release it via **Pickup trigger**
 (set `AI-Implement-Status = Ready`). The orchestrator's next poll will include it
 once `isBlockedByIncomplete` returns false.
 
 ## Follow-up filing
-File a new Jira issue as a child of the build-up epic (`parent = <epic>`), with
-the Repo field set and the `AI-Implement` label. For a scoped fix that should be
+File a new Jira issue with the Repo field set and the `AI-Implement` label. If
+this session has a build-up epic, parent the issue to it (`parent = <epic>`);
+a standalone build-down with no epic skips the parent. For a scoped fix that should be
 picked up now, set `AI-Implement-Status = Ready` (Pickup trigger). For planning
 or architect-routed work, leave `AI-Implement-Status` unset so the pipeline does
 not pick it up; assign the architect for architectural findings. Custom-field IDs

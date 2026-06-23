@@ -72,7 +72,7 @@ The pipeline runs continuously. Never treat pipeline state as a surprise.
 - When the PR is ready, agent marks the issue ready for triage and posts a gap analysis comment (structure below)
 - A working state is expected, not alarming. A ready-for-triage state means work is ready for review.
 
-If an issue you expected to act on is already in a working or In Review state, the pipeline beat you to it. Read the PR, don't re-file the work.
+If an issue you expected to act on is already in a working or ready-for-triage state, the pipeline beat you to it. Read the PR, don't re-file the work.
 
 ### The gap analysis document
 
