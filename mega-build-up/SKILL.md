@@ -1,13 +1,13 @@
 ---
 name: mega-build-up
-description: "Plan a milestone in depth, grill the user adversarially on the design, then file a Linear project with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'mega-build-up', 'mega build-up', 'deep build-up', 'thorough build-up', 'grill me on this build-up', or describes an objective and wants the design pressure-tested before any issues get filed. Mega-build-up is build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and Linear documents attached to the project so the design and plan travel with the work."
+description: "Plan a milestone in depth, grill the user adversarially on the design, then file a tracker project/epic with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'mega-build-up', 'mega build-up', 'deep build-up', 'thorough build-up', 'grill me on this build-up', or describes an objective and wants the design pressure-tested before any issues get filed. Mega-build-up is build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and design + plan documents attached to the project/epic so they travel with the work."
 ---
 
 # Mega Build-Up Skill
 
-A mega-build-up is build-up with senior-engineer pushback and a written-plan deliverable. Same AI-Implement pipeline target. Same Linear destination. Higher rigor on the front end.
+A mega-build-up is build-up with senior-engineer pushback and a written-plan deliverable. Same AI-Implement pipeline target. Same tracker destination (Linear or Jira). Higher rigor on the front end.
 
-**Cardinal rule: grill, then plan, then file.** Three approval gates: (1) design after grilling, (2) plan after drafting, (3) issue list before filing. Don't skip gates to save time — the cost of bad scope filed into Linear is much higher than the cost of one more question.
+**Cardinal rule: grill, then plan, then file.** Three approval gates: (1) design after grilling, (2) plan after drafting, (3) issue list before filing. Don't skip gates to save time — the cost of bad scope filed into the tracker is much higher than the cost of one more question.
 
 **Use this over plain `build-up` when:**
 - Scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture)
@@ -25,12 +25,12 @@ If unclear which to use, ask once. Default to `build-up` for speed.
 
 ## Configuration
 
-- `{{TRACKER}}` — Linear (this skill assumes Linear MCP; adapt for others)
+- `{{TRACKER}}` — the issue tracker for this build-up: `linear` or `jira`. Determines which `trackers/<id>.md` adapter the core follows for all tracker-touching steps.
 - `{{REPO}}` — GitHub repo, owner/name format
 - `{{IMPLEMENT_LABEL}}` — `AI-Implement` (the label that triggers the AI-Implement pipeline)
 - `{{ARCHITECT_NAME}}` — human owner for risky changes (migrations, auth, infra). Optional.
 - `{{BUILD_CMD}}` — verification command (e.g., `next build`, `tsc --noEmit`, `pytest`)
-- `{{PLAN_DIR}}` — local path for plan drafts before they're attached to Linear (default `docs/plans/`)
+- `{{PLAN_DIR}}` — local path for plan drafts before they're attached to the tracker container (default `docs/plans/`)
 
 ---
 
@@ -38,17 +38,17 @@ If unclear which to use, ask once. Default to `build-up` for speed.
 
 The downstream consumer of this build-up is the **AI-Implement harness** (https://github.com/BuildDownAI/AI-Implement). Knowing how it picks up work shapes how issues should be written.
 
-- The orchestrator polls Linear every ~60s for unblocked issues with the `AI-Implement` label.
+- The orchestrator polls the tracker every ~60s for unblocked issues marked for AI-Implement (exact mechanism per the active adapter's **Pickup trigger** section).
 - A picked-up issue moves to **In Progress**, runs Claude Code against the ticket spec via `WORKFLOW.md`, opens a PR, then posts a **gap analysis** comment comparing the diff against the spec.
-- The Linear issue transitions to **Ready for Review** with a PR link.
+- The issue transitions to **Ready for Review** with a PR link.
 - Commenting `/ai-implement` on the PR re-runs Claude in **gap-fill mode** against the same branch.
-- Linear is the source of truth. Ad-hoc prompts don't enter the pipeline.
+- The tracker is the source of truth. Ad-hoc prompts don't enter the pipeline.
 
 **Implications for issue shape:**
 1. **The issue body is the spec.** The pipeline reads it cold — no follow-up questions. Everything must be inline.
 2. **Gap analysis only catches what the spec specified.** Vague acceptance criteria → vague gap analysis → bad PRs.
 3. **Parallel pickup is the default.** Multiple unblocked `AI-Implement` issues run concurrently across separate branches. Issues must be independently mergeable, or use `Blocked by:` to serialize them.
-4. **State + label is the trigger.** `state: Todo` + `AI-Implement` label = picked up within minutes. `Backlog` = parked.
+4. **The pickup signal is tracker-specific.** Linear uses state + label; Jira uses a Status field. The pickup signal present = picked up within minutes; parked = not picked up. (Exact mechanism per the active adapter's **Pickup trigger** section.)
 
 ---
 
@@ -115,11 +115,19 @@ When a failure class recurs across two or more build-ups, promote it from "lesso
 
 State the environment at session start.
 
-- **Chat (web/mobile):** Linear MCP, GitHub MCP, conversation memory. Lacks local FS / bash. Belay-on to a code-reading agent for codebase reads.
+- **Chat (web/mobile):** the tracker MCP (see Tracker Selection), GitHub MCP, conversation memory. Lacks local FS / bash. Belay-on to a code-reading agent for codebase reads.
 - **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads, plan file drafting, then hand back to chat for filing.
-- **Pair pattern:** Draft the plan locally as a markdown file in `{{PLAN_DIR}}`, then attach it to Linear from chat as a Project Document.
+- **Pair pattern:** Draft the plan locally as a markdown file in `{{PLAN_DIR}}`, then attach it per the active adapter's **Doc home** section.
 
-**Opening declaration:** State environment, primary tools, and which mode you'll be running. Example: *"Running in chat. Linear MCP for filing, will draft the plan to `docs/plans/` and attach as a project document. Mode 2 (New Design)."*
+### Tracker Selection
+
+Pick the active tracker at session start and load its adapter:
+
+- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-cloudshare` → `linear`, `atlassian-cloudshare` → `jira`). If both are present or it's ambiguous, ask once.
+- Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (overlap scan, container, doc home, pickup trigger, waves, dependencies, issue creation, status check) follows that adapter's matching `## ` section.
+- State the tracker in the opening declaration, e.g. *"…Tracker: Jira (epic BAC-23858, project BAC)."*
+
+**Opening declaration:** State environment, primary tools, tracker, and which mode you'll be running. Example: *"Running in chat. Tracker MCP for filing, will draft the plan to `docs/plans/` and attach to the container per the active adapter. Mode 2 (New Design)."* (Adjust tracker name per `{{TRACKER}}`; see Tracker Selection above.)
 
 ---
 
@@ -141,22 +149,17 @@ Mega-build-up's grilling and detailed-plan phases apply most strongly to **Mode 
 Understand current state before drafting anything.
 
 - Read prototype + production codebases (Mode 1) or research the codebase for adjacent patterns (Mode 2).
-- List existing projects via `list_projects` so you know whether this build-up creates a new project or attaches to an existing one.
-- **Run the Backlog Overlap Scan** (below). This is not optional — there is almost always existing Linear work that overlaps, and unaddressed overlap produces duplicate issues, file conflicts, and superseded work that lingers forever.
+- List existing projects per the active adapter's **Container** section so you know whether this build-up creates a new project or attaches to an existing one.
+- **Run the Backlog Overlap Scan** (below). This is not optional — there is almost always existing tracker work that overlaps, and unaddressed overlap produces duplicate issues, file conflicts, and superseded work that lingers forever.
 - Ask **at most 2** clarifying questions before moving on. After that, state assumptions and proceed.
 
 The orient phase produces a **working understanding**, not a plan. Don't draft issues yet.
 
 ### Backlog Overlap Scan
 
-Search the Linear backlog for existing work that intersects with this build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
+Search the tracker backlog for existing work that intersects with this build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
 
-**Search strategy:**
-
-1. **Keyword search.** Extract 5–10 domain terms from the objective (entity names, feature names, route paths, table names). Search Linear via `search_issues` (or `list_issues` + filter) across **all states** including Backlog. Don't restrict to In Progress — stale Backlog issues are exactly the overlap that gets missed.
-2. **Label search.** If the build-up touches a known feature area with a label (e.g., `billing`, `auth`, `onboarding`), list all open issues with that label.
-3. **Project search.** Check related existing projects via `list_projects`. Pull the issue list for any project whose scope plausibly overlaps.
-4. **File-path heuristic.** If Phase 1 codebase research identified specific files this build-up will modify, search issue bodies for those paths.
+**Search strategy:** search per the active adapter's **Overlap scan** section.
 
 **Search defaults:** narrow to the user's team and any teams the build-up obviously touches. If signals suggest cross-team overlap, expand. Better to over-search and discard than to miss a duplicate.
 
@@ -164,7 +167,7 @@ Search the Linear backlog for existing work that intersects with this build-up. 
 
 | Classification | Definition | Default action |
 |---|---|---|
-| **Duplicate** | Existing issue describes the same work | Don't re-file. Reference the existing issue ID. If stale, revive it (move to Todo + `AI-Implement`) instead of filing fresh. |
+| **Duplicate** | Existing issue describes the same work | Don't re-file. Reference the existing issue ID. If stale, revive it (per the active adapter's **Wave staging** / **Pickup trigger** sections) instead of filing fresh. |
 | **Subset** | Existing issue is broader; our work is a piece of it | Either fold our work into existing scope, OR split the existing issue and replace one piece with ours. |
 | **Superset** | Our planned work covers what the existing issue describes | File ours. Close the existing as superseded, link to the new issue. |
 | **Adjacent** | Same files/area, different intent | Risk: file conflicts when both run via the pipeline. Add `Blocked by:` to one or coordinate sequencing in the plan. |
@@ -223,7 +226,7 @@ You don't need all 10 every time. You do need to walk the tree and stop at "we h
 
 ### Output of Phase 2
 
-A short **Design Decisions** doc capturing what was decided. This becomes one of the two documents attached to the Linear project. Format:
+A short **Design Decisions** doc capturing what was decided. This becomes one of the two documents attached to the tracker container. Format:
 
 ```markdown
 # {Build-Up Name} — Design Decisions
@@ -247,7 +250,7 @@ One-paragraph statement of what this build-up achieves.
 - **Observability:** {logs/metrics}
 
 ## Overlap & Reconciliation
-For each overlapping existing Linear issue:
+For each overlapping existing tracker issue:
 - **{ISSUE-ID} {title}** — Classification: {Duplicate | Subset | Superset | Adjacent | Dependency | Stale}. Action: {revive | fold in | supersede | block-by | close | ignore-with-rationale}.
 
 If "ignore-with-rationale," state the rationale. Silence is not a valid entry.
@@ -264,7 +267,7 @@ Save to `{{PLAN_DIR}}/{date}-{slug}-design.md`.
 
 ## Phase 3: Draft the Implementation Plan
 
-This is the writing-plans-style detailed plan: file paths, bite-sized steps, no placeholders. The plan is a document attached to the Linear project, **and** the source material for the issue breakdown in Phase 4.
+This is the writing-plans-style detailed plan: file paths, bite-sized steps, no placeholders. The plan is a document attached to the tracker container, **and** the source material for the issue breakdown in Phase 4.
 
 ### Plan philosophy
 
@@ -286,7 +289,7 @@ Before defining tasks, map out which files will be created or modified and what 
 ```markdown
 # {Feature Name} Implementation Plan
 
-> **For AI-Implement:** Each task below maps to a Linear issue (Phase 4). Steps use checkbox syntax for tracking. The pipeline picks up each issue independently — task descriptions must be self-contained.
+> **For AI-Implement:** Each task below maps to a tracker issue (Phase 4). Steps use checkbox syntax for tracking. The pipeline picks up each issue independently — task descriptions must be self-contained.
 
 **Goal:** One sentence.
 
@@ -294,14 +297,14 @@ Before defining tasks, map out which files will be created or modified and what 
 
 **Tech Stack:** Key libraries/frameworks.
 
-**Linear Project:** {project name + URL once filed}
+**Tracker Container:** {project/epic name + URL once filed}
 
 ---
 ```
 
 ### Task structure
 
-Each task = one parallelizable unit of work = one Linear issue.
+Each task = one parallelizable unit of work = one tracker issue.
 
 ````markdown
 ### Task N: {Component Name}
@@ -390,24 +393,15 @@ Save to `{{PLAN_DIR}}/{date}-{slug}-plan.md`.
 
 ---
 
-## Phase 4: Linear Project + Documents + Issues
+## Phase 4: Container + Documents + Issues
 
-### Step 1: Resolve the Linear project
+### Step 1: Resolve the container
 
-- **New project:** Default name = build-up name from Phase 2. Confirm with user.
-- **Existing project:** Use `list_projects` to match. If multiple candidates, present them.
-- Create the project via the Linear MCP if new. Capture the project ID and URL.
+Follow the active adapter's **Container** section.
 
 ### Step 2: Attach design + plan documents
 
-Linear supports project Documents. Attach both:
-
-1. **Design Decisions** → upload `{{PLAN_DIR}}/{date}-{slug}-design.md` as a project document titled `Design Decisions`.
-2. **Implementation Plan** → upload `{{PLAN_DIR}}/{date}-{slug}-plan.md` as a project document titled `Implementation Plan`.
-
-Use the Linear MCP's document creation tool (`create_document` or equivalent). If the MCP version available doesn't support documents, fall back to: paste the markdown into the project description, and link the local files in the first issue's body.
-
-The documents travel with the project. Anyone who picks up an issue can find them via the project link.
+Attach both docs per the active adapter's **Doc home** section.
 
 ### Step 3: Generate issues from plan tasks
 
@@ -418,13 +412,13 @@ For each task in the plan, build an issue body that the AI-Implement pipeline ca
 ```
 ## Problem / Context
 
-{Why this issue exists. Link to the Linear project for full design context.}
+{Why this issue exists. Link to the container for full design context.}
 
 ## Task
 
 {Direct from the plan task. Files to create/modify, with exact paths.}
 
-Reference design context: {Linear project URL}
+Reference design context: {issue container URL — see the active adapter's **Issue URL** section}
 
 ## Steps
 
@@ -460,24 +454,20 @@ The issue body must be **self-contained**. The AI-Implement pipeline reads it co
 
 ### Step 3.5: Execute overlap reconciliation actions
 
-Before filing new issues, work through the design doc's Overlap & Reconciliation section. For each entry, take the committed action:
+Before filing new issues, work through the design doc's Overlap & Reconciliation section. Using the active adapter's **Wave staging** / **Pickup trigger** mechanics, take the committed action for each entry:
 
-- **Revive (Duplicate, stale):** move the existing issue to `Todo`, add the `AI-Implement` label, attach to this build-up's project, comment with a link to the design doc.
+- **Revive (Duplicate, stale):** move the existing issue to the active state, apply the pipeline label, attach to this build-up's container, comment with a link to the design doc.
 - **Fold in (Subset):** comment on the existing issue noting it's been absorbed into the new scope; close it once the corresponding new issue is filed and link them.
 - **Split (Subset, opposite direction):** edit the existing issue to narrow its scope; file the remaining piece(s) as part of this build-up.
 - **Supersede (Superset):** after filing the new issue, close the existing one with a comment linking to the superseder.
 - **Block-by (Adjacent or Dependency):** add `Blocked by: {existing-id}` to the new issue's body before filing.
-- **Close (Stale, won't-do):** close with a comment explaining the decision and linking to the build-up's project for context.
+- **Close (Stale, won't-do):** close with a comment explaining the decision and linking to the build-up's container for context.
 
 These actions are not optional cleanup — they are part of filing the build-up. Skip them and the backlog accumulates ghost issues that conflict with active work.
 
 ### Step 4: Wave staging — file the issues
 
-Same wave model as `build-up`:
-
-- **Wave 1** (no `Blocked by`) → `state: Todo` + label `AI-Implement`. Pipeline picks up within minutes.
-- **Wave 2+** (has `Blocked by`) → `state: Backlog`. Promote to `Todo` during build-down as blockers merge.
-- **Architect-routed** (schema, security, infra) → `state: Todo`, assigned to `{{ARCHITECT_NAME}}`, **no** `AI-Implement` label.
+Wave 1 / Wave 2+ / architect routing per the active adapter's **Pickup trigger**, **Wave staging**, and **Architect routing** sections.
 
 File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
@@ -485,13 +475,13 @@ File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
 **Trigger:** the wave contains **≥ 3 issues applying the same task template to different surfaces** (e.g., "enable pagination on `/employees/`", "…on `/assignments/`", "…on `/calculations/`"; or "convert app X serializers to explicit fields", same for app Y, app Z).
 
-When the trigger fires, **file them all** but only label the **first** with `AI-Implement`. The rest stay in their natural state (Todo or Backlog) **without** the `AI-Implement` label. Pick the pilot to be the one whose surface is smallest or best-understood — it sets the pattern.
+When the trigger fires, **file them all** but release only the **first** for pickup (per the active adapter's **Pickup trigger** section). The rest stay parked (per the active adapter's **Wave staging** section) until the pilot lands. Pick the pilot to be the one whose surface is smallest or best-understood — it sets the pattern.
 
 Then in build-down, after the pilot's PR lands:
 
 1. Inspect the PR for unspecified-but-load-bearing details the agent had to invent — file paths, naming, edge cases, peripheral updates (MCP sync, type exports, mock fixtures) the spec didn't enumerate.
 2. Update the remaining N-1 issue bodies to **inline whatever the pilot got right** (and correct whatever it got wrong). The earlier issues' "Pattern anchor" should now point at the freshly-merged PR.
-3. **Then** add the `AI-Implement` label to release the rest in parallel.
+3. **Then** release the rest for pickup in parallel (per the active adapter's **Pickup trigger** section).
 
 **Cost:** one extra build-down checkpoint (a few minutes after the pilot merges). **Benefit:** N-1 issues land cleanly the first time instead of N issues hitting the same systemic miss in parallel and producing N PRs to gap-fill.
 
@@ -503,14 +493,14 @@ Then in build-down, after the pilot's PR lands:
 | # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Routing |
 ```
 
-Confirm wave assignments and routing. After explicit approval, file via `save_issue` (or Linear MCP equivalent).
+Confirm wave assignments and routing. After explicit approval, file per the active adapter's **Required create fields** section.
 
 ### Step 5: Post-filing manifest
 
 After all issues are filed, present:
 
-- Linear project URL
-- Document URLs (design + plan)
+- Container URL (project/epic — per the active adapter's **Container** section)
+- Document URLs (design + plan — per the active adapter's **Doc home** section)
 - Issue manifest with real issue IDs
 - Wave 1 issues (currently being picked up by the pipeline)
 - Critical-path summary: longest dependency chain, so the user sees minimum time-to-complete
@@ -519,21 +509,15 @@ After all issues are filed, present:
 
 ## Status Check Mode
 
-Same as `build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
+Same as `build-up` status check. Match the user's reference to the active container per the active adapter's **Container** section, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
 
-If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents and surface them, don't reconstruct from issue bodies.
+If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents per the active adapter's **Doc home** section and surface them, don't reconstruct from issue bodies.
 
 ---
 
 ## Conventions
 
-**Linear MCP patterns:**
-- `save_issue` handles create + update (pass `id` to update).
-- Label arrays replace — always pass the full desired list.
-- `state: Todo` + `AI-Implement` label = pipeline pickup.
-- Documents attach to projects, not to individual issues. One project per build-up.
-
-**Dependency phrasing:** Always `Blocked by: {ISSUE-ID} (reason)`. Not "Depends on," not "Requires." One phrase, one pattern.
+**Dependency phrasing:** Always `Blocked by: {ISSUE-ID} (reason)`. Not "Depends on," not "Requires." One phrase, one pattern (mechanism is per-adapter — see **Dependencies**).
 
 **Sizing:** see Issue Design Rubric. (Skill archaeology note: earlier versions used a 1/2/3/5/8 story-point scale inherited from `build-up`. It was dropped because abstract sizing didn't capture codebase friction.)
 
@@ -545,10 +529,10 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 
 1. **Three approval gates: design, plan, issues.** Don't skip one to save time.
 2. **Grill one question at a time, with a recommended answer.** Walk the decision tree. Stop when the next question would be implementation detail.
-3. **The plan is a document, not a comment thread.** It lives as a Linear project document so it survives the build-up session.
+3. **The plan is a document, not a comment thread.** It lives as a tracker container document so it survives the build-up session.
 4. **One task = one issue.** Plan tasks are sized for parallel pipeline execution. Issue bodies are self-contained because the pipeline reads them cold.
 5. **Backend before frontend, always.** Schema → API → UI. Never combined.
-6. **Wave 1 to Todo + `AI-Implement`. Get the agents going.** Build-up's job is to launch work, not park it.
+6. **Wave 1 to the pickup-ready state per the active adapter. Get the agents going.** Build-up's job is to launch work, not park it.
 7. **Mega vs. plain build-up is a choice about rigor, not a default.** Use plain `build-up` for small, well-trodden scope. Use this when the design needs pressure-testing or the plan needs to live as documentation.
 
 ---
