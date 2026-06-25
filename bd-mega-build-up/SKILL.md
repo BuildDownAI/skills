@@ -1,6 +1,8 @@
 ---
 name: bd-mega-build-up
 description: "Plan a milestone in depth, grill the user adversarially on the design, then file a tracker project/epic with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'bd-mega-build-up', 'mega bd-build-up', 'deep bd-build-up', 'thorough bd-build-up', 'grill me on this bd-build-up', or describes an objective and wants the design pressure-tested before any issues get filed. bd-mega-build-up is bd-build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and design + plan documents attached to the project/epic so they travel with the work."
+metadata:
+  suite: builddown
 ---
 
 # Mega Build-Up Skill

@@ -148,10 +148,37 @@ After installing, open a Claude Code session in the repo you want to use these s
 ./install.sh --project <path>      # install into <path>/.claude/skills (project-local)
 ./install.sh --copy                # copy files instead of symlinking
 ./install.sh --force               # overwrite existing skill dirs
+./install.sh --prune               # remove stale/renamed BuildDown skills no longer in source
+./install.sh --from-git <url>      # install from a managed clone (accepts <url>@<ref>)
+./install.sh --ref <ref> --update  # pin/refresh the managed clone to a branch/tag/SHA
 ./install.sh --dry-run             # show what would happen, change nothing
 ./install.sh --uninstall           # remove this repo's skills from the target
 ./install.sh -h | --help
 ```
+
+### Install from GitHub (managed clone)
+
+`--from-git` clones (or refreshes) into a managed source dir at `~/.claude/_sources/builddown` and
+installs from there, so your install never rides a random working copy on a dev branch:
+
+```bash
+# Latest default branch, refreshed on each run
+curl -fsSL https://raw.githubusercontent.com/BuildDownAI/skills/main/install.sh | bash -s -- \
+  --from-git https://github.com/BuildDownAI/skills.git --update
+
+# Pin to a specific branch/tag/SHA (e.g. to test a feature branch)
+./install.sh --from-git https://github.com/BuildDownAI/skills.git@ai-implement/feature/bds-1 --update
+```
+
+To re-point a managed install at a different ref later, re-run with the new `@<ref>` (or `--ref`) and
+`--update`. Add `--prune` to drop any skills that were renamed or removed between refs.
+
+### Stale-install cleanup
+
+Every BuildDown `SKILL.md` carries `metadata.suite: builddown` in its frontmatter. On install, the
+script reports any **marked** skill in the target that's no longer in the current source (e.g. an
+old un-prefixed `build-down` left behind after the `bd-` rename) and, with `--prune`, removes it.
+Skills without the marker are never touched.
 
 ### Manual install
 

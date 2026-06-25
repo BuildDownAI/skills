@@ -1,6 +1,8 @@
 ---
 name: bd-super-build-down
 description: "Autonomous, lean-back bd-build-down. Trigger this skill when the user says 'bd-super-build-down', 'super bd-build-down', 'autonomous bd-build-down', 'lean-back bd-build-down', 'just land everything', 'overnight bd-build-down', or asks for a bd-build-down that runs at speed without narration. bd-super-build-down is bd-build-down's faster cousin — same autonomy defaults, same rules, but optimized for throughput: batch escalations, minimal narration, mandatory bd-smoke-jumper dispatch, session-abort triggers for unattended runs. Use when there are many PRs to process, when the user won't be watching every step, or when speed matters more than step-by-step visibility."
+metadata:
+  suite: builddown
 ---
 
 # Super-Build-Down Skill

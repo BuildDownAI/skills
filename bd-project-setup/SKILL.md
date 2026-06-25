@@ -1,6 +1,8 @@
 ---
 name: bd-project-setup
 description: "Wire this repo's BuildDown skills to concrete tools for a project — write the project-scoped MCP servers (.mcp.json), pre-approve them, drive each server's OAuth from inside the session, and bind the {{PLACEHOLDER}} tokens (tracker workspace/team, GitHub repo, AI-Implement label, build command, etc.) in CLAUDE.md. Trigger when the user says 'bd-project-setup', 'set up the skills', 'setup', 'wire up the relationships', 'configure the MCP servers', 'point Linear at this project', 'connect this repo to Linear/GitHub', or starts using these skills in a new project. Setup automates everything except the single in-browser OAuth approval, which is a hard boundary of OAuth."
+metadata:
+  suite: builddown
 ---
 
 # BD Project Setup Skill
@@ -48,6 +50,31 @@ bullet keys, or inline text):
 | `enabledMcpjsonServers` / server-approval state | whether servers are pre-approved in `.claude/settings.json` |
 
 If `CLAUDE.md` is absent or contains none of these, record: *no CLAUDE.md bindings found*.
+
+### Step 0.2b — Check for already-connected / already-permissioned tracker servers
+
+A tracker can already be reachable even when this project has no local `.mcp.json` — e.g. via a
+**global connector** or a server configured in another scope. Writing a fresh `linear` server in that
+case creates a *duplicate* (and often a name mismatch that defeats the Phase 3 pre-approval). Check
+before assuming "Not configured":
+
+1. **Connected servers.** Run `claude mcp list` (Bash). Note every server already shown **Connected**,
+   and whether any is a tracker (name contains `linear`, `jira`, `atlassian`, or its tools are
+   `mcp__<name>__list_teams`-style). If a tracker is already Connected, record its **server name**.
+2. **Permissioned server names.** Read `.claude/settings.json`, `.claude/settings.local.json`, and
+   `~/.claude/settings.json`. Collect:
+   - `enabledMcpjsonServers` entries
+   - any `permissions.allow` entry of the form `mcp__<name>__*` — the `<name>` is an
+     already-approved server name (e.g. `linear-server`, not necessarily `linear`).
+
+   Record the existing tracker server name(s). **In Phase 2, reuse the existing name rather than
+   hardcoding `linear`** — a `.mcp.json` server whose name doesn't match the already-permissioned
+   `mcp__<name>__*` won't inherit that approval and will re-trigger the trust prompt.
+
+> If a tracker is **already Connected** (step 1) and the project has no local `.mcp.json`, do **not**
+> silently treat it as "Not configured." Surface it: *"A `<name>` tracker server is already connected
+> (global/other scope). Want a project-scoped `.mcp.json` twin anyway, or rely on the existing
+> connection?"* Only write a project-scoped server if the user wants the binding committed to the repo.
 
 ### Step 0.3 — Classify the local setup
 
@@ -168,6 +195,13 @@ time, not in the URL. Never put a `linear.app/<workspace>/...` web URL in the se
 ```
 
 Only include servers the project actually uses. Validate it parses (`python3 -m json.tool .mcp.json`).
+
+> **Reuse the existing server name (from Step 0.2b).** If the tracker is already permissioned under a
+> different name (e.g. `mcp__linear-server__*` in `permissions.allow`, or already Connected as
+> `linear-server`), use **that** name as the `mcpServers` key here — don't hardcode `linear`. A
+> name mismatch means the new server won't inherit the existing approval and the Phase 3 pre-approval
+> and Phase 5 OAuth will both target the wrong name. Keep the key consistent across `.mcp.json`,
+> `enabledMcpjsonServers`, and the `mcp__<name>__*` tool calls.
 
 ## Phase 3 — Pre-approve the servers (skip the trust prompt)
 
