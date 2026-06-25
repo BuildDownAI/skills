@@ -21,6 +21,12 @@ Each skill in this repo answers one of those questions, with a consistent autono
 
 ## The skills
 
+### `bd-project-setup` — wire a project's tools and bindings
+
+Runs once per project to configure everything the other skills need: writes `.mcp.json` with the project-scoped MCP servers (Linear, GitHub, etc.), pre-approves them so the trust prompt never fires, drives each server's OAuth flow from inside the session, and writes the `{{PLACEHOLDER}}` → value bindings into `CLAUDE.md` (tracker workspace/team, GitHub repo, build command, etc.). The rest of the skills read those bindings — you only run setup once.
+
+Trigger: *"bd-project-setup"*, *"set up the skills"*, *"wire up the relationships"*, *"configure the MCP servers"*, *"point Linear at this project"*.
+
 ### `build-up` — plan a milestone's worth of issues
 
 Turns a product objective, design handoff, or convergence plan into a sequenced, dependency-aware set of tracker issues ready for the AI coding agent. **Plan first, file second** — build-up always presents the proposed breakdown for your review before creating anything in the tracker.
@@ -51,6 +57,14 @@ Parachutes onto one or more PRs, reads the gap analysis to figure out what to te
 
 Trigger: *"smoke-jump"*, *"smoke test"*, *"test this PR"*, *"verify the preview"*.
 
+### `mega-build-up` — deep build-up with adversarial grilling and plan documents
+
+Build-up's heavier cousin. Same AI-Implement pipeline awareness and issue-shape discipline, but adds an adversarial design-review phase (senior-engineer pushback before any issues get filed), a detailed implementation plan with exact file paths, and design + plan documents attached to the tracker project/epic so they travel with the work. Supports both Linear and Jira via swappable tracker adapters (`trackers/linear.md`, `trackers/jira.md`).
+
+Use mega-build-up when scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture) or when the plan needs to live as documentation. Use plain `build-up` for smaller, well-trodden work.
+
+Trigger: *"mega-build-up"*, *"deep build-up"*, *"grill me on this"*, *"thorough build-up"*, *"I want the senior eng review"*.
+
 ### `belay-on` — formalize tool handoffs mid-session
 
 A climbing term: *belay on* means the safety system is engaged and the climber can proceed. This skill formalizes pausing one tool (chat, CLI, code-execution) to gather information from another (code-reading agent, browser, etc.) and resuming cleanly when results come back. Each build skill anticipates belay-on points; this skill is what produces the handoff prompt and integrates the results.
@@ -62,29 +76,37 @@ Trigger: *"belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back fro
 ## How they fit together
 
 ```
-            ┌──────────┐
-   design,  │ build-up │   plan reviewed,
- objective ─►          ├─► issues filed
-            └──────────┘
-                 │
+        ┌──────────────────┐
+  once  │ bd-project-setup │  write .mcp.json, CLAUDE.md bindings,
+  per   │                  │  OAuth each MCP server from inside the session
+ project└──────────────────┘
+                 │ bindings in place
                  ▼
-          ┌─────────────┐
-          │ summit-push │   sequence + harden
-          │  (pre-push) │   issue bodies
-          └─────────────┘
-                 │
-                 ▼  agent picks up issues, opens PRs
-                 │
-   ┌─────────────┴──────────────┐
-   ▼                            ▼
+   ┌─────────────┴──────────────────┐
+   ▼                                ▼
+┌──────────┐              ┌──────────────────┐
+│ build-up │   design,    │ mega-build-up    │   adversarial grilling
+│          │ objective ──►│                  │   + written plan docs
+└──────────┘              └──────────────────┘
+     │  plan reviewed, issues filed
+     ▼
+┌─────────────┐
+│ summit-push │   sequence + harden issue bodies
+│  (pre-push) │
+└─────────────┘
+     │
+     ▼  agent picks up issues, opens PRs
+     │
+┌────┴──────────────────────────┐
+▼                               ▼
 ┌────────────┐       ┌────────────────────┐
 │ build-down │  or   │ super-build-down   │   triage + drive to merge
 └────────────┘       └────────────────────┘
-   │  dispatches per-PR        │ mandatory per-PR
-   ▼                           ▼
-            ┌──────────────┐
-            │ smoke-jumper │   verdicts → merge signals
-            └──────────────┘
+  │  dispatches per-PR          │ mandatory per-PR
+  ▼                             ▼
+           ┌──────────────┐
+           │ smoke-jumper │   verdicts → merge signals
+           └──────────────┘
 
   belay-on  ─── cross-cutting: pause/resume tool handoffs anywhere above
 ```
@@ -108,12 +130,14 @@ The skills are tooling-agnostic where possible — service names appear as `{{TR
 ## Installation
 
 ```bash
-git clone https://github.com/cpope/BuildDownAI-skills.git
-cd BuildDownAI-skills
+git clone https://github.com/BuildDownAI/skills.git builddown-skills
+cd builddown-skills
 ./install.sh
 ```
 
 By default this **symlinks** the skills into `~/.claude/skills/`, so a future `git pull` updates them instantly.
+
+After installing, open a Claude Code session in the repo you want to use these skills with and run `bd-project-setup`. Setup writes `.mcp.json`, pre-approves the MCP servers, drives OAuth authentication from inside the session, and records all `{{PLACEHOLDER}}` bindings in `CLAUDE.md`. You only need to do this once per project; the other skills read those bindings automatically.
 
 ### Options
 

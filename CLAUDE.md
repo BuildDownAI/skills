@@ -24,6 +24,24 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 - **Team it polls:** `BDS` — so labeled BDS issues are safe to experiment with; they do not touch the
   production AI-Implement backlog (team AI-Implement / AII-*).
 
-<!-- TODO (next pass): bind the remaining placeholders at project level —
-     {{REPO}} (GitHub MCP), {{PREVIEW_HOST}}, {{CODING_AGENT}}/{{AGENT_MENTION}},
-     {{BUILD_CMD}}, {{PLAN_DIR}}, {{AUTH_PROVIDER}}. -->
+## GitHub repo — `{{REPO}}`
+
+- **`{{REPO}}`:** `BuildDownAI/skills`
+- **GitHub MCP:** `github` — add to `.mcp.json` if PR operations are needed (e.g. for build-down runs against this repo's own PRs)
+
+## AI coding agent — `{{AGENT_MENTION}}`
+
+- **`{{AGENT_MENTION}}`:** `/ai-implement` (comment trigger that re-runs Claude Code in gap-fill mode on a PR)
+- **`{{CODING_AGENT}}`:** AI-Implement testing instance (same as the handoff target above)
+
+## Plan documents — `{{PLAN_DIR}}`
+
+- **`{{PLAN_DIR}}`:** `docs/superpowers/plans/`
+
+## Build verification — `{{BUILD_CMD}}`
+
+- **`{{BUILD_CMD}}`:** *(not applicable — this repo contains skill definitions and shell scripts only; no compile or test step)*
+
+## Preview deployment — `{{PREVIEW_HOST}}` / `{{AUTH_PROVIDER}}`
+
+- *(not applicable — this repo has no preview deployments; smoke-jumper is not used here)*
