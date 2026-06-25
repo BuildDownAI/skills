@@ -127,6 +127,9 @@ Pick the active tracker at session start and load its adapter:
 - Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (overlap scan, container, doc home, pickup trigger, waves, dependencies, issue creation, status check) follows that adapter's matching `## ` section.
 - State the tracker in the opening declaration, e.g. *"…Tracker: Jira (epic BAC-23858, project BAC)."*
 
+**Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
+`trackers/jira.md` documents the Jira MCP binding and filing differences (Epic container, `AI-Implement-Status` field gate, `transition_issue` for state). The full skill conversion — Jira MCP wiring, verb replacement (`save_issue` → `create_issue`/`update_issue`), and container/pickup logic — is the work of AII-149; `trackers/jira.md` is the projected spec. `tracker.kind: jira` in `CLAUDE.md` is the signal that the Jira adapter is active.
+
 **Opening declaration:** State environment, primary tools, tracker, and which mode you'll be running. Example: *"Running in chat. Tracker MCP for filing, will draft the plan to `docs/plans/` and attach to the container per the active adapter. Mode 2 (New Design)."* (Adjust tracker name per `{{TRACKER}}`; see Tracker Selection above.)
 
 ---

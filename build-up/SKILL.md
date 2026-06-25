@@ -460,6 +460,12 @@ Present a concise status summary. If there are PRs ready, say "there are N PRs r
 - `state: "Todo"` + `{{IMPLEMENT_LABEL}}` triggers pipeline pickup within minutes
 - `state: "Backlog"` is for issues with unmet dependencies, not a general default
 
+**Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
+- MCP binding: Atlassian MCP (`atlassian-cloudshare` → `jira`); `tracker.kind: jira` in `CLAUDE.md`
+- Issue creation: `create_issue` with `projectKey` + `issueType`; updates via `update_issue` with `issueKey`
+- Pipeline pickup: `AI-Implement-Status = Ready` custom field (not a label); Wave 1 → set field, Wave 2+ → leave unset
+- Labels exist in Jira but the pickup gate is the status field — setting only a label is a silent no-op
+
 **Prototype tool routing (when both kinds are available):**
 - Code-first tool → Mode 3a brief, later Mode 1 convergence. Good for: code-heavy prototypes, fast iteration on full-stack patterns, when the output needs to look like real code.
 - Design-first tool → Mode 3b brief, later Mode 2 handoff-bundle variant. Good for: design-system-first work, brand-consistent output, visual iteration, when the output will be handed to engineering via a bundle rather than repo diff.

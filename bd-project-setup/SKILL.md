@@ -26,6 +26,7 @@ start; the rest can be filled in later as the project needs them.
 
 | Placeholder | Question | Example |
 |---|---|---|
+| `tracker.kind` | "Linear or Jira?" | `linear` (default) |
 | `{{TRACKER}}` workspace + team | "Which Linear workspace and team?" | workspace `eudoxus`, team `BDS` |
 | `{{REPO}}` | "Which GitHub repo do PRs land in?" | `org/product-repo` |
 | `{{IMPLEMENT_LABEL}}` | "What label does the coding agent pick up?" | `AI-Implement` |
@@ -73,6 +74,7 @@ minimum, the tracker workspace + **team** must be explicit, because issues get f
 
 ```md
 ## Issue tracker — Linear
+- tracker.kind: linear
 - MCP server: `linear` (.mcp.json)
 - Workspace: `eudoxus` (bound at OAuth time)
 - Team: `BDS`  ← issues filed/listed/searched against this team
