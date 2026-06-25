@@ -5,7 +5,7 @@
 
 ## Objective
 
-Let the `mega-build-up` skill drive a milestone build-up into **either Linear or
+Let the `bd-mega-build-up` skill drive a milestone build-up into **either Linear or
 Jira**, so a customer whose AI-Implement deployment is wired to Jira gets the
 same grilling → plan → file pipeline that Linear users get today. The downstream
 AI-Implement orchestrator is already provider-abstracted
@@ -15,16 +15,16 @@ AI-Implement orchestrator is already provider-abstracted
 ## Scope
 
 **In v1:**
-- Refactor `mega-build-up/SKILL.md` into a tracker-neutral shared core.
-- Extract Linear-specific mechanics into `mega-build-up/trackers/linear.md`.
-- Add `mega-build-up/trackers/jira.md` covering the Jira mechanics.
+- Refactor `bd-mega-build-up/SKILL.md` into a tracker-neutral shared core.
+- Extract Linear-specific mechanics into `bd-mega-build-up/trackers/linear.md`.
+- Add `bd-mega-build-up/trackers/jira.md` covering the Jira mechanics.
 - Add a Tracker Selection step + `{{TRACKER}}` config so the core loads the
   right adapter.
 
 **Deferred:**
-- Applying the same adapter pattern to the rest of the family (`build-up`,
-  `build-down`, `super-build-down`, `summit-push`, `smoke-jumper`). They are all
-  Linear-coupled and will need the same treatment, but mega-build-up proves the
+- Applying the same adapter pattern to the rest of the family (`bd-build-up`,
+  `bd-build-down`, `bd-super-build-down`, `bd-summit-push`, `bd-smoke-jumper`). They are all
+  Linear-coupled and will need the same treatment, but bd-mega-build-up proves the
   pattern first.
 
 **Out of scope:**
@@ -63,7 +63,7 @@ the privileged default.
 ### File layout
 
 ```
-mega-build-up/
+bd-mega-build-up/
   SKILL.md            # shared core: process + rubric, tracker-neutral
   trackers/
     linear.md         # Linear adapter (extracted from today's inline prose)

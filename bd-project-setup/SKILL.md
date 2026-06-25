@@ -5,7 +5,7 @@ description: "Wire this repo's BuildDown skills to concrete tools for a project 
 
 # BD Project Setup Skill
 
-Wires the BuildDown skills (build-up, summit-push, build-down, super-build-down, smoke-jumper, belay-on)
+Wires the BuildDown skills (bd-build-up, bd-summit-push, bd-build-down, bd-super-build-down, bd-smoke-jumper, bd-belay-on)
 to the concrete tools for **one** project. Everything the skills reference is a `{{PLACEHOLDER}}`
 token; setup turns those tokens into real servers and values.
 
@@ -34,7 +34,7 @@ start; the rest can be filled in later as the project needs them.
 | `{{AUTH_PROVIDER}}` | "How do you log into previews?" | Google SSO |
 | `{{BUILD_CMD}}` | "Build/verify command?" | `npm run build && npm test` |
 | `{{PLAN_DIR}}` | "Where do plan drafts go?" | `docs/plans/` (default) |
-| `{{ARCHITECT_NAME}}` | "Persona name for mega-build-up review?" | — |
+| `{{ARCHITECT_NAME}}` | "Persona name for bd-mega-build-up review?" | — |
 
 ## Phase 2 — Write `.mcp.json` (project-scoped servers)
 

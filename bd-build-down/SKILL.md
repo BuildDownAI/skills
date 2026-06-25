@@ -1,13 +1,13 @@
 ---
-name: build-down
-description: "Run a build-down session — drive open PRs to merge. Trigger this skill when the user says 'build-down', 'let's do a build-down', 'drive PRs to merge', 'PR triage', or asks to review and merge open pull requests. A build-down is an active sprint-closure session — survey the issue tracker and open GitHub PRs, assess each one against its gap analysis, drive gaps to resolution autonomously via PR comments to the AI coding agent, merge clean PRs, file minimal new tracker issues only when blockers are discovered, and leave the board cleaner than it started. This skill assumes a workflow with an issue tracker (e.g., Linear MCP), GitHub MCP, browser automation MCP for preview testing, and an AI coding agent that opens PRs in response to issues."
+name: bd-build-down
+description: "Run a bd-build-down session — drive open PRs to merge. Trigger this skill when the user says 'bd-build-down', 'let's do a bd-build-down', 'drive PRs to merge', 'PR triage', or asks to review and merge open pull requests. A bd-build-down is an active sprint-closure session — survey the issue tracker and open GitHub PRs, assess each one against its gap analysis, drive gaps to resolution autonomously via PR comments to the AI coding agent, merge clean PRs, file minimal new tracker issues only when blockers are discovered, and leave the board cleaner than it started. This skill assumes a workflow with an issue tracker (e.g., Linear MCP), GitHub MCP, browser automation MCP for preview testing, and an AI coding agent that opens PRs in response to issues."
 ---
 
-# Build-Down Skill
+# Bd-Build-Down Skill
 
-A build-down drives open PRs to merge. Mission: fewer open PRs, cleaner tracker, no blockers left undocumented, no gaps left unfixed when they could be fixed in-session.
+A bd-build-down drives open PRs to merge. Mission: fewer open PRs, cleaner tracker, no blockers left undocumented, no gaps left unfixed when they could be fixed in-session.
 
-**Guiding principle — drive to standard.** If a gap is visible and a coding-agent comment can fix it in the existing PR, post the comment now. Don't defer real work to "future build-up" or "follow-up issue" when the fix is one comment away. The park-and-trash rule: if we're walking past it and can pick it up, we pick it up.
+**Guiding principle — drive to standard.** If a gap is visible and a coding-agent comment can fix it in the existing PR, post the comment now. Don't defer real work to "future bd-build-up" or "follow-up issue" when the fix is one comment away. The park-and-trash rule: if we're walking past it and can pick it up, we pick it up.
 
 **Autonomy default.** This skill runs autonomously by default. Post coding-agent comments, merge clean PRs, file session summaries, and move issues between states without asking. Escalate to the user only for pattern breaks (defined below).
 
@@ -39,13 +39,13 @@ This skill runs in three environments with different capabilities. Detect which 
 - Has: tracker MCP, GitHub MCP (via connector), browser automation MCP (when extension active), project context, conversation memory, past-chat search
 - Lacks: bash, local filesystem, git, ability to run build commands or apply migrations
 - Use for: triage, sequencing, agent comments, merging via GitHub MCP, session summaries, filing issues
-- Belay-on to a code-execution environment when: a conflict needs local resolution, a migration needs manual application, a test needs to run locally
+- Bd-belay-on to a code-execution environment when: a conflict needs local resolution, a migration needs manual application, a test needs to run locally
 
 **Code-execution environment (terminal, e.g., Claude Code):**
 - Has: bash, local filesystem, git, can push commits, tracker MCP if configured
 - Lacks: project memory across sessions, broad strategic context
 - Use for: local conflict resolution, running build commands, applying migrations, testing fixes before push
-- Belay-on to chat when: the session needs strategic context about a PR's history or product intent
+- Bd-belay-on to chat when: the session needs strategic context about a PR's history or product intent
 
 **Code-reading agent (e.g., a desktop tool with deep filesystem access):**
 - Has: deep codebase reading, grep across files
@@ -460,9 +460,9 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 
 1. **The PR branch belongs to the AI coding agent.** Never edit a PR branch directly. Never push commits to it. All changes go through agent comments. Exceptions: main-branch hotfixes unrelated to any open PR, and session summary issues (which aren't on any PR branch).
 
-2. **Drive to standard now.** If a gap is scoped and the agent can fix it in-session, post the comment. Don't defer real work to "future build-up."
+2. **Drive to standard now.** If a gap is scoped and the agent can fix it in-session, post the comment. Don't defer real work to "future bd-build-up."
 
-3. **Follow-up context determines state.** Discovery in build-down → Todo + `{{IMPLEMENT_LABEL}}` if scoped. Backlog only for planning.
+3. **Follow-up context determines state.** Discovery in bd-build-down → Todo + `{{IMPLEMENT_LABEL}}` if scoped. Backlog only for planning.
 
 4. **Autonomous by default, escalate only on pattern breaks.** See the Phase 2d list. Everything else, act.
 
