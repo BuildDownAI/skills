@@ -5,7 +5,7 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 
 ## MCP & discovery
 
-Use the Linear MCP (`linear-cloudshare`). The three operations this skill relies on are:
+Use the configured Linear MCP server (named `linear-<workspace>` in your MCP config). The three operations this skill relies on are:
 
 - `list_issues` — query issues by state and/or label
 - `get_issue` — fetch a single issue (acceptance criteria, body, blockedBy)

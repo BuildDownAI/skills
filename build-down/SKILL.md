@@ -59,7 +59,7 @@ This skill runs in three environments with different capabilities. Detect which 
 
 Pick the active tracker at session start and load its adapter:
 
-- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-cloudshare` → Linear, `atlassian-cloudshare` → Jira). If ambiguous, ask once.
+- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (a `linear-*` MCP → Linear, an `atlassian-*` MCP → Jira). If ambiguous, ask once.
 - Read `trackers/<tracker>.md`. Every tracker-touching step below (issue scan, pickup trigger, post-merge completion, unblock, follow-up filing) follows that adapter's matching `## ` section.
 - State the tracker in the opening declaration.
 
