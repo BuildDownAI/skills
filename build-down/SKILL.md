@@ -496,6 +496,12 @@ If a symptom doesn't clearly match a row, don't force-fit. Investigate and escal
 - `state: "Todo"` triggers agent pickup within minutes
 - `state: "In Progress"` + PR attachment = agent is working
 
+**Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
+- MCP binding: Atlassian MCP (`atlassian-cloudshare` → `jira`); `tracker.kind: jira` in `CLAUDE.md`
+- Issue updates: `update_issue` with `issueKey`; state transitions via `transition_issue`
+- Agent working state: `AI-Implement-Status = In Progress` custom field; PR link via `add_remote_link`
+- Gap filing: new sub-tasks or linked issues under the same Epic rather than sibling issues
+
 **Label conventions (adapt names to your tracker):**
 - `{{IMPLEMENT_LABEL}}` — the AI coding agent should implement this
 - `agent-working` — the AI coding agent is actively running (set by pipeline, don't set manually)

@@ -6,6 +6,7 @@ tokens. This file binds those placeholders to the concrete tools for **this** pr
 
 ## Issue tracker — Linear
 
+- **tracker.kind:** `linear`
 - **MCP server:** `linear` (project-scoped, defined in `.mcp.json`, endpoint `https://mcp.linear.app/mcp`)
 - **Workspace:** `eudoxus` — bound at authentication time (run `/mcp` and authenticate the `linear` server; choose the Eudoxus workspace in the OAuth grant)
 - **Team:** `BDS` — file/list/search issues against this team

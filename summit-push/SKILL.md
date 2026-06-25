@@ -414,6 +414,11 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 - `blockedBy` arrays are informational (don't block automation but do drive summit-push's dependency analysis)
 - `relatedTo` accepts arrays of issue ID strings
 
+**Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
+- MCP binding: Atlassian MCP (`atlassian-cloudshare` → `jira`); `tracker.kind: jira` in `CLAUDE.md`
+- Description updates: `update_issue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
+- Wave state: no direct `state` field — use `transition_issue` + `AI-Implement-Status` custom field for pipeline gating
+
 ### Filing states (aligned with build-up)
 
 - Wave 1 (no dependencies) → `state: Todo` with `{{IMPLEMENT_LABEL}}` — triggers pipeline pickup
