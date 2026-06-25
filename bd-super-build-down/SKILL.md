@@ -1,27 +1,27 @@
 ---
-name: super-build-down
-description: "Autonomous, lean-back build-down. Trigger this skill when the user says 'super-build-down', 'super build-down', 'autonomous build-down', 'lean-back build-down', 'just land everything', 'overnight build-down', or asks for a build-down that runs at speed without narration. Super-build-down is build-down's faster cousin — same autonomy defaults, same rules, but optimized for throughput: batch escalations, minimal narration, mandatory smoke-jumper dispatch, session-abort triggers for unattended runs. Use when there are many PRs to process, when the user won't be watching every step, or when speed matters more than step-by-step visibility."
+name: bd-super-build-down
+description: "Autonomous, lean-back bd-build-down. Trigger this skill when the user says 'bd-super-build-down', 'super bd-build-down', 'autonomous bd-build-down', 'lean-back bd-build-down', 'just land everything', 'overnight bd-build-down', or asks for a bd-build-down that runs at speed without narration. bd-super-build-down is bd-build-down's faster cousin — same autonomy defaults, same rules, but optimized for throughput: batch escalations, minimal narration, mandatory bd-smoke-jumper dispatch, session-abort triggers for unattended runs. Use when there are many PRs to process, when the user won't be watching every step, or when speed matters more than step-by-step visibility."
 ---
 
 # Super-Build-Down Skill
 
-Super-build-down is build-down run at speed and scale. Same mission (fewer open PRs, cleaner board, no gaps left unfixed), same rules, same autonomy model — but tuned for throughput instead of interactive pace.
+bd-super-build-down is bd-build-down run at speed and scale. Same mission (fewer open PRs, cleaner board, no gaps left unfixed), same rules, same autonomy model — but tuned for throughput instead of interactive pace.
 
-**The difference from build-down.** Build-down is already autonomous-by-default (post agent comments, merge clean PRs, file session summaries without asking). Super-build-down layers on:
+**The difference from bd-build-down.** bd-build-down is already autonomous-by-default (post agent comments, merge clean PRs, file session summaries without asking). bd-super-build-down layers on:
 
 1. **Batch escalations** — gather all pattern-break items and present once at the end, not inline as they appear
 2. **Minimal narration** — log actions, don't explain each one; the session summary is the narrative
-3. **Mandatory smoke-jumper** — every mergeable PR gets smoke-tested (build-down makes this optional)
+3. **Mandatory bd-smoke-jumper** — every mergeable PR gets smoke-tested (bd-build-down makes this optional)
 4. **Session-abort triggers** — explicit conditions that halt an unattended run before it causes damage
 5. **Throughput targets** — 10 PRs in under an hour is the benchmark
 
-**When to use super-build-down over build-down:**
+**When to use bd-super-build-down over bd-build-down:**
 - 5+ PRs to process and most are routine
 - End-of-day push or overnight session — the user won't be watching
 - The user wants the board cleaned with minimal cognitive overhead
 - The pipeline has been healthy recently (trust the defaults)
 
-**When to use build-down instead:**
+**When to use bd-build-down instead:**
 - 1-2 PRs, interactive review is faster
 - PRs are complex, interconnected, or novel
 - The user wants to review each PR for product intent
@@ -31,7 +31,7 @@ Super-build-down is build-down run at speed and scale. Same mission (fewer open 
 
 ## Configuration
 
-Same as build-down. The skill assumes the user has these set up:
+Same as bd-build-down. The skill assumes the user has these set up:
 
 - `{{TRACKER}}` — issue tracker (Linear, Jira, GitHub Issues)
 - `{{REPO}}` — GitHub repo, owner/name format
@@ -46,17 +46,17 @@ Same as build-down. The skill assumes the user has these set up:
 
 ### Environment detection
 
-Same as build-down. State at session start and adapt.
+Same as bd-build-down. State at session start and adapt.
 
-**Chat (primary for super-build-down):**
+**Chat (primary for bd-super-build-down):**
 - Has: tracker MCP, GitHub MCP, browser MCP, project context
 - Use for: orientation, triage, agent comments, merges, session summary
-- Smoke-jumper runs sequentially in chat (no true parallel dispatch without subagents — it's sequential-but-automatic)
+- bd-smoke-jumper runs sequentially in chat (no true parallel dispatch without subagents — it's sequential-but-automatic)
 
 **Code-execution:**
 - Has: bash, local filesystem, git
 - Use for: local conflict resolution if agent loops, manual migration application (escalated out of session)
-- Rarely the primary environment for super-build-down
+- Rarely the primary environment for bd-super-build-down
 
 **Code-reading agent:**
 - Rarely used. If it's needed for something, that something is probably a pattern break that should escalate.
@@ -65,13 +65,13 @@ Same as build-down. State at session start and adapt.
 
 ### The AI coding agent pipeline
 
-Pipeline is a running system. Agent-working state is expected, not alarming. Gap analysis is the primary assessment document (✅ Implemented / ⚠️ Gaps / 🔧 Manual Steps). See build-down's Environment and Pipeline Context section for full treatment — super-build-down inherits the same model.
+Pipeline is a running system. Agent-working state is expected, not alarming. Gap analysis is the primary assessment document (✅ Implemented / ⚠️ Gaps / 🔧 Manual Steps). See bd-build-down's Environment and Pipeline Context section for full treatment — bd-super-build-down inherits the same model.
 
 ---
 
 ## Phase 1: Orient (Fast)
 
-Faster than build-down's orient because super-build-down trusts pipeline state and skips narration.
+Faster than bd-build-down's orient because bd-super-build-down trusts pipeline state and skips narration.
 
 **Tracker board scan (one batch):**
 - `list_issues`: states `In Progress`, `In Review`, and `Todo` with `{{IMPLEMENT_LABEL}}`
@@ -101,7 +101,7 @@ The Tier column is filled in Phase 2. No other output in Phase 1 — save the na
 
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 
-For 5+ open PRs, run summit-push Mode 2 automatically (not optional). Its risk report feeds Phase 2 classification directly. Don't ask permission — it's a read-only scan.
+For 5+ open PRs, run bd-summit-push Mode 2 automatically (not optional). Its risk report feeds Phase 2 classification directly. Don't ask permission — it's a read-only scan.
 
 ---
 
@@ -115,7 +115,7 @@ ALL of these must be true:
 - ✅ CI checks passing (or only known transient infra failure)
 - ✅ No merge conflicts
 - ✅ Gap analysis: all ✅ Implemented, zero ⚠️ gaps
-- ✅ Smoke-jumper returns 🟢 CLEAR TO MERGE
+- ✅ bd-smoke-jumper returns 🟢 CLEAR TO MERGE
 - ✅ No SQL migrations
 - ✅ No overlap with other open PRs
 - ✅ Not on pattern-break list (Phase 2d)
@@ -132,7 +132,7 @@ Additional confidence boosters (not required but speed the decision):
 Clean enough to handle autonomously but has one manageable issue:
 
 - ⚠️ Gap analysis has items that are agent-fixable (scoped, no product decision needed)
-- ⚠️ Smoke-jumper returns 🟡 MERGE WITH CAVEATS (data-related only — demo data gaps, empty states)
+- ⚠️ bd-smoke-jumper returns 🟡 MERGE WITH CAVEATS (data-related only — demo data gaps, empty states)
 - ⚠️ Clear-cut merge conflict (both sides added imports, both sides added config entries, no business logic overlap)
 
 **Action:**
@@ -142,7 +142,7 @@ Clean enough to handle autonomously but has one manageable issue:
 
 ### Tier 3: Escalate (batch, not inline)
 
-Escalation triggers (same pattern-break list as build-down):
+Escalation triggers (same pattern-break list as bd-build-down):
 
 1. Gap requires a product decision
 2. Agent already failed on this specific gap (prior attempt in comment history)
@@ -150,25 +150,25 @@ Escalation triggers (same pattern-break list as build-down):
 4. Touches auth, security middleware, or auth provider config
 5. Fix would modify >5 files or cross PR boundaries
 6. PR age >5 days
-7. Smoke-jumper returns 🔴 DO NOT MERGE
+7. bd-smoke-jumper returns 🔴 DO NOT MERGE
 8. CI failing (not transient infra)
 9. Merge conflict involves business logic
 10. File overlap with another open PR (merge ordering decision)
 
-**Action for super-build-down:** DO NOT present Tier 3 items as they appear. Collect them all. Present once at the end of Phase 4 as a batch.
+**Action for bd-super-build-down:** DO NOT present Tier 3 items as they appear. Collect them all. Present once at the end of Phase 4 as a batch.
 
 ---
 
 ## Phase 3: Smoke-Jumper Dispatch (Mandatory)
 
-Super-build-down requires smoke-jumper. If browser MCP is unavailable, downgrade every Tier 1 to Tier 2 and note the skip in the summary — but do not skip the step entirely.
+bd-super-build-down requires bd-smoke-jumper. If browser MCP is unavailable, downgrade every Tier 1 to Tier 2 and note the skip in the summary — but do not skip the step entirely.
 
 **Sequence (chat is sequential, not parallel):**
 
 1. Prioritize PRs: Tier 1 candidates first (fastest to clear), then Tier 2, skip Tier 3 (they're escalating regardless)
-2. Run smoke-jumper on each in order, using the existing smoke-jumper skill
+2. Run bd-smoke-jumper on each in order, using the existing bd-smoke-jumper skill
 3. Capture the verdict: 🟢 / 🟡 / 🔴
-4. If smoke-jumper was already run on a PR (existing report in comments <24h old), consume it rather than re-running
+4. If bd-smoke-jumper was already run on a PR (existing report in comments <24h old), consume it rather than re-running
 
 **Smoke results feed Phase 2 classification:**
 - 🟢 confirms Tier 1 → proceed to merge
@@ -214,7 +214,7 @@ Check remaining open PRs for new conflicts via `get_pull_request` mergeable stat
 
 ### 4d. Follow-up filing (mid-session)
 
-Super-build-down files follow-up issues same as build-down. Discovery of a scoped fix mid-session → new issue → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Backlog only if the fix needs planning.
+bd-super-build-down files follow-up issues same as bd-build-down. Discovery of a scoped fix mid-session → new issue → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Backlog only if the fix needs planning.
 
 Do not drop gaps silently. If a gap is not agent-fixable and not escalatable, file it. Silence is never the default.
 
@@ -292,7 +292,7 @@ If 2+ PRs escalated for the same reason, log the pattern. Examples:
 - "3 PRs escalated for the same gap type: missing security context in new endpoints"
 - "2 PRs escalated for conflicts with the same main-side PR"
 
-Pattern logs go into the session summary "Observations" section and signal pipeline health issues worth addressing in a separate build-up.
+Pattern logs go into the session summary "Observations" section and signal pipeline health issues worth addressing in a separate bd-build-up.
 
 ### 6c. Next wave assessment
 
@@ -302,13 +302,13 @@ Quick check: are Todo issues that had blockers merged today ready to move? They 
 
 ## Phase 7: Session Summary (Autonomous Write)
 
-Post as a tracker issue assigned to the architect (or to the user, single-operator). Same autonomy rule as build-down — this is informational, not an action, no approval gate.
+Post as a tracker issue assigned to the architect (or to the user, single-operator). Same autonomy rule as bd-build-down — this is informational, not an action, no approval gate.
 
 **Title:** `Super Build-Down Summary — {Month Day}: {brief focus}`
 
 **Tone:** Professional, factual. No alarm language. "Critical/urgent/blocker" reserved for literal P0.
 
-**Migration-first structure** (matches build-down):
+**Migration-first structure** (matches bd-build-down):
 
 ```markdown
 # Super Build-Down Summary — {date}
@@ -368,9 +368,9 @@ Post as a tracker issue assigned to the architect (or to the user, single-operat
 Same pattern-break list as Phase 2 Tier 3 (above), plus:
 - PR modifies infrastructure config (deploy config, CI workflows, framework config)
 - PR modifies auth/security (auth provider config, security policies, middleware)
-- Smoke-jumper returned 🔴
+- bd-smoke-jumper returned 🔴
 - CI failing (not transient infra)
-- PR open >5 days (aligned with build-down's threshold)
+- PR open >5 days (aligned with bd-build-down's threshold)
 
 ### Never auto-post agent comments when
 
@@ -384,7 +384,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 - Every merge (auto), with PR #, issue, rationale
 - Every agent comment posted
 - Every Tier 3 collection
-- Every smoke-jumper dispatch and result
+- Every bd-smoke-jumper dispatch and result
 - Every follow-up issue filed
 - Every pattern observation
 
@@ -394,9 +394,9 @@ Halt the session immediately and post what you have to the summary when:
 
 1. **3+ consecutive CI failures across different PRs** — main branch is likely broken. Do not keep merging.
 2. **Auto-merge API call fails unexpectedly** — pause all merges, shift remaining PRs to Tier 3, finish with escalation batch.
-3. **Smoke-jumper repeatedly returns 🔴 on PRs that should be clean** — something is wrong with the preview environment, not the PRs.
+3. **bd-smoke-jumper repeatedly returns 🔴 on PRs that should be clean** — something is wrong with the preview environment, not the PRs.
 4. **The user explicitly says "stop" or "hold"** — pause all activity, present current state.
-5. **More than 50% of PRs hit pattern-break triggers** — the session's scope is wrong for super-build-down; should have been build-down.
+5. **More than 50% of PRs hit pattern-break triggers** — the session's scope is wrong for bd-super-build-down; should have been bd-build-down.
 
 Abort means: finish writing the session summary (including what was completed and why it stopped), post it, exit. Do not keep trying.
 
@@ -417,23 +417,23 @@ Abort means: finish writing the session summary (including what was completed an
 
 ### Agent comment conventions
 
-Same as build-down:
+Same as bd-build-down:
 - Never wrap the agent mention in backticks
 - Always instruct `git merge main` explicitly for conflict resolution
 - Include `{{BUILD_CMD}}` as verification for typed-code changes
 - Resolve `{ISSUE-ID}` placeholders to real IDs before posting
 
-Super-build-down comments include a trailing marker so the architect can filter if needed:
+bd-super-build-down comments include a trailing marker so the architect can filter if needed:
 
 ```
-[Posted by super-build-down — autonomous session {date}]
+[Posted by bd-super-build-down — autonomous session {date}]
 ```
 
 ### Relationship to other skills
 
-- **Super-build-down dispatches smoke-jumper** mandatorily. Existing reports <24h old are consumed rather than re-run.
-- **Super-build-down uses summit-push Mode 2** automatically for 5+ PRs. Not optional, not asked.
-- **Super-build-down does NOT run with build-down.** If the user wants to switch to interactive mode mid-session, the skill presents current state, writes the session summary so far, and hands off.
+- **bd-super-build-down dispatches bd-smoke-jumper** mandatorily. Existing reports <24h old are consumed rather than re-run.
+- **bd-super-build-down uses bd-summit-push Mode 2** automatically for 5+ PRs. Not optional, not asked.
+- **bd-super-build-down does NOT run with bd-build-down.** If the user wants to switch to interactive mode mid-session, the skill presents current state, writes the session summary so far, and hands off.
 
 ---
 
@@ -442,7 +442,7 @@ Super-build-down comments include a trailing marker so the architect can filter 
 1. **Throughput over narration.** Log, don't explain. The session summary is the narrative.
 2. **Batch Tier 3, don't inline.** Pattern breaks collect; present once at end.
 3. **Migrations always go to the architect, not the user.** Even in batch escalation. (Single-operator: still surface separately, just routed to the user.)
-4. **Drive to standard.** Same as build-down — don't defer scoped gaps when the agent can fix them.
+4. **Drive to standard.** Same as bd-build-down — don't defer scoped gaps when the agent can fix them.
 5. **Silence is never the default.** Every gap is fixed, escalated, or filed.
 6. **Abort beats damage.** Session-abort triggers exist because unattended runs can cause harm. Honor them.
-7. **Pattern-break list is identical to build-down.** This skill is build-down at speed, not with different rules.
+7. **Pattern-break list is identical to bd-build-down.** This skill is bd-build-down at speed, not with different rules.
