@@ -19,7 +19,7 @@ In Jira there are two independent status concepts:
 - **`AI-Implement-Status`** — the orchestrator's own custom-field state machine
   (`Ready` → `Planning` → `Plan Approved` → `Implementing` → `PR Ready`). Its
   terminal value is `PR Ready`; **the orchestrator never marks completion.** (See
-  `STATUS_VALUES` in `cloudshare/ai-implement/src/providers/jira-fields.ts`.)
+  `STATUS_VALUES` in `ai-implement/src/providers/jira-fields.ts`.)
 - The issue's **native workflow status**, whose `statusCategory.key` becomes
   `done` when the issue is completed. This is the real completion signal.
 
@@ -27,7 +27,7 @@ When a PR merges, an external integration is supposed to transition the native
 status to Done. In Linear the Linear↔GitHub integration does this reliably; in
 Jira it is unreliable. The consequence has teeth beyond a stale-looking board:
 the orchestrator's dependency gate `isBlockedByIncomplete`
-(`cloudshare/ai-implement/src/providers/jira.ts:78`) only stops blocking
+(`ai-implement/src/providers/jira.ts:78`) only stops blocking
 dependents once the blocker's `statusCategory` is `done`. **A merged-but-not-Done
 Jira issue silently keeps its dependents blocked, stalling the pipeline.**
 
@@ -83,7 +83,7 @@ genuinely match, so a reader who knows one adapter recognizes the shared seams.
 
 | Seam | Linear | Jira |
 |---|---|---|
-| MCP & discovery | `linear-cloudshare` | `atlassian-cloudshare` (ToolSearch for Jira tools at runtime) |
+| MCP & discovery | `linear-<workspace>` | `atlassian-<workspace>` (ToolSearch for Jira tools at runtime) |
 | Issue scan & states | `list_issues` by `In Progress` / `In Review` / `Todo`+label | JQL by `AI-Implement-Status` values + native status |
 | Pickup trigger | `Todo` + `{{IMPLEMENT_LABEL}}` | `AI-Implement-Status = Ready` + repo field + mapping JQL |
 | Post-merge completion | rely on Linear↔GitHub auto-close; fallback move to `Done` | **explicit idempotent transition to Done + verify + unblock check** (below) |
@@ -100,7 +100,7 @@ delegating only the tracker-touching lines to the active adapter by seam name.
 After build-down merges a PR, the Jira **Post-merge completion** seam runs:
 
 1. **Resolve the issue key** from the merged PR — the branch name and/or PR
-   title carries the Jira key (e.g. `BAC-123`). Do not assume a PR↔issue link;
+   title carries the Jira key (e.g. `PROJ-123`). Do not assume a PR↔issue link;
    resolve the key explicitly.
 2. **Check current native status.** If the issue's `statusCategory` is already
    `done`, the integration fired — skip the transition (idempotent; coexists with

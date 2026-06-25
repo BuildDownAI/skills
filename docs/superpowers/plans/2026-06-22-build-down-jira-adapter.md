@@ -62,7 +62,7 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 - [ ] **Step 2: Fill each seam from the mapped source**
 
 Write the Linear mechanics into each section, faithful to current `SKILL.md` behavior:
-- **MCP & discovery:** Linear MCP (`linear-cloudshare`); `list_issues` / `get_issue` / `save_issue`.
+- **MCP & discovery:** Linear MCP (`linear-<workspace>`); `list_issues` / `get_issue` / `save_issue`.
 - **Issue scan & states:** `list_issues` filtered by `state: "In Progress"`, `state: "In Review"`, and `state: "Todo"` + label `{{IMPLEMENT_LABEL}}`. In Review = ready for triage; In Progress = pipeline working.
 - **Pickup trigger:** `state: Todo` + `{{IMPLEMENT_LABEL}}` = picked up within minutes. `save_issue` with `id` to update; label arrays replace (pass the full list).
 - **Post-merge completion:** The Linear↔GitHub integration auto-closes the linked issue when its PR merges. As a fallback, set the issue `state: Done` via `save_issue`. No verification step is required — the integration is reliable.
@@ -111,7 +111,7 @@ After the "Opening declaration" line in `## Environment and Pipeline Context` �
 
 Pick the active tracker at session start and load its adapter:
 
-- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-cloudshare` → Linear, `atlassian-cloudshare` → Jira). If ambiguous, ask once.
+- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (a `linear-*` MCP → Linear, an `atlassian-*` MCP → Jira). If ambiguous, ask once.
 - Read `trackers/<tracker>.md`. Every tracker-touching step below (issue scan, pickup trigger, post-merge completion, unblock, follow-up filing) follows that adapter's matching `## ` section.
 - State the tracker in the opening declaration.
 ```
@@ -183,7 +183,7 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 > category is `done`).
 
 ## MCP & discovery
-Use the `atlassian-cloudshare` MCP. Discover the Jira tools at runtime with
+Use the `atlassian-<workspace>` MCP. Discover the Jira tools at runtime with
 ToolSearch (`jira search jql`, `jira get issue`, `jira transition issue`,
 `jira edit issue`, `jira add comment`). Two distinct status concepts:
 `AI-Implement-Status` (the orchestrator's custom-field state machine: Ready →
@@ -209,7 +209,7 @@ the Status field does.
 After build-down merges a PR, complete the linked Jira issue explicitly:
 
 1. **Resolve the issue key** from the merged PR — the branch name and/or PR title
-   carries the key (e.g. `BAC-123`). Do not assume a PR↔issue link; resolve it.
+   carries the key (e.g. `PROJ-123`). Do not assume a PR↔issue link; resolve it.
 2. **Check current native status.** Fetch the issue; if its `statusCategory` is
    already `done`, the integration fired — skip the transition (idempotent).
 3. **Transition to Done.** Fire the Jira workflow transition whose target status
@@ -243,7 +243,7 @@ are instance-specific — read them from the orchestrator mapping.
 
 ## Issue URL & key
 Issue key is resolved from the PR branch/title. User-facing URL is
-`{siteUrl}/browse/{KEY}` (e.g. `https://cloudshare.atlassian.net/browse/BAC-123`).
+`{siteUrl}/browse/{KEY}` (e.g. `https://<your-workspace>.atlassian.net/browse/PROJ-123`).
 
 ## Red flags (Jira-specific)
 - **Trusting the integration to complete the issue.** → It's unreliable; always

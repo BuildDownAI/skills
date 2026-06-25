@@ -11,7 +11,7 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 > category is `done`).
 
 ## MCP & discovery
-Use the `atlassian-cloudshare` MCP. Discover the Jira tools at runtime with
+Use the configured Atlassian/Jira MCP server (named `atlassian-<workspace>` in your MCP config). Discover the Jira tools at runtime with
 ToolSearch (`jira search jql`, `jira get issue`, `jira transition issue`,
 `jira edit issue`, `jira add comment`). Two distinct status concepts:
 `AI-Implement-Status` (the orchestrator's custom-field state machine: Ready →
@@ -37,7 +37,7 @@ the Status field does.
 After build-down merges a PR, complete the linked Jira issue explicitly:
 
 1. **Resolve the issue key** from the merged PR — the branch name and/or PR title
-   carries the key (e.g. `BAC-123`). Do not assume a PR↔issue link; resolve it.
+   carries the key (e.g. `PROJ-123`). Do not assume a PR↔issue link; resolve it.
 2. **Check current native status.** Fetch the issue; if its `statusCategory` is
    already `done`, the integration fired — skip the transition (idempotent).
 3. **Transition to Done.** Fire the Jira workflow transition whose target status
@@ -73,7 +73,7 @@ are instance-specific — read them from the orchestrator mapping.
 
 ## Issue URL & key
 Issue key is resolved from the PR branch/title. User-facing URL is
-`{siteUrl}/browse/{KEY}` (e.g. `https://cloudshare.atlassian.net/browse/BAC-123`).
+`{siteUrl}/browse/{KEY}` (e.g. `https://<your-workspace>.atlassian.net/browse/PROJ-123`).
 
 ## Red flags (Jira-specific)
 - **Trusting the integration to complete the issue.** → It's unreliable; always
