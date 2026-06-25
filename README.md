@@ -85,11 +85,13 @@ Trigger: *"belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back fro
    ┌─────────────┴──────────────────┐
    ▼                                ▼
 ┌──────────┐              ┌──────────────────┐
-│ build-up │   design,    │ mega-build-up    │   adversarial grilling
-│          │ objective ──►│                  │   + written plan docs
+│ build-up │◄─ design,    │ mega-build-up    │◄─ design,  adversarial grilling
+│          │   objective  │                  │   objective + written plan docs
 └──────────┘              └──────────────────┘
-     │  plan reviewed, issues filed
-     ▼
+     │                              │
+     └──────────────┬───────────────┘
+                    │ plan reviewed, issues filed
+                    ▼
 ┌─────────────┐
 │ summit-push │   sequence + harden issue bodies
 │  (pre-push) │
