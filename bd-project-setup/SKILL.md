@@ -19,6 +19,122 @@ the session to find an MCP panel; setup produces the link and consumes the callb
 
 ---
 
+## Phase 0 — Detect existing setup
+
+Before gathering any input or writing any files, read the project's current state. Use the Read
+tool directly on each path; never infer from memory.
+
+### Step 0.1 — Check for a local `.mcp.json`
+
+Read **both** locations (either may exist):
+
+1. `<project-root>/.mcp.json`
+2. `<project-root>/.claude/.mcp.json`
+
+For each location that exists, note the path and list every entry in `mcpServers`. If neither exists,
+record: *no local `.mcp.json` found*.
+
+### Step 0.2 — Check for `CLAUDE.md` bindings
+
+Read `<project-root>/CLAUDE.md`. Look for the following variables (names may appear as headings,
+bullet keys, or inline text):
+
+| Variable | What to look for |
+|---|---|
+| `tracker.kind` | `linear` or `jira` |
+| Tracker workspace | workspace name bound to the MCP server |
+| Tracker team | team short-code (e.g. `BDS`) |
+| `{{IMPLEMENT_LABEL}}` | label the coding-agent pickup trigger |
+| `enabledMcpjsonServers` / server-approval state | whether servers are pre-approved in `.claude/settings.json` |
+
+If `CLAUDE.md` is absent or contains none of these, record: *no CLAUDE.md bindings found*.
+
+### Step 0.3 — Classify the local setup
+
+Based on Steps 0.1 and 0.2, classify the project into one of three states:
+
+| State | Condition |
+|---|---|
+| **Fully configured** | `.mcp.json` present with at least one tracker server entry **AND** all five CLAUDE.md variables bound |
+| **Partially configured** | One of `.mcp.json` or CLAUDE.md bindings present but not both |
+| **Not configured** | Neither `.mcp.json` nor CLAUDE.md bindings found |
+
+### Step 0.4 — Report findings and ask what to do next
+
+**If Fully configured:** Report the current parameters in a table:
+
+```
+Current setup detected:
+  tracker.kind          : <value>
+  Workspace             : <value>
+  Team                  : <value>
+  {{IMPLEMENT_LABEL}}   : <value>
+  Server approval state : <enabled/not enabled>
+  .mcp.json location    : <path>
+```
+
+Then ask: **"This project is already configured. Re-run setup to update the bindings, or keep
+the current setup as-is?"** Wait for the user to choose one of:
+- **Re-run** → proceed to Phase 1 (gather fresh values; phases 1–5 will merge, not clobber)
+- **Keep** → stop here; do not modify any files
+
+**If Partially configured:** Report what was found and what is missing, e.g.:
+
+```
+Partial setup detected:
+  .mcp.json found at  : <path>
+  CLAUDE.md bindings  : MISSING
+```
+
+Then ask: **"Setup is incomplete. Complete the missing wiring, or start over from scratch?"** Wait:
+- **Complete** → proceed to Phase 1 (skip steps for what already exists)
+- **Start over** → proceed to Phase 1 (treat as Not configured)
+
+**If Not configured:** Skip to Step 0.5 to check for reusable servers from other projects.
+
+### Step 0.5 — Scan for cross-project MCP servers (Not configured path only)
+
+> **Trust boundary:** Read local config files only. Never copy auth tokens. Surface server names and
+> command strings for a human decision — credential values must always be redacted.
+
+Read `~/.claude.json`. If the file is absent or has no `projects` key, record *no other projects
+found* and skip to Phase 1.
+
+Otherwise, iterate over every entry in `projects[*].mcpServers`. For each MCP server entry, check
+whether it is a tracker candidate using these heuristics (any match qualifies):
+
+- Server `name` contains `linear`, `jira`, or `atlassian` (case-insensitive)
+- `command` or `args` contain `@linear/mcp`, `mcp-linear`, `jira`, or `atlassian`
+- `env` keys include `LINEAR_API_KEY`, `JIRA_*`, or `ATLASSIAN_*`
+
+Build a numbered list of candidates. For each candidate, show:
+
+| Field | Display |
+|---|---|
+| # | Sequential number |
+| Name | Server `name`, or the `command` string if `name` is absent |
+| Type / command | `type` + `url` for remote servers; `command` + `args` for local servers |
+| Env keys | Key names only — values shown as `[redacted]` |
+| Source project | Absolute path of the project where the entry was found |
+
+> **Note:** On shared or multi-user machines, even env var *names* can hint at credential existence.
+> Only surface these details to the project owner in a private session.
+
+If one or more candidates are found, show the table and ask:
+
+**"Found tracker MCP servers in other projects (listed above). Pick one to use as a template for
+this project's `.mcp.json`, or configure from scratch?"**
+
+Wait for the user to choose:
+- **Use server N** → carry the server's `name`, `type`/`url` or `command`/`args` forward to Phase 2
+  as pre-filled values. Do **not** carry env var values or auth tokens — the user must re-authenticate.
+- **Configure from scratch** → proceed to Phase 1 with no pre-filled values
+
+If no candidates are found, proceed to Phase 1 with a note: *no existing tracker MCP servers found
+in other projects; configuring from scratch*.
+
+---
+
 ## Phase 1 — Gather the bindings
 
 Ask the user (or read from an existing `CLAUDE.md`) for the values. Only `{{TRACKER}}` is required to
