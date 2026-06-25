@@ -8,3 +8,6 @@
 .idea/
 *.swp
 *.swo
+
+# Claude Code local settings (contains secrets)
+settings.local.json
