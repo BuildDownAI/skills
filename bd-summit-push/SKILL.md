@@ -1,19 +1,19 @@
 ---
-name: summit-push
-description: "Strategic assault planning for a milestone push. Trigger this skill when the user says 'summit-push', 'summit push', 'strategic push', 'optimize the push', 'plan the assault', 'what order should we send these', or asks to evaluate a build-up plan before filing or sending issues to the AI coding agent. A summit-push sits between build-up (planning) and build-down (landing) — it takes a set of planned or filed issues and optimizes their sequencing, dependency graph, and issue body quality for maximum one-shot success rate through the AI coding agent pipeline. It also runs pre-flight checks during build-down to anticipate architectural blindspots before merging. Use this skill when the user wants to be strategic rather than spray-and-pray with the agent pipeline, or wants to de-risk a merge sequence."
+name: bd-summit-push
+description: "Strategic assault planning for a milestone push. Trigger this skill when the user says 'bd-summit-push', 'summit push', 'strategic push', 'optimize the push', 'plan the assault', 'what order should we send these', or asks to evaluate a bd-build-up plan before filing or sending issues to the AI coding agent. A bd-summit-push sits between bd-build-up (planning) and bd-build-down (landing) — it takes a set of planned or filed issues and optimizes their sequencing, dependency graph, and issue body quality for maximum one-shot success rate through the AI coding agent pipeline. It also runs pre-flight checks during bd-build-down to anticipate architectural blindspots before merging. Use this skill when the user wants to be strategic rather than spray-and-pray with the agent pipeline, or wants to de-risk a merge sequence."
 ---
 
 # Summit-Push Skill
 
-Summit-push is the strategic layer between build-up and build-down. Build-up creates the work. Build-down lands it. Summit-push makes both smarter.
+bd-summit-push is the strategic layer between bd-build-up and bd-build-down. bd-build-up creates the work. bd-build-down lands it. bd-summit-push makes both smarter.
 
-**The metaphor:** You don't summit Everest by running at it. You stage camps, acclimatize, pick weather windows, send the right climbers in the right order. Summit-push does the same for AI-coding-agent batches — evaluates what's planned, optimizes the attack order, hardens issue descriptions for one-shot success, and during build-down, anticipates architectural blindspots that cause PRs to fail or need rework.
+**The metaphor:** You don't summit Everest by running at it. You stage camps, acclimatize, pick weather windows, send the right climbers in the right order. bd-summit-push does the same for AI-coding-agent batches — evaluates what's planned, optimizes the attack order, hardens issue descriptions for one-shot success, and during bd-build-down, anticipates architectural blindspots that cause PRs to fail or need rework.
 
 **Two modes:**
 
-1. **Pre-push (before filing or before the agent picks up work)** — evaluate a build-up plan or a set of filed-but-not-started issues. Optimize sequencing, harden issue bodies, identify one-shot killers, produce a push manifest.
+1. **Pre-push (before filing or before the agent picks up work)** — evaluate a bd-build-up plan or a set of filed-but-not-started issues. Optimize sequencing, harden issue bodies, identify one-shot killers, produce a push manifest.
 
-2. **Mid-push (standalone risk scan)** — evaluate open PRs and queued issues for architectural risk. Anticipate merge conflicts, migration collisions, convention violations. Usually invoked automatically from super-build-down; can be run standalone when the user wants a risk scan without being in a build-down session.
+2. **Mid-push (standalone risk scan)** — evaluate open PRs and queued issues for architectural risk. Anticipate merge conflicts, migration collisions, convention violations. Usually invoked automatically from bd-super-build-down; can be run standalone when the user wants a risk scan without being in a bd-build-down session.
 
 ---
 
@@ -32,9 +32,9 @@ Summit-push is the strategic layer between build-up and build-down. Build-up cre
 
 ### Environment detection
 
-Same as build-up and build-down.
+Same as bd-build-up and bd-build-down.
 
-**Chat (primary for summit-push):**
+**Chat (primary for bd-summit-push):**
 - Has: tracker MCP, GitHub MCP, project context, conversation memory
 - Use for: plan evaluation, issue body hardening, manifest generation, risk reporting
 - Blast radius analysis relies on project knowledge and issue descriptions — slightly more conservative confidence scores than in code-execution
@@ -52,22 +52,22 @@ Same as build-up and build-down.
 
 ### Relationship to other skills
 
-- **Build-up → summit-push → build-up:** Build-up drafts a plan, summit-push hardens it, build-up files the hardened version. Invoked when the plan has 5+ issues with dependencies, or the user says "summit-push this."
-- **Super-build-down invokes Mode 2 automatically** for 5+ open PRs — don't duplicate its work, consume the scan output instead.
-- **Build-down's own Phase 2h** does merge-sequencing for smaller PR counts. Summit-push Mode 2 is not needed for routine build-downs.
+- **bd-build-up → bd-summit-push → bd-build-up:** bd-build-up drafts a plan, bd-summit-push hardens it, bd-build-up files the hardened version. Invoked when the plan has 5+ issues with dependencies, or the user says "bd-summit-push this."
+- **bd-super-build-down invokes Mode 2 automatically** for 5+ open PRs — don't duplicate its work, consume the scan output instead.
+- **bd-build-down's own Phase 2h** does merge-sequencing for smaller PR counts. bd-summit-push Mode 2 is not needed for routine bd-build-downs.
 
 ---
 
 ## When to Use This Skill
 
 **Pre-push triggers:**
-- Build-up plan drafted, the user wants to review before filing
+- bd-build-up plan drafted, the user wants to review before filing
 - Issues filed but not yet picked up (still in Backlog, or in Todo but pipeline hasn't started)
 - The user is about to promote a batch from Backlog → Todo and wants to be strategic about order
 - The user wants to evaluate whether a set of issues can realistically land in a single cycle
 
 **Mid-push triggers:**
-- Multiple PRs open and the user wants proactive merge-order planning without running a full build-down
+- Multiple PRs open and the user wants proactive merge-order planning without running a full bd-build-down
 - Rework patterns appearing (PRs failing CI, inventing endpoints, missing conventions) and the user wants root-cause diagnosis
 - The user wants to evaluate whether remaining queued issues are safe to send given what's already in flight
 
@@ -84,10 +84,10 @@ Same as build-up and build-down.
 
 Accept input in any of these forms:
 
-- A build-up plan presented in the current conversation
+- A bd-build-up plan presented in the current conversation
 - A set of tracker issue IDs to evaluate (`get_issue` on each)
 - A project or milestone filter ("evaluate everything in the X project that's in Backlog or Todo")
-- A raw list of objectives to be decomposed — in this case, run build-up first, then summit-push the result
+- A raw list of objectives to be decomposed — in this case, run bd-build-up first, then bd-summit-push the result
 
 For each issue, capture: title, description/body, labels, dependencies (`blockedBy`), estimate, routing (assignee or `{{IMPLEMENT_LABEL}}`).
 
@@ -286,9 +286,9 @@ Pipeline turnaround varies by queue depth and issue complexity — from minutes 
 
 After the user approves the manifest:
 
-**If pre-filing (build-up hasn't filed yet):**
+**If pre-filing (bd-build-up hasn't filed yet):**
 - Update the in-session plan with hardened descriptions and optimized sequencing
-- Hand back to build-up Phase 3 for filing (with the build-up default: Wave 1 → Todo + `{{IMPLEMENT_LABEL}}`, Wave 2+ → Backlog)
+- Hand back to bd-build-up Phase 3 for filing (with the bd-build-up default: Wave 1 → Todo + `{{IMPLEMENT_LABEL}}`, Wave 2+ → Backlog)
 
 **If post-filing (issues already in tracker):**
 - Update issue descriptions in the tracker via `save_issue` with hardened versions
@@ -300,7 +300,7 @@ After the user approves the manifest:
 
 ## Mode 2: Mid-Push (Risk Scan)
 
-This mode is usually invoked automatically from super-build-down for 5+ open PRs. Run standalone when the user wants a risk scan without being in a build-down session.
+This mode is usually invoked automatically from bd-super-build-down for 5+ open PRs. Run standalone when the user wants a risk scan without being in a bd-build-down session.
 
 ### Phase 1: Current State Assessment
 
@@ -411,7 +411,7 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 
 - `save_issue` for create/update, label arrays replace (always pass full list)
 - When hardening an issue description, update ONLY the `description` field — preserve labels, state, assignee, estimate
-- `blockedBy` arrays are informational (don't block automation but do drive summit-push's dependency analysis)
+- `blockedBy` arrays are informational (don't block automation but do drive bd-summit-push's dependency analysis)
 - `relatedTo` accepts arrays of issue ID strings
 
 **Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
@@ -419,23 +419,23 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 - Description updates: `update_issue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
 - Wave state: no direct `state` field — use `transition_issue` + `AI-Implement-Status` custom field for pipeline gating
 
-### Filing states (aligned with build-up)
+### Filing states (aligned with bd-build-up)
 
 - Wave 1 (no dependencies) → `state: Todo` with `{{IMPLEMENT_LABEL}}` — triggers pipeline pickup
 - Wave 2+ (waiting on blockers) → `state: Backlog` — promote as blockers merge
 - Architect-routed → `state: Todo`, assigned to architect, no `{{IMPLEMENT_LABEL}}`
 - Exception: user explicitly says "stage only, don't start" → all → Backlog
 
-Summit-push respects these defaults when applying changes. Do not move issues to Todo that should be waiting.
+bd-summit-push respects these defaults when applying changes. Do not move issues to Todo that should be waiting.
 
 ---
 
 ## Key Principles
 
-1. **Summit-push is strategic, not mechanical.** The manifest is an analytical artifact — the user reviews it and decides. Summit-push does not file or promote without the user's approval.
+1. **bd-summit-push is strategic, not mechanical.** The manifest is an analytical artifact — the user reviews it and decides. bd-summit-push does not file or promote without the user's approval.
 2. **Target 4 or 5 on every issue.** Anything below gets hardened or split before the agent sees it.
 3. **Migrations serialize.** Two migrations touching the same tables are not independent — flag and sequence.
-4. **Wave 1 sends, Wave 2+ waits.** Mirror build-up's default.
+4. **Wave 1 sends, Wave 2+ waits.** Mirror bd-build-up's default.
 5. **Cross-reference the blindspot table.** Phase 3 auditing isn't complete without it.
 6. **Pipeline timing is measured, not assumed.** Use recent actual performance, not fixed hours-per-issue estimates.
-7. **Mode 2 is automatic inside super-build-down.** Standalone invocation only when the user wants a risk scan outside a build-down.
+7. **Mode 2 is automatic inside bd-super-build-down.** Standalone invocation only when the user wants a risk scan outside a bd-build-down.

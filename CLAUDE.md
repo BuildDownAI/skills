@@ -1,6 +1,6 @@
 # Project configuration
 
-This repo's skills (build-up, build-down, summit-push, etc.) help a human plan work — decomposing
+This repo's skills (bd-build-up, bd-build-down, bd-summit-push, etc.) help a human plan work — decomposing
 objectives into issues and driving them. They reference external services through `{{PLACEHOLDER}}`
 tokens. This file binds those placeholders to the concrete tools for **this** project.
 
@@ -13,7 +13,7 @@ tokens. This file binds those placeholders to the concrete tools for **this** pr
 - **Team URL:** https://linear.app/eudoxus/team/BDS/overview
 
 When a skill resolves `{{TRACKER}}`, it means the `linear` MCP, Eudoxus workspace, **team BDS**.
-New issues and projects created by build-up / mega-build-up go into team BDS unless told otherwise.
+New issues and projects created by bd-build-up / bd-mega-build-up go into team BDS unless told otherwise.
 
 ## AI-Implement label handoff — testing orchestrator
 
@@ -28,7 +28,7 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 ## GitHub repo — `{{REPO}}`
 
 - **`{{REPO}}`:** `BuildDownAI/skills`
-- **GitHub MCP:** `github` — add to `.mcp.json` if PR operations are needed (e.g. for build-down runs against this repo's own PRs)
+- **GitHub MCP:** `github` — add to `.mcp.json` if PR operations are needed (e.g. for bd-build-down runs against this repo's own PRs)
 
 ## AI coding agent — `{{AGENT_MENTION}}`
 
@@ -45,4 +45,4 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 
 ## Preview deployment — `{{PREVIEW_HOST}}` / `{{AUTH_PROVIDER}}`
 
-- *(not applicable — this repo has no preview deployments; smoke-jumper is not used here)*
+- *(not applicable — this repo has no preview deployments; bd-smoke-jumper is not used here)*

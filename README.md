@@ -27,49 +27,49 @@ Runs once per project to configure everything the other skills need: writes `.mc
 
 Trigger: *"bd-project-setup"*, *"set up the skills"*, *"wire up the relationships"*, *"configure the MCP servers"*, *"point Linear at this project"*.
 
-### `build-up` — plan a milestone's worth of issues
+### `bd-build-up` — plan a milestone's worth of issues
 
-Turns a product objective, design handoff, or convergence plan into a sequenced, dependency-aware set of tracker issues ready for the AI coding agent. **Plan first, file second** — build-up always presents the proposed breakdown for your review before creating anything in the tracker.
+Turns a product objective, design handoff, or convergence plan into a sequenced, dependency-aware set of tracker issues ready for the AI coding agent. **Plan first, file second** — bd-build-up always presents the proposed breakdown for your review before creating anything in the tracker.
 
-Trigger: *"build-up"*, *"plan the issues"*, *"break this down into issues"*, *"convergence plan"*, *"build from this design"*.
+Trigger: *"bd-build-up"*, *"plan the issues"*, *"break this down into issues"*, *"convergence plan"*, *"build from this design"*.
 
-### `summit-push` — strategize the batch before sending
+### `bd-summit-push` — strategize the batch before sending
 
-Sits between build-up (planning) and build-down (landing). Takes a set of planned or filed issues and optimizes their sequencing, dependency graph, and issue-body quality for maximum one-shot success rate through the agent pipeline. Also runs pre-flight risk scans during build-down to anticipate architectural blindspots.
+Sits between bd-build-up (planning) and bd-build-down (landing). Takes a set of planned or filed issues and optimizes their sequencing, dependency graph, and issue-body quality for maximum one-shot success rate through the agent pipeline. Also runs pre-flight risk scans during bd-build-down to anticipate architectural blindspots.
 
-Trigger: *"summit-push"*, *"optimize the push"*, *"plan the assault"*, *"what order should we send these"*.
+Trigger: *"bd-summit-push"*, *"optimize the push"*, *"plan the assault"*, *"what order should we send these"*.
 
-### `build-down` — drive open PRs to merge
+### `bd-build-down` — drive open PRs to merge
 
 An active sprint-closure session: survey the tracker and open PRs, assess each against its gap analysis, drive gaps to resolution autonomously via PR comments to the agent, merge clean PRs, file minimal follow-up issues only for real blockers. Runs autonomously by default; escalates only on pattern breaks.
 
-Trigger: *"build-down"*, *"drive PRs to merge"*, *"PR triage"*.
+Trigger: *"bd-build-down"*, *"drive PRs to merge"*, *"PR triage"*.
 
-### `super-build-down` — autonomous, lean-back build-down
+### `bd-super-build-down` — autonomous, lean-back bd-build-down
 
-Build-down's faster cousin. Same mission and rules, tuned for throughput: batch escalations (presented once at the end), minimal narration, mandatory smoke-jumper dispatch, explicit session-abort triggers for unattended runs. Use when you've got 5+ PRs and won't be watching every step.
+bd-build-down's faster cousin. Same mission and rules, tuned for throughput: batch escalations (presented once at the end), minimal narration, mandatory bd-smoke-jumper dispatch, explicit session-abort triggers for unattended runs. Use when you've got 5+ PRs and won't be watching every step.
 
-Trigger: *"super-build-down"*, *"autonomous build-down"*, *"overnight build-down"*, *"just land everything"*.
+Trigger: *"bd-super-build-down"*, *"autonomous bd-build-down"*, *"overnight bd-build-down"*, *"just land everything"*.
 
-### `smoke-jumper` — autonomous PR smoke-testing
+### `bd-smoke-jumper` — autonomous PR smoke-testing
 
-Parachutes onto one or more PRs, reads the gap analysis to figure out what to test, logs into the preview deploy, runs adaptive smoke tests, posts a verdict comment, and files tracker issues for failures. Build-down does quick inline checks; smoke-jumper does the deeper feature-aware verification. Runs standalone or is dispatched per-PR by the build-down skills.
+Parachutes onto one or more PRs, reads the gap analysis to figure out what to test, logs into the preview deploy, runs adaptive smoke tests, posts a verdict comment, and files tracker issues for failures. bd-build-down does quick inline checks; bd-smoke-jumper does the deeper feature-aware verification. Runs standalone or is dispatched per-PR by the bd-build-down skills.
 
 Trigger: *"smoke-jump"*, *"smoke test"*, *"test this PR"*, *"verify the preview"*.
 
-### `mega-build-up` — deep build-up with adversarial grilling and plan documents
+### `bd-mega-build-up` — deep bd-build-up with adversarial grilling and plan documents
 
-Build-up's heavier cousin. Same AI-Implement pipeline awareness and issue-shape discipline, but adds an adversarial design-review phase (senior-engineer pushback before any issues get filed), a detailed implementation plan with exact file paths, and design + plan documents attached to the tracker project/epic so they travel with the work. Supports both Linear and Jira via swappable tracker adapters (`trackers/linear.md`, `trackers/jira.md`).
+bd-build-up's heavier cousin. Same AI-Implement pipeline awareness and issue-shape discipline, but adds an adversarial design-review phase (senior-engineer pushback before any issues get filed), a detailed implementation plan with exact file paths, and design + plan documents attached to the tracker project/epic so they travel with the work. Supports both Linear and Jira via swappable tracker adapters (`trackers/linear.md`, `trackers/jira.md`).
 
-Use mega-build-up when scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture) or when the plan needs to live as documentation. Use plain `build-up` for smaller, well-trodden work.
+Use bd-mega-build-up when scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture) or when the plan needs to live as documentation. Use plain `bd-build-up` for smaller, well-trodden work.
 
-Trigger: *"mega-build-up"*, *"deep build-up"*, *"grill me on this"*, *"thorough build-up"*, *"I want the senior eng review"*.
+Trigger: *"bd-mega-build-up"*, *"deep bd-build-up"*, *"grill me on this"*, *"thorough bd-build-up"*, *"I want the senior eng review"*.
 
-### `belay-on` — formalize tool handoffs mid-session
+### `bd-belay-on` — formalize tool handoffs mid-session
 
-A climbing term: *belay on* means the safety system is engaged and the climber can proceed. This skill formalizes pausing one tool (chat, CLI, code-execution) to gather information from another (code-reading agent, browser, etc.) and resuming cleanly when results come back. Each build skill anticipates belay-on points; this skill is what produces the handoff prompt and integrates the results.
+A climbing term: *belay on* means the safety system is engaged and the climber can proceed. This skill formalizes pausing one tool (chat, CLI, code-execution) to gather information from another (code-reading agent, browser, etc.) and resuming cleanly when results come back. Each build skill anticipates bd-belay-on points; this skill is what produces the handoff prompt and integrates the results.
 
-Trigger: *"belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back from recon"*.
+Trigger: *"bd-belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back from recon"*.
 
 ---
 
@@ -85,7 +85,7 @@ Trigger: *"belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back fro
    ┌─────────────┴──────────────────┐
    ▼                                ▼
 ┌──────────┐              ┌──────────────────┐
-│ build-up │◄─ design,    │ mega-build-up    │◄─ design,  adversarial grilling
+│ bd-build-up │◄─ design,    │ bd-mega-build-up    │◄─ design,  adversarial grilling
 │          │   objective  │                  │   objective + written plan docs
 └──────────┘              └──────────────────┘
      │                              │
@@ -93,7 +93,7 @@ Trigger: *"belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back fro
                     │ plan reviewed, issues filed
                     ▼
 ┌─────────────┐
-│ summit-push │   sequence + harden issue bodies
+│ bd-summit-push │   sequence + harden issue bodies
 │  (pre-push) │
 └─────────────┘
      │
@@ -102,15 +102,15 @@ Trigger: *"belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back fro
 ┌────┴──────────────────────────┐
 ▼                               ▼
 ┌────────────┐       ┌────────────────────┐
-│ build-down │  or   │ super-build-down   │   triage + drive to merge
+│ bd-build-down │  or   │ bd-super-build-down   │   triage + drive to merge
 └────────────┘       └────────────────────┘
   │  dispatches per-PR          │ mandatory per-PR
   ▼                             ▼
            ┌──────────────┐
-           │ smoke-jumper │   verdicts → merge signals
+           │ bd-smoke-jumper │   verdicts → merge signals
            └──────────────┘
 
-  belay-on  ─── cross-cutting: pause/resume tool handoffs anywhere above
+  bd-belay-on  ─── cross-cutting: pause/resume tool handoffs anywhere above
 ```
 
 ---
@@ -122,7 +122,7 @@ These skills assume a workflow with:
 - **[Claude Code](https://docs.claude.com/en/docs/claude-code)** — the harness that loads and runs skills.
 - **An issue tracker MCP** — Linear is the assumed default; substitute Jira / GitHub Issues if you have an equivalent MCP.
 - **GitHub MCP** — for PR survey, comment posting, and merging.
-- **Browser automation MCP** — for smoke-jumper and inline preview checks (Chrome DevTools MCP, Playwright MCP, etc.).
+- **Browser automation MCP** — for bd-smoke-jumper and inline preview checks (Chrome DevTools MCP, Playwright MCP, etc.).
 - **An AI coding agent that responds to PR comments** — [AI-Implement](https://github.com/cpope/AI-Implement) is the reference implementation; anything that opens a PR from a labeled ticket and re-runs from a `/ai-implement` (or equivalent) comment will work.
 
 The skills are tooling-agnostic where possible — service names appear as `{{TRACKER}}`, `{{CODING_AGENT}}` etc. in the skill files. Substitute as needed.
@@ -158,8 +158,8 @@ After installing, open a Claude Code session in the repo you want to use these s
 If you'd rather not run the script, each skill is a self-contained directory under `skills/`. Copy or symlink whichever ones you want into `~/.claude/skills/` (or `<project>/.claude/skills/`):
 
 ```bash
-ln -s "$PWD/build-down" ~/.claude/skills/build-down
-ln -s "$PWD/build-up"   ~/.claude/skills/build-up
+ln -s "$PWD/bd-build-down" ~/.claude/skills/bd-build-down
+ln -s "$PWD/bd-build-up"   ~/.claude/skills/bd-build-up
 # ...etc
 ```
 
