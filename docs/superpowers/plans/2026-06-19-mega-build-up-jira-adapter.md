@@ -2,21 +2,21 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make `mega-build-up` drive a build-up into Linear *or* Jira by splitting its tracker-touching mechanics into per-tracker adapter docs behind a tracker-neutral core.
+**Goal:** Make `bd-mega-build-up` drive a bd-build-up into Linear *or* Jira by splitting its tracker-touching mechanics into per-tracker adapter docs behind a tracker-neutral core.
 
-**Architecture:** `mega-build-up/SKILL.md` becomes a tracker-neutral shared core (process + rubric). Two adapter docs under `mega-build-up/trackers/` (`linear.md`, `jira.md`) own the mechanics for a fixed set of "seams" (overlap scan, container, doc home, pickup trigger, waves, dependencies, issue creation, status check). The core declares the tracker at session start and follows the matching adapter.
+**Architecture:** `bd-mega-build-up/SKILL.md` becomes a tracker-neutral shared core (process + rubric). Two adapter docs under `bd-mega-build-up/trackers/` (`linear.md`, `jira.md`) own the mechanics for a fixed set of "seams" (overlap scan, container, doc home, pickup trigger, waves, dependencies, issue creation, status check). The core declares the tracker at session start and follows the matching adapter.
 
 **Tech Stack:** Markdown skill files only. No code, no build step. "Tests" are grep/diff/read-through validation checks against the spec.
 
 ## Global Constraints
 
-- Files live in `mega-build-up/SKILL.md` and `mega-build-up/trackers/{linear,jira}.md` — copied verbatim from the spec's file layout.
-- Scope is **mega-build-up only**. Do not touch `build-up`, `build-down`, `super-build-down`, `summit-push`, or `smoke-jumper`.
+- Files live in `bd-mega-build-up/SKILL.md` and `bd-mega-build-up/trackers/{linear,jira}.md` — copied verbatim from the spec's file layout.
+- Scope is **bd-mega-build-up only**. Do not touch `bd-build-up`, `bd-build-down`, `bd-super-build-down`, `bd-summit-push`, or `bd-smoke-jumper`.
 - No Confluence. Jira design+plan docs are **markdown files attached to the container epic**.
 - Linear behavior must be **unchanged** after the refactor — the extraction is content-preserving.
 - Each adapter MUST document the same fixed seam set, in this order: MCP & discovery · Container · Doc home · Overlap scan · Pickup trigger · Wave staging · Architect routing · Dependencies · Required create fields · Issue type · Issue URL · Status check.
 - The pipeline reads issue bodies cold and does not follow links — this rule from the core applies to both adapters.
-- Work happens on branch `mega-build-up-jira-adapter` (already created).
+- Work happens on branch `bd-mega-build-up-jira-adapter` (already created).
 
 ---
 
@@ -25,8 +25,8 @@
 Move every Linear-specific mechanic out of `SKILL.md` into a new `trackers/linear.md`, organized by the fixed seam set. This task **only creates `linear.md`** — `SKILL.md` is neutralized in Task 2. Content is copied verbatim from the current `SKILL.md` regions so Linear behavior is preserved.
 
 **Files:**
-- Create: `mega-build-up/trackers/linear.md`
-- Read (source regions): `mega-build-up/SKILL.md`
+- Create: `bd-mega-build-up/trackers/linear.md`
+- Read (source regions): `bd-mega-build-up/SKILL.md`
 
 **Interfaces:**
 - Produces: `trackers/linear.md` with one `## ` section per seam, named exactly per the Global Constraints seam set. Task 2 and Task 3 rely on these exact section names.
@@ -84,21 +84,21 @@ issue-type requirement.`
 Run:
 ```bash
 cd /Users/cameronpope/source/BuildDownAI/skills
-grep -nE 'save_issue|list_projects|create_document|state: Todo|AI-Implement` label|Backlog' mega-build-up/trackers/linear.md
+grep -nE 'save_issue|list_projects|create_document|state: Todo|AI-Implement` label|Backlog' bd-mega-build-up/trackers/linear.md
 ```
 Expected: hits for each of `save_issue`, `list_projects`, `create_document`, `state: Todo`, and `Backlog` — confirming the mechanics were carried over (not yet removed from SKILL.md; that's Task 2).
 
 Run:
 ```bash
-grep -c '^## ' mega-build-up/trackers/linear.md
+grep -c '^## ' bd-mega-build-up/trackers/linear.md
 ```
 Expected: `12` (one heading per seam).
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add mega-build-up/trackers/linear.md
-git commit -m "Extract Linear mechanics into mega-build-up/trackers/linear.md
+git add bd-mega-build-up/trackers/linear.md
+git commit -m "Extract Linear mechanics into bd-mega-build-up/trackers/linear.md
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
@@ -110,7 +110,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 Make `SKILL.md` tracker-agnostic: add `{{TRACKER}}` config, add a Tracker Selection step, and replace each inline Linear mechanic with a pointer to the active adapter's matching seam section. Core *prose* (phases, rubric, grilling tree, approval gates) stays.
 
 **Files:**
-- Modify: `mega-build-up/SKILL.md` (Configuration, Environment Detection, Phase 1 overlap scan, Phase 4 Steps 1–4, Status Check, Conventions)
+- Modify: `bd-mega-build-up/SKILL.md` (Configuration, Environment Detection, Phase 1 overlap scan, Phase 4 Steps 1–4, Status Check, Conventions)
 
 **Interfaces:**
 - Consumes: `trackers/linear.md` seam section names from Task 1.
@@ -127,7 +127,7 @@ In the Configuration section, replace the first bullet:
 with:
 
 ```markdown
-- `{{TRACKER}}` — the issue tracker for this build-up: `linear` or `jira`. Determines which `trackers/<id>.md` adapter the core follows for all tracker-touching steps.
+- `{{TRACKER}}` — the issue tracker for this bd-build-up: `linear` or `jira`. Determines which `trackers/<id>.md` adapter the core follows for all tracker-touching steps.
 ```
 
 - [ ] **Step 2: Add a Tracker Selection block to Environment Detection**
@@ -162,13 +162,13 @@ At each seam in the core, replace the Linear-specific instruction with a pointer
 Run:
 ```bash
 cd /Users/cameronpope/source/BuildDownAI/skills
-grep -nE 'save_issue|list_projects|create_document|state: Todo' mega-build-up/SKILL.md
+grep -nE 'save_issue|list_projects|create_document|state: Todo' bd-mega-build-up/SKILL.md
 ```
 Expected: **no output** (all Linear tool/state mechanics now live in the adapter).
 
 Run:
 ```bash
-grep -nE 'trackers/|active adapter|Tracker Selection|\{\{TRACKER\}\}' mega-build-up/SKILL.md
+grep -nE 'trackers/|active adapter|Tracker Selection|\{\{TRACKER\}\}' bd-mega-build-up/SKILL.md
 ```
 Expected: multiple hits — confirms the core now delegates and the selection step exists.
 
@@ -179,8 +179,8 @@ Read through `SKILL.md` + `trackers/linear.md` together as a Linear operator wou
 - [ ] **Step 6: Commit**
 
 ```bash
-git add mega-build-up/SKILL.md
-git commit -m "Neutralize mega-build-up core; delegate tracker mechanics to adapters
+git add bd-mega-build-up/SKILL.md
+git commit -m "Neutralize bd-mega-build-up core; delegate tracker mechanics to adapters
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
@@ -192,7 +192,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 Create `trackers/jira.md` with the same seam sections as `linear.md`, encoding the Jira mechanics and the four red-flag gotchas from the spec.
 
 **Files:**
-- Create: `mega-build-up/trackers/jira.md`
+- Create: `bd-mega-build-up/trackers/jira.md`
 
 **Interfaces:**
 - Consumes: the core's seam references from Task 2 (must satisfy the same `## ` section names as `linear.md`).
@@ -218,10 +218,10 @@ The MCP covers both Jira and Confluence; this adapter uses Jira only.
 
 ## Container
 The container is a **Jira Epic** under a fixed Jira project (e.g. epic
-`BAC-23858` in project `BAC`). Jira forbids epics-under-epics, so every build-up
+`BAC-23858` in project `BAC`). Jira forbids epics-under-epics, so every bd-build-up
 issue is a flat child with `parent = <epic key>`. Resolve or confirm the epic key
 with the operator at session start; do not create a new project. If no epic
-exists for this build-up, create one Epic-type issue in the project and use it as
+exists for this bd-build-up, create one Epic-type issue in the project and use it as
 the parent.
 
 ## Doc home
@@ -255,7 +255,7 @@ Concretely, on create:
 - **Wave 1** (no blockers): `AI-Implement-Status = Ready` (see Pickup trigger).
 - **Wave 2+** (has blockers): create with `AI-Implement-Status` **unset** (any
   value that isn't `Ready`/`Plan Approved`). The pipeline ignores it. Promote to
-  `Ready` during build-down as blockers merge.
+  `Ready` during bd-build-down as blockers merge.
 - Pilot-first sequencing (from the core) maps to: file all siblings but set
   `AI-Implement-Status = Ready` on **only the pilot**; leave the rest unset until
   the pilot's PR lands, then set them `Ready`.
@@ -314,7 +314,7 @@ the design/plan?", fetch the **epic's attachments** (the two markdown docs).
 Run:
 ```bash
 cd /Users/cameronpope/source/BuildDownAI/skills
-diff <(grep '^## ' mega-build-up/trackers/linear.md) <(grep '^## ' mega-build-up/trackers/jira.md)
+diff <(grep '^## ' bd-mega-build-up/trackers/linear.md) <(grep '^## ' bd-mega-build-up/trackers/jira.md)
 ```
 Expected: **no output** (both adapters expose the identical seam section set).
 
@@ -322,15 +322,15 @@ Expected: **no output** (both adapters expose the identical seam section set).
 
 Run:
 ```bash
-grep -nE 'AI-Implement-Status = Ready|ADF|instance-specific|inward' mega-build-up/trackers/jira.md
+grep -nE 'AI-Implement-Status = Ready|ADF|instance-specific|inward' bd-mega-build-up/trackers/jira.md
 ```
 Expected: hits for all four — confirms the four red flags are documented.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add mega-build-up/trackers/jira.md
-git commit -m "Add Jira tracker adapter for mega-build-up
+git add bd-mega-build-up/trackers/jira.md
+git commit -m "Add Jira tracker adapter for bd-mega-build-up
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
@@ -347,7 +347,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 - Doc home = epic attachments → `jira.md` Doc home. ✓
 - Trigger = Status field; Blocks-link direction; ADF; instance-specific IDs → `jira.md` Red flags. ✓
 - Linear parity preserved → Task 2 Step 5. ✓
-- Scope = mega-build-up only → Global Constraints. ✓
+- Scope = bd-mega-build-up only → Global Constraints. ✓
 
 **2. Placeholder scan:** No "TBD/TODO/handle edge cases". Extraction map in Task 1 names exact source regions; new prose (Tracker Selection, full `jira.md`) is shown in full. ✓
 

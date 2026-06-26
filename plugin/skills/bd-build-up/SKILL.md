@@ -1,13 +1,15 @@
 ---
-name: build-up
-description: "Plan and file a milestone's worth of tracker issues. Trigger this skill when the user says 'build-up', 'let's do a build-up', 'plan the issues', 'break this down into issues', 'convergence plan', 'design brief', 'build from this design', or describes a product objective and wants it decomposed into sequenced, dependency-aware tracker issues ready for an AI coding agent or a design prototyping tool. Also trigger when the user hands over a design handoff bundle and wants it turned into issues, or asks to status-check an existing build-up. A build-up is the creative counterpart to build-down — it turns a product objective (or a prototype handoff) into a concrete issue plan, reviews it, then files it."
+name: bd-build-up
+description: "Plan and file a milestone's worth of tracker issues. Trigger this skill when the user says 'bd-build-up', 'let's do a bd-build-up', 'plan the issues', 'break this down into issues', 'convergence plan', 'design brief', 'build from this design', or describes a product objective and wants it decomposed into sequenced, dependency-aware tracker issues ready for an AI coding agent or a design prototyping tool. Also trigger when the user hands over a design handoff bundle and wants it turned into issues, or asks to status-check an existing bd-build-up. A bd-build-up is the creative counterpart to bd-build-down — it turns a product objective (or a prototype handoff) into a concrete issue plan, reviews it, then files it."
+metadata:
+  suite: builddown
 ---
 
 # Build-Up Skill
 
-A build-up turns a product objective into a sequenced set of well-scoped tracker issues. It's the planning half of the development loop — build-up creates the work, build-down drives it to merge.
+A bd-build-up turns a product objective into a sequenced set of well-scoped tracker issues. It's the planning half of the development loop — bd-build-up creates the work, bd-build-down drives it to merge.
 
-**Cardinal rule: plan first, file second.** Always present the proposed issue breakdown for the user's review before creating anything in the tracker. Planning is where product decisions live; filing is mechanical. Unlike build-down (which runs autonomously), build-up requires the user's explicit approval of the plan before any issue gets filed. The plan is the artifact.
+**Cardinal rule: plan first, file second.** Always present the proposed issue breakdown for the user's review before creating anything in the tracker. Planning is where product decisions live; filing is mechanical. Unlike bd-build-down (which runs autonomously), bd-build-up requires the user's explicit approval of the plan before any issue gets filed. The plan is the artifact.
 
 **Context awareness.** If this skill triggers mid-conversation where research, prototyping, or discussion has already happened, don't start from scratch. Extract what's already established — objectives, design decisions, codebase findings — and pick up from there.
 
@@ -15,7 +17,7 @@ A build-up turns a product objective into a sequenced set of well-scoped tracker
 
 ## Configuration
 
-This skill assumes setup similar to build-down. Substitute as needed.
+This skill assumes setup similar to bd-build-down. Substitute as needed.
 
 - `{{TRACKER}}` — the issue tracker (Linear, Jira, GitHub Issues, etc.)
 - `{{REPO}}` — the GitHub repo, owner/name format
@@ -37,13 +39,13 @@ State the environment at session start and adapt.
 - Has: tracker MCP, GitHub MCP, project context, conversation memory, past-chat search
 - Lacks: local filesystem, bash, ability to read repo files directly
 - Use for: strategic planning, issue body drafting, tracker filing, plan presentation
-- Belay-on to a code-reading agent when: need to read prototype/production codebase to verify assumptions, check existing patterns, or compare prototype against production
+- bd-belay-on to a code-reading agent when: need to read prototype/production codebase to verify assumptions, check existing patterns, or compare prototype against production
 
 **Code-execution environment (terminal):**
 - Has: bash, local filesystem, git, can read both repos directly
 - Lacks: project memory, broad strategic context
 - Use for: convergence-mode codebase reads, cross-repo diffing
-- Belay-on to chat when: session needs strategic framing or past build-up context
+- bd-belay-on to chat when: session needs strategic framing or past bd-build-up context
 
 **Code-reading agent:**
 - Has: deep codebase reading, grep across files
@@ -51,19 +53,19 @@ State the environment at session start and adapt.
 - Use for: narrow pattern searches when chat's read operations are too slow
 - Return findings to chat for filing — code-reading agent can't file issues
 
-**Opening declaration:** State the environment and primary tools. Example: *"Running in chat. Tracker MCP for filing, belay-on to a code-reading agent if we need to verify prototype structure."*
+**Opening declaration:** State the environment and primary tools. Example: *"Running in chat. Tracker MCP for filing, bd-belay-on to a code-reading agent if we need to verify prototype structure."*
 
 ### The AI coding agent pipeline (what happens after filing)
 
 - Issues filed with `state: Todo` and label `{{IMPLEMENT_LABEL}}` are picked up within minutes
 - Issues filed with `state: Backlog` sit until explicitly promoted
-- The default filing state depends on the build-up's intent — see Phase 3
+- The default filing state depends on the bd-build-up's intent — see Phase 3
 
 ---
 
 ## Mode Detection
 
-Every build-up runs in one of three modes. Infer the mode from the user's framing before asking.
+Every bd-build-up runs in one of three modes. Infer the mode from the user's framing before asking.
 
 **Default inference rules:**
 
@@ -92,13 +94,13 @@ No prototype repo to converge against. The user describes a product objective OR
 - **Pure objective:** the user describes the goal. Research codebase, design feature breakdown, draft issues.
 - **Handoff-bundle variant:** the user provides a design handoff bundle (export, screenshots, or a link to the design project). Treat the bundle as the specification — use it to scope issues directly. Do NOT treat it as a prototype to "converge against" — it's a spec to build from.
 
-When the input is a handoff bundle, the build-up produces issues that treat the bundle as the source of truth, not a target to reconcile against. The bundle IS the brief.
+When the input is a handoff bundle, the bd-build-up produces issues that treat the bundle as the source of truth, not a target to reconcile against. The bundle IS the brief.
 
 ### Mode 3a: Code-Prototype Brief (Objective → Prototype Spec)
 
 Output is a markdown file the user pastes into the code-prototype tool's plan mode. The brief must be self-contained — the tool will one-shot from it without follow-up questions, so everything needed (pages, components, data shapes, interactions, edge cases) must be in the document.
 
-A Mode 3a brief often becomes input to a later Mode 1 convergence build-up.
+A Mode 3a brief often becomes input to a later Mode 1 convergence bd-build-up.
 
 ### Mode 3b: Design Brief (Objective → Design Tool Kickoff)
 
@@ -129,7 +131,7 @@ Weak clarifying questions to avoid:
 
 ### Mode 1: Convergence orient
 
-1. **Read the prototype codebase.** Confirm the path with the user if not given. Map key components, pages, and data structures. Note what the prototype does, what UI patterns it uses, where it uses mock data. In chat: belay-on to a code-reading agent for this read.
+1. **Read the prototype codebase.** Confirm the path with the user if not given. Map key components, pages, and data structures. Note what the prototype does, what UI patterns it uses, where it uses mock data. In chat: bd-belay-on to a code-reading agent for this read.
 
 2. **Read the production codebase.** Compare against the prototype:
    - Which pages/routes exist in the prototype but not in prod?
@@ -155,7 +157,7 @@ Two flavors — pure objective and handoff-bundle.
    - Schema changes required
    - What's reusable vs. built fresh
 
-   In chat: belay-on to a code-reading agent for this read.
+   In chat: bd-belay-on to a code-reading agent for this read.
 
 3. **Check the tracker.** `list_issues` for related in-flight work or existing blockers.
 
@@ -207,9 +209,9 @@ If any of those fail, split the issue.
 - **5 points** — complex page with multiple interactions, multi-file changes, needs careful testing (borderline — prefer splitting)
 - **8 points** — too big; must split
 
-**Explicit dependencies.** If issue B can't start until issue A merges, say so: "Blocked by: {ISSUE-ID} (reason)." Use "Blocked by" consistently — not "Depends on." This drives build-down merge sequencing.
+**Explicit dependencies.** If issue B can't start until issue A merges, say so: "Blocked by: {ISSUE-ID} (reason)." Use "Blocked by" consistently — not "Depends on." This drives bd-build-down merge sequencing.
 
-**Backend before frontend.** Schema migrations and API endpoints are separate issues that ship before UI issues that consume them. Prevents the build-down footgun where a frontend PR merges but its migration hasn't been applied.
+**Backend before frontend.** Schema migrations and API endpoints are separate issues that ship before UI issues that consume them. Prevents the bd-build-down footgun where a frontend PR merges but its migration hasn't been applied.
 
 **Routing rules:**
 - **Architect (`{{ARCHITECT_NAME}}`)** — schema migrations, security policies, infra, complex architecture. Assign these directly, do not label `{{IMPLEMENT_LABEL}}`.
@@ -240,8 +242,8 @@ Group into phases or tracks when ≥ 8 issues or when parallel execution paths e
 
 ### Plan metadata (top of document)
 
-- **Build-up name** — short label the user can reference later
-- **Objective** — one sentence on what this build-up achieves
+- **bd-build-up name** — short label the user can reference later
+- **Objective** — one sentence on what this bd-build-up achieves
 - **Mode** — Convergence / New Design (pure) / New Design (handoff-bundle) / Code-Prototype Brief / Design Brief
 - **Issue count** — total
 - **Estimated scope** — total story points
@@ -272,22 +274,22 @@ After explicit approval, file via `save_issue` (or tracker equivalent).
 
 Before filing, resolve the tracker project:
 
-- **New project:** Default the project name to the build-up name. Confirm with the user if not already named.
+- **New project:** Default the project name to the bd-build-up name. Confirm with the user if not already named.
 - **Existing project:** Use `list_projects` to match. If multiple candidates, present them and ask.
 
-Every issue in the build-up attaches to the same project so the body of work is queryable as a unit.
+Every issue in the bd-build-up attaches to the same project so the body of work is queryable as a unit.
 
 ### Filing state — stage the waves
 
-Build-up's job is to launch work, not park it. Get the agents going. File issues into dependency-minded waves: Wave 1 (no blockers) starts immediately; later waves promote to Todo as their blockers merge.
+bd-build-up's job is to launch work, not park it. Get the agents going. File issues into dependency-minded waves: Wave 1 (no blockers) starts immediately; later waves promote to Todo as their blockers merge.
 
 **Default filing (applies unless the user says otherwise):**
 
 - **Wave 1** (issues with no dependencies) → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Pipeline picks up within minutes.
-- **Wave 2+** (issues with unmet dependencies) → `state: Backlog`. Promote to Todo during build-down as blockers merge.
+- **Wave 2+** (issues with unmet dependencies) → `state: Backlog`. Promote to Todo during bd-build-down as blockers merge.
 - **Architect-routed issues** (schema, security, infra) → `state: Todo`, assigned to the architect, no `{{IMPLEMENT_LABEL}}`. The architect decides their own sequencing.
 
-This is the point of a build-up. A well-staged build-up has Wave 1 running by the time the session ends.
+This is the point of a bd-build-up. A well-staged bd-build-up has Wave 1 running by the time the session ends.
 
 **Exceptions (rare — the user must signal):**
 
@@ -296,7 +298,7 @@ This is the point of a build-up. A well-staged build-up has Wave 1 running by th
 
 If the signal is ambiguous, ask one clear question: *"File Wave 1 to Todo to start the pipeline, or stage everything to Backlog for later?"*
 
-Mid-session discoveries in build-down are a different skill's concern — that skill files scoped fixes to Todo + `{{IMPLEMENT_LABEL}}` directly. Build-up is about launching a coordinated wave, not parking work.
+Mid-session discoveries in bd-build-down are a different skill's concern — that skill files scoped fixes to Todo + `{{IMPLEMENT_LABEL}}` directly. bd-build-up is about launching a coordinated wave, not parking work.
 
 ### Filing order
 
@@ -340,7 +342,7 @@ Edge cases, known gotchas, decisions made during planning.
 
 ### Labels and metadata per issue
 
-- **Project:** The build-up's project (from the resolution step above)
+- **Project:** The bd-build-up's project (from the resolution step above)
 - **Labels:** Include issue type (Bug/Feature/Improvement). Add `{{IMPLEMENT_LABEL}}` for pipeline pickup. Add `convergence`, `frontend`, `backend`, `full-stack` as applicable.
 - **Priority:** As determined in the plan
 - **Estimate:** As determined in the plan
@@ -350,14 +352,14 @@ Edge cases, known gotchas, decisions made during planning.
 
 Present a manifest table: `Issue # | Title | Labels | Dependencies | Priority | State`
 
-This is the build-up's reference point for later status checks and build-down sessions.
+This is the bd-build-up's reference point for later status checks and bd-build-down sessions.
 
-### When to suggest build-down handoff
+### When to suggest bd-build-down handoff
 
-Only suggest switching to build-down mode when:
+Only suggest switching to bd-build-down mode when:
 
-- At least one issue from this build-up has reached `In Review` (PR ready)
-- OR at least one PR from this build-up is open on GitHub
+- At least one issue from this bd-build-up has reached `In Review` (PR ready)
+- OR at least one PR from this bd-build-up is open on GitHub
 
 Do not suggest mid-filing. Do not suggest when issues are all still in Backlog or Todo without PRs — there's nothing to drive down yet.
 
@@ -420,19 +422,19 @@ Present via the file-presentation tool. Do not file tracker issues for Mode 3b u
 
 ### Handoff after design iteration
 
-When the user returns from a design tool session with a finished prototype, the next build-up is Mode 2 (handoff-bundle variant), NOT Mode 1. Do not offer Mode 1 convergence for design-tool work — the bundle is the brief.
+When the user returns from a design tool session with a finished prototype, the next bd-build-up is Mode 2 (handoff-bundle variant), NOT Mode 1. Do not offer Mode 1 convergence for design-tool work — the bundle is the brief.
 
 ---
 
 ## Status Check Mode
 
-Triggered when the user asks where things stand on a named build-up ("where are we on Feature X?", "status on the Y convergence?").
+Triggered when the user asks where things stand on a named bd-build-up ("where are we on Feature X?", "status on the Y convergence?").
 
 This is a separate path from planning — skip Phases 1-3, run this path only.
 
 ### Steps
 
-1. **Identify the build-up.** Match the user's reference (name, project, keyword) to a tracker project via `list_projects`. If ambiguous, list candidates and ask.
+1. **Identify the bd-build-up.** Match the user's reference (name, project, keyword) to a tracker project via `list_projects`. If ambiguous, list candidates and ask.
 
 2. **List issues** from the matched project via `list_issues` with project filter.
 
@@ -446,9 +448,9 @@ This is a separate path from planning — skip Phases 1-3, run this path only.
    - Critical path status (which chain is gating completion)
    - Any unblocked Backlog work ready for promotion
 
-6. **Identify build-down readiness:** Issues in `In Review` or with open PRs are candidates for build-down. Flag them.
+6. **Identify bd-build-down readiness:** Issues in `In Review` or with open PRs are candidates for bd-build-down. Flag them.
 
-Present a concise status summary. If there are PRs ready, say "there are N PRs ready for build-down — want to switch modes?" without assuming the answer. If issues are all in Backlog when they should be moving (dependencies met, no reason to wait), flag that as the likely next action — promoting the next wave to Todo.
+Present a concise status summary. If there are PRs ready, say "there are N PRs ready for bd-build-down — want to switch modes?" without assuming the answer. If issues are all in Backlog when they should be moving (dependencies met, no reason to wait), flag that as the likely next action — promoting the next wave to Todo.
 
 ---
 
@@ -459,6 +461,12 @@ Present a concise status summary. If there are PRs ready, say "there are N PRs r
 - Label arrays replace — always pass the full desired label list
 - `state: "Todo"` + `{{IMPLEMENT_LABEL}}` triggers pipeline pickup within minutes
 - `state: "Backlog"` is for issues with unmet dependencies, not a general default
+
+**Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
+- MCP binding: Atlassian MCP (`atlassian-cloudshare` → `jira`); `tracker.kind: jira` in `CLAUDE.md`
+- Issue creation: `create_issue` with `projectKey` + `issueType`; updates via `update_issue` with `issueKey`
+- Pipeline pickup: `AI-Implement-Status = Ready` custom field (not a label); Wave 1 → set field, Wave 2+ → leave unset
+- Labels exist in Jira but the pickup gate is the status field — setting only a label is a silent no-op
 
 **Prototype tool routing (when both kinds are available):**
 - Code-first tool → Mode 3a brief, later Mode 1 convergence. Good for: code-heavy prototypes, fast iteration on full-stack patterns, when the output needs to look like real code.
@@ -485,5 +493,5 @@ Present a concise status summary. If there are PRs ready, say "there are N PRs r
 3. **Mode defaults from framing.** Infer first, ask only on conflicting signals.
 4. **Max 2 clarifying questions before drafting.** After that, state assumptions and draft.
 5. **Stage waves, don't park.** Wave 1 files to Todo + `{{IMPLEMENT_LABEL}}` — get the agents going. Later waves to Backlog, promoted as blockers merge. Exception: user explicitly says "stage only, don't start."
-6. **Suggest build-down only when there's something to drive down.** PR open or issue in In Review.
-7. **Build-up is not build-down.** This skill plans; the other drives. Don't mix their autonomy models — build-up asks permission to file, build-down acts and reports.
+6. **Suggest bd-build-down only when there's something to drive down.** PR open or issue in In Review.
+7. **bd-build-up is not bd-build-down.** This skill plans; the other drives. Don't mix their autonomy models — bd-build-up asks permission to file, bd-build-down acts and reports.

@@ -6,7 +6,7 @@ exactly.
 
 ## MCP & discovery
 
-- **Chat (web/mobile):** Linear MCP, GitHub MCP, conversation memory. Lacks local FS / bash. Belay-on to a code-reading agent for codebase reads.
+- **Chat (web/mobile):** Linear MCP, GitHub MCP, conversation memory. Lacks local FS / bash. bd-belay-on to a code-reading agent for codebase reads.
 - **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads, plan file drafting, then hand back to chat for filing.
 - **Pair pattern:** Draft the plan locally as a markdown file in `{{PLAN_DIR}}`, then attach it to Linear from chat as a Project Document.
 
@@ -14,7 +14,7 @@ exactly.
 
 ## Container
 
-- **New project:** Default name = build-up name from Phase 2. Confirm with user.
+- **New project:** Default name = bd-build-up name from Phase 2. Confirm with user.
 - **Existing project:** Use `list_projects` to match. If multiple candidates, present them.
 - Create the project via the Linear MCP if new. Capture the project ID and URL.
 
@@ -31,16 +31,16 @@ The documents travel with the project. Anyone who picks up an issue can find the
 
 ## Overlap scan
 
-Search the Linear backlog for existing work that intersects with this build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
+Search the Linear backlog for existing work that intersects with this bd-build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
 
 **Search strategy:**
 
 1. **Keyword search.** Extract 5–10 domain terms from the objective (entity names, feature names, route paths, table names). Search Linear via `search_issues` (or `list_issues` + filter) across **all states** including Backlog. Don't restrict to In Progress — stale Backlog issues are exactly the overlap that gets missed.
-2. **Label search.** If the build-up touches a known feature area with a label (e.g., `billing`, `auth`, `onboarding`), list all open issues with that label.
+2. **Label search.** If the bd-build-up touches a known feature area with a label (e.g., `billing`, `auth`, `onboarding`), list all open issues with that label.
 3. **Project search.** Check related existing projects via `list_projects`. Pull the issue list for any project whose scope plausibly overlaps.
-4. **File-path heuristic.** If Phase 1 codebase research identified specific files this build-up will modify, search issue bodies for those paths.
+4. **File-path heuristic.** If Phase 1 codebase research identified specific files this bd-build-up will modify, search issue bodies for those paths.
 
-**Search defaults:** narrow to the user's team and any teams the build-up obviously touches. If signals suggest cross-team overlap, expand. Better to over-search and discard than to miss a duplicate.
+**Search defaults:** narrow to the user's team and any teams the bd-build-up obviously touches. If signals suggest cross-team overlap, expand. Better to over-search and discard than to miss a duplicate.
 
 ## Pickup trigger
 
@@ -51,10 +51,10 @@ Search the Linear backlog for existing work that intersects with this build-up. 
 
 ## Wave staging
 
-Same wave model as `build-up`:
+Same wave model as `bd-build-up`:
 
 - **Wave 1** (no `Blocked by`) → `state: Todo` + label `AI-Implement`. Pipeline picks up within minutes.
-- **Wave 2+** (has `Blocked by`) → `state: Backlog`. Promote to `Todo` during build-down as blockers merge.
+- **Wave 2+** (has `Blocked by`) → `state: Backlog`. Promote to `Todo` during bd-build-down as blockers merge.
 - **Architect-routed** (schema, security, infra) → `state: Todo`, assigned to `{{ARCHITECT_NAME}}`, **no** `AI-Implement` label.
 
 File in dependency order so `Blocked by:` references resolve to real issue IDs.
@@ -77,7 +77,7 @@ The issue body itself follows the core's Phase 4 Step 3 template.
 - `save_issue` handles create + update (pass `id` to update).
 - Label arrays replace — always pass the full desired list.
 - `state: Todo` + `AI-Implement` label = pipeline pickup.
-- Documents attach to projects, not to individual issues. One project per build-up.
+- Documents attach to projects, not to individual issues. One project per bd-build-up.
 
 File via `save_issue` (or Linear MCP equivalent) after explicit approval of the issue manifest.
 
@@ -97,6 +97,6 @@ The "reference design context" link is for humans reviewing the PR, not for the 
 
 ## Status check
 
-Same as `build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
+Same as `bd-build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify bd-build-down readiness (issues in In Review or with open PRs).
 
 If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents and surface them, don't reconstruct from issue bodies.

@@ -1,31 +1,33 @@
 ---
-name: mega-build-up
-description: "Plan a milestone in depth, grill the user adversarially on the design, then file a tracker project/epic with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'mega-build-up', 'mega build-up', 'deep build-up', 'thorough build-up', 'grill me on this build-up', or describes an objective and wants the design pressure-tested before any issues get filed. Mega-build-up is build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and design + plan documents attached to the project/epic so they travel with the work."
+name: bd-mega-build-up
+description: "Plan a milestone in depth, grill the user adversarially on the design, then file a tracker project/epic with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'bd-mega-build-up', 'mega bd-build-up', 'deep bd-build-up', 'thorough bd-build-up', 'grill me on this bd-build-up', or describes an objective and wants the design pressure-tested before any issues get filed. bd-mega-build-up is bd-build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and design + plan documents attached to the project/epic so they travel with the work."
+metadata:
+  suite: builddown
 ---
 
 # Mega Build-Up Skill
 
-A mega-build-up is build-up with senior-engineer pushback and a written-plan deliverable. Same AI-Implement pipeline target. Same tracker destination (Linear or Jira). Higher rigor on the front end.
+A bd-mega-build-up is bd-build-up with senior-engineer pushback and a written-plan deliverable. Same AI-Implement pipeline target. Same tracker destination (Linear or Jira). Higher rigor on the front end.
 
 **Cardinal rule: grill, then plan, then file.** Three approval gates: (1) design after grilling, (2) plan after drafting, (3) issue list before filing. Don't skip gates to save time — the cost of bad scope filed into the tracker is much higher than the cost of one more question.
 
-**Use this over plain `build-up` when:**
+**Use this over plain `bd-build-up` when:**
 - Scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture)
 - The user explicitly wants pushback ("grill me," "stress-test this," "I want the senior eng review")
 - The plan needs to live as documentation (regulated work, multi-week effort, multiple operators handing off)
 
-**Use plain `build-up` instead when:**
+**Use plain `bd-build-up` instead when:**
 - Scope is small (< 5 issues, well-trodden territory)
 - The user is confident and wants speed
 - It's a convergence pass over an already-reviewed prototype
 
-If unclear which to use, ask once. Default to `build-up` for speed.
+If unclear which to use, ask once. Default to `bd-build-up` for speed.
 
 ---
 
 ## Configuration
 
-- `{{TRACKER}}` — the issue tracker for this build-up: `linear` or `jira`. Determines which `trackers/<id>.md` adapter the core follows for all tracker-touching steps.
+- `{{TRACKER}}` — the issue tracker for this bd-build-up: `linear` or `jira`. Determines which `trackers/<id>.md` adapter the core follows for all tracker-touching steps.
 - `{{REPO}}` — GitHub repo, owner/name format
 - `{{IMPLEMENT_LABEL}}` — `AI-Implement` (the label that triggers the AI-Implement pipeline)
 - `{{ARCHITECT_NAME}}` — human owner for risky changes (migrations, auth, infra). Optional.
@@ -36,7 +38,7 @@ If unclear which to use, ask once. Default to `build-up` for speed.
 
 ## AI-Implement Pipeline Context
 
-The downstream consumer of this build-up is the **AI-Implement harness** (https://github.com/BuildDownAI/AI-Implement). Knowing how it picks up work shapes how issues should be written.
+The downstream consumer of this bd-build-up is the **AI-Implement harness** (https://github.com/BuildDownAI/AI-Implement). Knowing how it picks up work shapes how issues should be written.
 
 - The orchestrator polls the tracker every ~60s for unblocked issues marked for AI-Implement (exact mechanism per the active adapter's **Pickup trigger** section).
 - A picked-up issue moves to **In Progress**, runs Claude Code against the ticket spec via `WORKFLOW.md`, opens a PR, then posts a **gap analysis** comment comparing the diff against the spec.
@@ -103,11 +105,11 @@ Each task explicitly answers each signal in the plan. "No, and that's OK because
 
 ### Rubric evolution
 
-The rubric is living. After each build-down, capture failure classes:
+The rubric is living. After each bd-build-down, capture failure classes:
 - "This task needed 4 gap-fill rounds because we didn't specify the auth pattern" → add a soft signal for **Auth pattern anchor**.
 - "This task one-shotted but produced a regression because we didn't specify the existing-data assumption" → add a soft signal for **Existing-data invariants**.
 
-When a failure class recurs across two or more build-ups, promote it from "lesson learned" to a permanent rubric entry. Edit this skill — don't keep the rubric in someone's head.
+When a failure class recurs across two or more bd-build-ups, promote it from "lesson learned" to a permanent rubric entry. Edit this skill — don't keep the rubric in someone's head.
 
 ---
 
@@ -115,7 +117,7 @@ When a failure class recurs across two or more build-ups, promote it from "lesso
 
 State the environment at session start.
 
-- **Chat (web/mobile):** the tracker MCP (see Tracker Selection), GitHub MCP, conversation memory. Lacks local FS / bash. Belay-on to a code-reading agent for codebase reads.
+- **Chat (web/mobile):** the tracker MCP (see Tracker Selection), GitHub MCP, conversation memory. Lacks local FS / bash. bd-belay-on to a code-reading agent for codebase reads.
 - **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads, plan file drafting, then hand back to chat for filing.
 - **Pair pattern:** Draft the plan locally as a markdown file in `{{PLAN_DIR}}`, then attach it per the active adapter's **Doc home** section.
 
@@ -127,20 +129,23 @@ Pick the active tracker at session start and load its adapter:
 - Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (overlap scan, container, doc home, pickup trigger, waves, dependencies, issue creation, status check) follows that adapter's matching `## ` section.
 - State the tracker in the opening declaration, e.g. *"…Tracker: Jira (epic BAC-23858, project BAC)."*
 
+**Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
+`trackers/jira.md` documents the Jira MCP binding and filing differences (Epic container, `AI-Implement-Status` field gate, `transition_issue` for state). The full skill conversion — Jira MCP wiring, verb replacement (`save_issue` → `create_issue`/`update_issue`), and container/pickup logic — is the work of AII-149; `trackers/jira.md` is the projected spec. `tracker.kind: jira` in `CLAUDE.md` is the signal that the Jira adapter is active.
+
 **Opening declaration:** State environment, primary tools, tracker, and which mode you'll be running. Example: *"Running in chat. Tracker MCP for filing, will draft the plan to `docs/plans/` and attach to the container per the active adapter. Mode 2 (New Design)."* (Adjust tracker name per `{{TRACKER}}`; see Tracker Selection above.)
 
 ---
 
 ## Mode Detection
 
-Same modes as `build-up`. Infer from framing; ask only on conflicting signals.
+Same modes as `bd-build-up`. Infer from framing; ask only on conflicting signals.
 
 - **Mode 1: Convergence** — code-prototype repo → production. User mentions a prototype path or says "converge."
 - **Mode 2: New Design** — objective → issues. Default when no prototype is mentioned. *Handoff-bundle variant:* user provides a design tool's export.
 - **Mode 3a: Code-Prototype Brief** — objective → markdown spec for a code-first prototype tool. Skip filing.
 - **Mode 3b: Design Brief** — objective → markdown brief for a design-first tool. Skip filing.
 
-Mega-build-up's grilling and detailed-plan phases apply most strongly to **Mode 2** (and Mode 1 when convergence scope is large). For Mode 3 briefs, grilling still applies — it sharpens the brief — but the plan-document phase is replaced by the brief itself.
+bd-mega-build-up's grilling and detailed-plan phases apply most strongly to **Mode 2** (and Mode 1 when convergence scope is large). For Mode 3 briefs, grilling still applies — it sharpens the brief — but the plan-document phase is replaced by the brief itself.
 
 ---
 
@@ -149,7 +154,7 @@ Mega-build-up's grilling and detailed-plan phases apply most strongly to **Mode 
 Understand current state before drafting anything.
 
 - Read prototype + production codebases (Mode 1) or research the codebase for adjacent patterns (Mode 2).
-- List existing projects per the active adapter's **Container** section so you know whether this build-up creates a new project or attaches to an existing one.
+- List existing projects per the active adapter's **Container** section so you know whether this bd-build-up creates a new project or attaches to an existing one.
 - **Run the Backlog Overlap Scan** (below). This is not optional — there is almost always existing tracker work that overlaps, and unaddressed overlap produces duplicate issues, file conflicts, and superseded work that lingers forever.
 - Ask **at most 2** clarifying questions before moving on. After that, state assumptions and proceed.
 
@@ -157,11 +162,11 @@ The orient phase produces a **working understanding**, not a plan. Don't draft i
 
 ### Backlog Overlap Scan
 
-Search the tracker backlog for existing work that intersects with this build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
+Search the tracker backlog for existing work that intersects with this bd-build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
 
 **Search strategy:** search per the active adapter's **Overlap scan** section.
 
-**Search defaults:** narrow to the user's team and any teams the build-up obviously touches. If signals suggest cross-team overlap, expand. Better to over-search and discard than to miss a duplicate.
+**Search defaults:** narrow to the user's team and any teams the bd-build-up obviously touches. If signals suggest cross-team overlap, expand. Better to over-search and discard than to miss a duplicate.
 
 **Classify each hit** into one of these categories. Each category has a default action:
 
@@ -190,13 +195,13 @@ This is the senior-engineer review. Adversarial in tone, collaborative in intent
 
 **Provide your recommended answer with each question.** The user can accept it (fast) or push back (better answer). Recommendations should be opinionated, not safe-defaults.
 
-**If a question can be answered by reading the codebase, read the codebase.** Don't ask the user what they could see for themselves. Belay-on to a code-reading agent if needed.
+**If a question can be answered by reading the codebase, read the codebase.** Don't ask the user what they could see for themselves. bd-belay-on to a code-reading agent if needed.
 
 **Walk the decision tree.** Resolve dependencies between decisions. Don't ask about column types before deciding whether the table exists.
 
 **Push back when the answer is weak.** If the user says "we'll figure that out later" on a load-bearing decision, name what depends on it and ask again. Polite, persistent, specific.
 
-**Stop grilling when the design is decided, not when you run out of questions.** Some build-ups need 3 questions, some need 15. The signal to stop is that the next question would be a detail the implementation can decide on its own.
+**Stop grilling when the design is decided, not when you run out of questions.** Some bd-build-ups need 3 questions, some need 15. The signal to stop is that the next question would be a detail the implementation can decide on its own.
 
 ### What to grill on
 
@@ -211,8 +216,8 @@ Cover at least these branches before declaring the design decided:
 7. **Migration / rollout.** Feature flag? Behind auth? Backfill needed? How do we ship this without breaking existing users? **If the rollout ends in a tighter constraint (`NOT NULL`, `UNIQUE`, narrower type, new FK/CHECK): have we enumerated every writer to the affected table/column** — production code, test fixtures, factories, seed scripts, background jobs, importers, admin tooling — **and made each one satisfy the future constraint in the additive PR?** (See Hard Rule 9.) Force the writer census now; don't defer to "we'll find them when CI breaks."
 8. **Testing strategy.** Unit, integration, e2e? What's the minimum bar? Where are the load-bearing tests?
 9. **Observability.** What logs/metrics do we need to verify it's working in production?
-10. **Out-of-scope confirmations.** "We are NOT doing X, Y, Z in this build-up. Confirm?"
-11. **Backlog overlap decisions.** For each hit in the Overlap Inventory, walk through the classification and confirm the action. "Issue ABC-123 is a Subset — fold ours in, or split theirs?" Don't let stale Backlog issues haunt the build-up.
+10. **Out-of-scope confirmations.** "We are NOT doing X, Y, Z in this bd-build-up. Confirm?"
+11. **Backlog overlap decisions.** For each hit in the Overlap Inventory, walk through the classification and confirm the action. "Issue ABC-123 is a Subset — fold ours in, or split theirs?" Don't let stale Backlog issues haunt the bd-build-up.
 
 You don't need all 10 every time. You do need to walk the tree and stop at "we have enough to write a plan that won't surprise us."
 
@@ -232,7 +237,7 @@ A short **Design Decisions** doc capturing what was decided. This becomes one of
 # {Build-Up Name} — Design Decisions
 
 ## Objective
-One-paragraph statement of what this build-up achieves.
+One-paragraph statement of what this bd-build-up achieves.
 
 ## Scope
 **In v1:** ...
@@ -456,14 +461,14 @@ The issue body must be **self-contained**. The AI-Implement pipeline reads it co
 
 Before filing new issues, work through the design doc's Overlap & Reconciliation section. Using the active adapter's **Wave staging** / **Pickup trigger** mechanics, take the committed action for each entry:
 
-- **Revive (Duplicate, stale):** move the existing issue to the active state, apply the pipeline label, attach to this build-up's container, comment with a link to the design doc.
+- **Revive (Duplicate, stale):** move the existing issue to the active state, apply the pipeline label, attach to this bd-build-up's container, comment with a link to the design doc.
 - **Fold in (Subset):** comment on the existing issue noting it's been absorbed into the new scope; close it once the corresponding new issue is filed and link them.
-- **Split (Subset, opposite direction):** edit the existing issue to narrow its scope; file the remaining piece(s) as part of this build-up.
+- **Split (Subset, opposite direction):** edit the existing issue to narrow its scope; file the remaining piece(s) as part of this bd-build-up.
 - **Supersede (Superset):** after filing the new issue, close the existing one with a comment linking to the superseder.
 - **Block-by (Adjacent or Dependency):** add `Blocked by: {existing-id}` to the new issue's body before filing.
-- **Close (Stale, won't-do):** close with a comment explaining the decision and linking to the build-up's container for context.
+- **Close (Stale, won't-do):** close with a comment explaining the decision and linking to the bd-build-up's container for context.
 
-These actions are not optional cleanup — they are part of filing the build-up. Skip them and the backlog accumulates ghost issues that conflict with active work.
+These actions are not optional cleanup — they are part of filing the bd-build-up. Skip them and the backlog accumulates ghost issues that conflict with active work.
 
 ### Step 4: Wave staging — file the issues
 
@@ -477,13 +482,13 @@ File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
 When the trigger fires, **file them all** but release only the **first** for pickup (per the active adapter's **Pickup trigger** section). The rest stay parked (per the active adapter's **Wave staging** section) until the pilot lands. Pick the pilot to be the one whose surface is smallest or best-understood — it sets the pattern.
 
-Then in build-down, after the pilot's PR lands:
+Then in bd-build-down, after the pilot's PR lands:
 
 1. Inspect the PR for unspecified-but-load-bearing details the agent had to invent — file paths, naming, edge cases, peripheral updates (MCP sync, type exports, mock fixtures) the spec didn't enumerate.
 2. Update the remaining N-1 issue bodies to **inline whatever the pilot got right** (and correct whatever it got wrong). The earlier issues' "Pattern anchor" should now point at the freshly-merged PR.
 3. **Then** release the rest for pickup in parallel (per the active adapter's **Pickup trigger** section).
 
-**Cost:** one extra build-down checkpoint (a few minutes after the pilot merges). **Benefit:** N-1 issues land cleanly the first time instead of N issues hitting the same systemic miss in parallel and producing N PRs to gap-fill.
+**Cost:** one extra bd-build-down checkpoint (a few minutes after the pilot merges). **Benefit:** N-1 issues land cleanly the first time instead of N issues hitting the same systemic miss in parallel and producing N PRs to gap-fill.
 
 **When NOT to apply pilot-first:** the wave contains ≤ 2 same-pattern siblings (parallel-safety rules already cover that), or the issues only superficially resemble each other (different app, different shape, different decisions — no reusable pattern). The trigger is *same task template*, not *same project area*.
 
@@ -509,7 +514,7 @@ After all issues are filed, present:
 
 ## Status Check Mode
 
-Same as `build-up` status check. Match the user's reference to the active container per the active adapter's **Container** section, list issues grouped by state, surface blockers, identify build-down readiness (issues in In Review or with open PRs).
+Same as `bd-build-up` status check. Match the user's reference to the active container per the active adapter's **Container** section, list issues grouped by state, surface blockers, identify bd-build-down readiness (issues in In Review or with open PRs).
 
 If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents per the active adapter's **Doc home** section and surface them, don't reconstruct from issue bodies.
 
@@ -519,7 +524,7 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 
 **Dependency phrasing:** Always `Blocked by: {ISSUE-ID} (reason)`. Not "Depends on," not "Requires." One phrase, one pattern (mechanism is per-adapter — see **Dependencies**).
 
-**Sizing:** see Issue Design Rubric. (Skill archaeology note: earlier versions used a 1/2/3/5/8 story-point scale inherited from `build-up`. It was dropped because abstract sizing didn't capture codebase friction.)
+**Sizing:** see Issue Design Rubric. (Skill archaeology note: earlier versions used a 1/2/3/5/8 story-point scale inherited from `bd-build-up`. It was dropped because abstract sizing didn't capture codebase friction.)
 
 **Plan file naming:** `{{PLAN_DIR}}/{YYYY-MM-DD}-{slug}-design.md` and `-plan.md`. Same date prefix so they sort together.
 
@@ -529,11 +534,11 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 
 1. **Three approval gates: design, plan, issues.** Don't skip one to save time.
 2. **Grill one question at a time, with a recommended answer.** Walk the decision tree. Stop when the next question would be implementation detail.
-3. **The plan is a document, not a comment thread.** It lives as a tracker container document so it survives the build-up session.
+3. **The plan is a document, not a comment thread.** It lives as a tracker container document so it survives the bd-build-up session.
 4. **One task = one issue.** Plan tasks are sized for parallel pipeline execution. Issue bodies are self-contained because the pipeline reads them cold.
 5. **Backend before frontend, always.** Schema → API → UI. Never combined.
-6. **Wave 1 to the pickup-ready state per the active adapter. Get the agents going.** Build-up's job is to launch work, not park it.
-7. **Mega vs. plain build-up is a choice about rigor, not a default.** Use plain `build-up` for small, well-trodden scope. Use this when the design needs pressure-testing or the plan needs to live as documentation.
+6. **Wave 1 to the pickup-ready state per the active adapter. Get the agents going.** bd-build-up's job is to launch work, not park it.
+7. **Mega vs. plain bd-build-up is a choice about rigor, not a default.** Use plain `bd-build-up` for small, well-trodden scope. Use this when the design needs pressure-testing or the plan needs to live as documentation.
 
 ---
 
@@ -553,14 +558,14 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 - **Phase 1 produced no Overlap Inventory.** → Backlog scan was skipped or too narrow. Re-run with broader keywords. Mature backlogs always have hits.
 - **Overlap Inventory entry has no committed action.** → Silent overlap. Force a decision in Phase 2 grilling before approving the design.
 - **Issue body says "see design doc" without inlining the spec.** → Pipeline can't read links. Inline the spec.
-- **Grilling skipped because "the user seemed sure".** → Mega-build-up exists for the grill. If skipping was right, plain `build-up` was the right skill.
+- **Grilling skipped because "the user seemed sure".** → bd-mega-build-up exists for the grill. If skipping was right, plain `bd-build-up` was the right skill.
 
 ---
 
 ## Relationship to Other Skills
 
-- **`build-up`** — lighter version. Same destination (Linear + AI-Implement), no grilling phase, no plan document, issue bodies are written at filing time rather than derived from a plan.
-- **`build-down`** — the next session. Drives filed issues to merge. Promotes Backlog issues to Todo as blockers merge.
-- **`super-build-down`** — autonomous build-down. Mega-build-ups produce well-specified issues, which is the input super-build-down needs.
-- **`belay-on`** — use for environment hops. Chat→code-reading agent during Phase 1 codebase reads. Code-execution→chat for filing.
-- **`smoke-jumper`** — use during build-down to validate PRs against the design decisions doc.
+- **`bd-build-up`** — lighter version. Same destination (Linear + AI-Implement), no grilling phase, no plan document, issue bodies are written at filing time rather than derived from a plan.
+- **`bd-build-down`** — the next session. Drives filed issues to merge. Promotes Backlog issues to Todo as blockers merge.
+- **`bd-super-build-down`** — autonomous bd-build-down. bd-mega-build-ups produce well-specified issues, which is the input bd-super-build-down needs.
+- **`bd-belay-on`** — use for environment hops. Chat→code-reading agent during Phase 1 codebase reads. Code-execution→chat for filing.
+- **`bd-smoke-jumper`** — use during bd-build-down to validate PRs against the design decisions doc.

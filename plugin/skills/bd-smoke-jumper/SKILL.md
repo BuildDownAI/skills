@@ -1,28 +1,30 @@
 ---
-name: smoke-jumper
-description: "Autonomous smoke-testing agent for PRs. Trigger this skill when the user says 'smoke-jump', 'smoke test', 'smoke-jumper', 'test this PR', 'test these PRs', 'verify the preview', 'does this PR actually work', or asks to validate a preview deploy before merge. Smoke-jumper parachutes onto one or more PRs, reads the gap analysis and issue context to figure out what to test, logs into the preview deploy, runs adaptive smoke tests (baseline health + PR-specific verification), posts results as a PR comment, and files tracker issues for any failures. It runs independently or in parallel with build-down, super-build-down, and summit-push — those skills can invoke it per-PR or consume its reports if already run."
+name: bd-smoke-jumper
+description: "Autonomous smoke-testing agent for PRs. Trigger this skill when the user says 'smoke-jump', 'smoke test', 'bd-smoke-jumper', 'test this PR', 'test these PRs', 'verify the preview', 'does this PR actually work', or asks to validate a preview deploy before merge. bd-smoke-jumper parachutes onto one or more PRs, reads the gap analysis and issue context to figure out what to test, logs into the preview deploy, runs adaptive smoke tests (baseline health + PR-specific verification), posts results as a PR comment, and files tracker issues for any failures. It runs independently or in parallel with bd-build-down, bd-super-build-down, and bd-summit-push — those skills can invoke it per-PR or consume its reports if already run."
+metadata:
+  suite: builddown
 ---
 
 # Smoke-Jumper Skill
 
-A smoke-jumper is an autonomous agent that parachutes onto PRs, figures out what to test, and reports back. It offloads the smoke-testing bottleneck from build-down sessions so PRs can be verified independently of triage work.
+A bd-smoke-jumper is an autonomous agent that parachutes onto PRs, figures out what to test, and reports back. It offloads the smoke-testing bottleneck from bd-build-down sessions so PRs can be verified independently of triage work.
 
-**What makes smoke-jumper different from build-down's inline preview testing:**
+**What makes bd-smoke-jumper different from bd-build-down's inline preview testing:**
 
-- Build-down does quick inline smoke checks as part of PR triage. Smoke-jumper runs deeper, feature-aware tests.
-- Build-down asks "does the page load?" Smoke-jumper asks "does the acceptance criteria actually hold?" — it reads the gap analysis, understands the workstream, and tests accordingly.
-- Smoke-jumper posts autonomous PR comments with verdicts. Host skills (build-down, super-build-down) consume those verdicts as merge signals.
+- bd-build-down does quick inline smoke checks as part of PR triage. bd-smoke-jumper runs deeper, feature-aware tests.
+- bd-build-down asks "does the page load?" bd-smoke-jumper asks "does the acceptance criteria actually hold?" — it reads the gap analysis, understands the workstream, and tests accordingly.
+- bd-smoke-jumper posts autonomous PR comments with verdicts. Host skills (bd-build-down, bd-super-build-down) consume those verdicts as merge signals.
 
-**Verdict-to-tier mapping (for host skills that consume smoke-jumper output):**
+**Verdict-to-tier mapping (for host skills that consume bd-smoke-jumper output):**
 
-| Verdict | Meaning | Super-build-down action | Build-down action |
+| Verdict | Meaning | bd-super-build-down action | bd-build-down action |
 |---|---|---|---|
 | 🟢 CLEAR TO MERGE | Boot + all tested profiles pass | Auto-merge (Tier 1) | Recommend merge |
 | 🟡 data-caveat | Boot passes, caveats are data-only (empty states, mock data gaps) | Auto-merge with log (Tier 2) | Recommend merge, note caveat |
 | 🟡 functional-caveat | Boot passes but a non-acceptance-criteria feature is broken | Escalate (Tier 3) | Recommend hold or agent fix |
 | 🔴 DO NOT MERGE | Boot fails OR acceptance criteria feature broken | Escalate (Tier 3) | Hold, agent fix, or close |
 
-This mapping is the contract between smoke-jumper and the host skills. Verdicts must be one of these four exactly.
+This mapping is the contract between bd-smoke-jumper and the host skills. Verdicts must be one of these four exactly.
 
 ---
 
@@ -42,30 +44,30 @@ This mapping is the contract between smoke-jumper and the host skills. Verdicts 
 
 ### Environment detection
 
-Smoke-jumper is chat-primary — browser MCP is load-bearing. State at session start.
+bd-smoke-jumper is chat-primary — browser MCP is load-bearing. State at session start.
 
 **Chat (primary and required):**
 - Has: browser MCP (required), tracker MCP (required), GitHub MCP (recommended), internal API MCP (when available, for direct API verification)
 - Use for: all phases
-- If browser MCP is unavailable, smoke-jumper cannot run. Report back to the host skill "smoke-testing unavailable" and let the host downgrade its classification accordingly.
+- If browser MCP is unavailable, bd-smoke-jumper cannot run. Report back to the host skill "smoke-testing unavailable" and let the host downgrade its classification accordingly.
 
 **Code-execution:**
 - Rarely used for smoke-jumping — no browser.
 - Used only if the test requires running the build command or a local script that browser MCP can't invoke.
 
-**Opening declaration:** State the environment, target PRs, and invocation context (standalone / invoked from build-down / invoked from super-build-down — this determines the autonomy posture).
+**Opening declaration:** State the environment, target PRs, and invocation context (standalone / invoked from bd-build-down / invoked from bd-super-build-down — this determines the autonomy posture).
 
 ### Invocation context (determines autonomy)
 
-Smoke-jumper behaves differently depending on who invoked it:
+bd-smoke-jumper behaves differently depending on who invoked it:
 
 - **Standalone (user ran `smoke-jump ...` directly):** confirm batch scope with the user before starting. Human-assisted login is acceptable. Pause for input when needed.
-- **Invoked from build-down:** run inline for the current PR, return verdict to build-down session. Human-assisted login acceptable via the host session's prompt. No separate confirmation needed.
-- **Invoked from super-build-down (autonomous):** run for the target PR without confirmation. Do NOT ask for human-assisted login — if auth is required and no active session exists, return verdict `⚠️ auth-required` and let super-build-down handle it (downgrade to Tier 2 per its pattern).
+- **Invoked from bd-build-down:** run inline for the current PR, return verdict to bd-build-down session. Human-assisted login acceptable via the host session's prompt. No separate confirmation needed.
+- **Invoked from bd-super-build-down (autonomous):** run for the target PR without confirmation. Do NOT ask for human-assisted login — if auth is required and no active session exists, return verdict `⚠️ auth-required` and let bd-super-build-down handle it (downgrade to Tier 2 per its pattern).
 
 ### The gap analysis as primary assessment
 
-Same as build-down: the AI coding agent's gap analysis comment is the primary document. Smoke-jumper's Phase 2 reads it first. The ✅ / ⚠️ / 🔧 structure drives which profiles to run and what to verify.
+Same as bd-build-down: the AI coding agent's gap analysis comment is the primary document. bd-smoke-jumper's Phase 2 reads it first. The ✅ / ⚠️ / 🔧 structure drives which profiles to run and what to verify.
 
 ---
 
@@ -88,10 +90,10 @@ Determine which PRs to smoke-test.
 
 ### Check for existing reports first
 
-Before running tests, check if a smoke-jumper report already exists on the PR:
+Before running tests, check if a bd-smoke-jumper report already exists on the PR:
 
 - Read PR comments via GitHub MCP
-- Look for a comment matching the smoke-jumper report format (`## 🔥 Smoke-Jumper Report`)
+- Look for a comment matching the bd-smoke-jumper report format (`## 🔥 Smoke-Jumper Report`)
 - If a report exists and is <24 hours old AND no new commits have landed since → consume the existing report, don't re-run
 - If the report is stale (>24h) OR new commits since the report → re-run
 - Note in Phase 5 whether this was a fresh run or a consumed cached report
@@ -176,16 +178,16 @@ The preview deploy requires login.
 
 **Standalone invocation:** Notify the user: *"I need to log in to the preview deploy at {preview URL} to run smoke tests. Can you log in via the browser and let me know when you're ready?"* Wait for confirmation.
 
-**Invoked from build-down:** Prompt via the host session — the user is already engaged. Same wait-for-confirmation pattern.
+**Invoked from bd-build-down:** Prompt via the host session — the user is already engaged. Same wait-for-confirmation pattern.
 
-**Invoked from super-build-down (autonomous):** Do NOT prompt. Return verdict immediately:
+**Invoked from bd-super-build-down (autonomous):** Do NOT prompt. Return verdict immediately:
 ```
 ⚠️ AUTH REQUIRED — PR #{N}
-No active browser session for the preview deploy, and super-build-down is running
+No active browser session for the preview deploy, and bd-super-build-down is running
 autonomously. Smoke test skipped. Recommend host downgrade this PR's classification
 (Tier 1 candidates → Tier 2 with smoke-test-skipped note).
 ```
-Super-build-down's Phase 3 already handles this case.
+bd-super-build-down's Phase 3 already handles this case.
 
 ### 3c. Auth provider details
 
@@ -258,7 +260,7 @@ Apply the verdict criteria from the top of this skill:
 - **🟡 functional-caveat** — Boot passes but a feature (outside the acceptance criteria) is broken
 - **🔴 DO NOT MERGE** — Boot fails, or a feature IN the acceptance criteria is broken
 
-The difference between 🟡 data-caveat and 🟡 functional-caveat is load-bearing for super-build-down's Tier classification. Be precise.
+The difference between 🟡 data-caveat and 🟡 functional-caveat is load-bearing for bd-super-build-down's Tier classification. Be precise.
 
 ### 5b. PR Comment
 
@@ -270,7 +272,7 @@ Post via GitHub MCP (`add_issue_comment`). Post autonomously — this is an info
 **Preview URL:** {preview URL}
 **Tested:** {timestamp}
 **Auth:** {active session / human-assisted / skipped-auth-required}
-**Invocation:** {standalone / from build-down / from super-build-down}
+**Invocation:** {standalone / from bd-build-down / from bd-super-build-down}
 
 ### Boot
 {✅ PASS | ❌ FAIL: {error details}}
@@ -287,7 +289,7 @@ Post via GitHub MCP (`add_issue_comment`). Post autonomously — this is an info
 {For 🟡 — specify which caveat bucket and why}
 ```
 
-**Never wrap the agent mention in backticks** in the report (same rule as build-down — protects mention detection).
+**Never wrap the agent mention in backticks** in the report (same rule as bd-build-down — protects mention detection).
 
 ### 5c. Tracker issues for failures
 
@@ -303,7 +305,7 @@ File autonomously. Do not ask permission — silent drop is not an option, and f
 
 ### 5d. Session summary (multi-PR sessions only)
 
-If smoke-jumper ran on multiple PRs in one session, post a session summary as a tracker issue assigned to the architect (or the user, single-operator):
+If bd-smoke-jumper ran on multiple PRs in one session, post a session summary as a tracker issue assigned to the architect (or the user, single-operator):
 
 ```
 # Smoke-Jumper Session Summary — {date}
@@ -330,24 +332,24 @@ Single-PR invocations don't need a session summary — the PR comment is suffici
 
 ## Coordination with Host Skills
 
-### Smoke-jumper ↔ Build-down
+### bd-smoke-jumper ↔ bd-build-down
 
-- Build-down can invoke smoke-jumper per-PR during triage
-- If smoke-jumper has already run (<24h, no new commits), build-down consumes the existing report
-- Build-down's verdict interpretation is less strict than super-build-down's — 🟡 functional-caveat can still recommend merge with the user's approval if the feature is out-of-scope for this PR
+- bd-build-down can invoke bd-smoke-jumper per-PR during triage
+- If bd-smoke-jumper has already run (<24h, no new commits), bd-build-down consumes the existing report
+- bd-build-down's verdict interpretation is less strict than bd-super-build-down's — 🟡 functional-caveat can still recommend merge with the user's approval if the feature is out-of-scope for this PR
 
-### Smoke-jumper ↔ Super-build-down
+### bd-smoke-jumper ↔ bd-super-build-down
 
-- Super-build-down invokes smoke-jumper mandatorily for every Tier 1 candidate
-- Super-build-down strictly applies the verdict-to-tier mapping in the table at the top
-- If smoke-jumper returns `⚠️ auth-required`, super-build-down downgrades the PR to Tier 2 with a skipped-smoke note
-- If smoke-jumper is unavailable (browser MCP down), super-build-down downgrades all Tier 1 candidates to Tier 2 and proceeds
+- bd-super-build-down invokes bd-smoke-jumper mandatorily for every Tier 1 candidate
+- bd-super-build-down strictly applies the verdict-to-tier mapping in the table at the top
+- If bd-smoke-jumper returns `⚠️ auth-required`, bd-super-build-down downgrades the PR to Tier 2 with a skipped-smoke note
+- If bd-smoke-jumper is unavailable (browser MCP down), bd-super-build-down downgrades all Tier 1 candidates to Tier 2 and proceeds
 
-### Smoke-jumper ↔ Summit-push
+### bd-smoke-jumper ↔ bd-summit-push
 
-- Summit-push predicts risks via static analysis; smoke-jumper verifies them at runtime
-- If summit-push flagged a PR as high-risk in its manifest, smoke-jumper adds extra attention to those specific areas in Phase 4
-- Summit-push Mode 2 (Mid-Push) can note "smoke-jumper verdict pending" for a PR and let the verdict determine merge sequencing
+- bd-summit-push predicts risks via static analysis; bd-smoke-jumper verifies them at runtime
+- If bd-summit-push flagged a PR as high-risk in its manifest, bd-smoke-jumper adds extra attention to those specific areas in Phase 4
+- bd-summit-push Mode 2 (Mid-Push) can note "bd-smoke-jumper verdict pending" for a PR and let the verdict determine merge sequencing
 
 ---
 
@@ -386,8 +388,8 @@ Single-PR invocations don't need a session summary — the PR comment is suffici
 
 1. **Verdicts are a contract.** Host skills rely on the four-verdict table — 🟢, 🟡 data-caveat, 🟡 functional-caveat, 🔴. Be precise.
 2. **The gap analysis is the primary document.** Read it first; it shapes what gets tested.
-3. **Autonomy matches invocation context.** Standalone confirms. Build-down prompts. Super-build-down proceeds or returns auth-required.
+3. **Autonomy matches invocation context.** Standalone confirms. bd-build-down prompts. bd-super-build-down proceeds or returns auth-required.
 4. **Re-use fresh reports.** Don't re-run a smoke test <24h old with no new commits.
 5. **Boot is non-negotiable.** Every PR gets Boot; Boot failure stops the session for that PR.
-6. **File failures autonomously.** Silence is never the default. If smoke-jumper found it, the tracker gets it.
+6. **File failures autonomously.** Silence is never the default. If bd-smoke-jumper found it, the tracker gets it.
 7. **Time-box per PR.** ~5-10 minutes max. Partial verdicts beat stuck sessions.

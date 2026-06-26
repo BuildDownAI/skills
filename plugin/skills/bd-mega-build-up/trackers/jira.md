@@ -16,10 +16,10 @@ The MCP covers both Jira and Confluence; this adapter uses Jira only.
 
 ## Container
 The container is a **Jira Epic** under a fixed Jira project (e.g. epic
-`BAC-23858` in project `BAC`). Jira forbids epics-under-epics, so every build-up
+`BAC-23858` in project `BAC`). Jira forbids epics-under-epics, so every bd-build-up
 issue is a flat child with `parent = <epic key>`. Resolve or confirm the epic key
 with the operator at session start; do not create a new project. If no epic
-exists for this build-up, create one Epic-type issue in the project and use it as
+exists for this bd-build-up, create one Epic-type issue in the project and use it as
 the parent.
 
 ## Doc home
@@ -53,7 +53,7 @@ Concretely, on create:
 - **Wave 1** (no blockers): `AI-Implement-Status = Ready` (see Pickup trigger).
 - **Wave 2+** (has blockers): create with `AI-Implement-Status` **unset** (any
   value that isn't `Ready`/`Plan Approved`). The pipeline ignores it. Promote to
-  `Ready` during build-down as blockers merge.
+  `Ready` during bd-build-down as blockers merge.
 - Pilot-first sequencing (from the core) maps to: file all siblings but set
   `AI-Implement-Status = Ready` on **only the pilot**; leave the rest unset until
   the pilot's PR lands, then set them `Ready`.

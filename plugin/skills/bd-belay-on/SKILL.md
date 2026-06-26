@@ -1,24 +1,26 @@
 ---
-name: belay-on
-description: "Pause-and-recon pattern for multi-tool sessions. Trigger this skill when the user says 'belay-on', 'belay on', 'hold while I check', 'sending to {tool}', 'need code eyes on this', 'back from recon', 'here are the results', or when a session hits a question that can't be answered from the current tool's perspective and needs dispatching to another tool (chat→code-reading agent, chat→code-execution, code-execution→code-reading, etc). Belay-on formalizes the handoff between tools with different capabilities — it generates targeted recon prompts when pausing, and integrates recon results when resuming. Use any time a session needs to pause for information that requires a different tool's perspective."
+name: bd-belay-on
+description: "Pause-and-recon pattern for multi-tool sessions. Trigger this skill when the user says 'bd-belay-on', 'belay on', 'hold while I check', 'sending to {tool}', 'need code eyes on this', 'back from recon', 'here are the results', or when a session hits a question that can't be answered from the current tool's perspective and needs dispatching to another tool (chat→code-reading agent, chat→code-execution, code-execution→code-reading, etc). bd-belay-on formalizes the handoff between tools with different capabilities — it generates targeted recon prompts when pausing, and integrates recon results when resuming. Use any time a session needs to pause for information that requires a different tool's perspective."
+metadata:
+  suite: builddown
 ---
 
 # Belay-On Skill
 
 A climbing term: "belay on" means the safety system is engaged and the climber can proceed. In the workflow, it means: **I'm pausing this session to gather information from a tool with a different perspective, and I'll resume when results come back.**
 
-Belay-on formalizes a pattern the build skills (build-down, build-up, summit-push, super-build-down) already anticipate. Each declares its environment at session start and notes when to belay-on. This skill is what actually produces the handoff.
+bd-belay-on formalizes a pattern the build skills (bd-build-down, bd-build-up, bd-summit-push, bd-super-build-down) already anticipate. Each declares its environment at session start and notes when to bd-belay-on. This skill is what actually produces the handoff.
 
-**When belay-on does not apply:**
+**When bd-belay-on does not apply:**
 
-- **Fully autonomous sessions** (super-build-down, overnight runs). If the session can't pause and wait for a human to relay results from another tool, belay-on is the wrong pattern. Escalate to the host skill's pattern-break list instead.
-- **Within-environment questions.** If the information is reachable from the current tool, no belay-on — just answer.
+- **Fully autonomous sessions** (bd-super-build-down, overnight runs). If the session can't pause and wait for a human to relay results from another tool, bd-belay-on is the wrong pattern. Escalate to the host skill's pattern-break list instead.
+- **Within-environment questions.** If the information is reachable from the current tool, no bd-belay-on — just answer.
 
 ---
 
 ## Tool Perspective Map
 
-Each tool in the workflow has capability and blind spots. This is the reference that drives belay-on targeting.
+Each tool in the workflow has capability and blind spots. This is the reference that drives bd-belay-on targeting.
 
 | Tool | Strengths | Blind Spots |
 |---|---|---|
@@ -27,9 +29,9 @@ Each tool in the workflow has capability and blind spots. This is the reference 
 | **Code-reading agent** (e.g., desktop tool with deep filesystem access) | Deep codebase reading, grep across many files, pattern tracing across files faster than chat's reads | No tracker MCP, no GitHub MCP, no project memory, can't file or modify anything external |
 | **Browser MCP (in chat)** | Sees the running app, clicks through UI, reads rendered pages, tests preview deploys | Surface-level only, can't read source code, can't query databases directly |
 
-Most chat sessions have browser MCP available as a sub-capability — it's not a separate environment, it's a tool chat uses. The belay-on targets are the code-execution environment and the code-reading agent; browser MCP is usually invoked in-session from chat.
+Most chat sessions have browser MCP available as a sub-capability — it's not a separate environment, it's a tool chat uses. The bd-belay-on targets are the code-execution environment and the code-reading agent; browser MCP is usually invoked in-session from chat.
 
-**Code-reading agent's residual role:** Most of what dedicated code-reading agents used to do is now better handled by chat + GitHub MCP. Belay-on to a code-reading agent only when chat's read operations are too slow for the question (e.g., grep across 50+ files) or when the pattern requires reading file contents chat can't access.
+**Code-reading agent's residual role:** Most of what dedicated code-reading agents used to do is now better handled by chat + GitHub MCP. bd-belay-on to a code-reading agent only when chat's read operations are too slow for the question (e.g., grep across 50+ files) or when the pattern requires reading file contents chat can't access.
 
 ---
 
@@ -39,13 +41,13 @@ Most chat sessions have browser MCP available as a sub-capability — it's not a
 
 Triggered when:
 
-- The user explicitly says "belay-on," "sending to {tool}," "need code eyes on this," or equivalent
+- The user explicitly says "bd-belay-on," "sending to {tool}," "need code eyes on this," or equivalent
 - A host build skill identifies an assumption that needs cross-tool validation. Specific triggers:
-  - **Summit-push** confidence score ≤3 due to unverifiable codebase assumption → belay-on to a code-reading agent or code-execution
-  - **Build-up** orient phase needs to read prototype or production codebase → belay-on to a code-reading agent
-  - **Build-down** agent conflict resolution has looped twice → belay-on to code-execution for manual resolution
-  - **Build-down** a PR's diff behavior can't be verified from GitHub MCP alone → belay-on to browser MCP preview test (usually in-session, not a full belay)
-  - **Code-execution session** needs strategic context about a PR's product intent → belay-on to chat
+  - **bd-summit-push** confidence score ≤3 due to unverifiable codebase assumption → bd-belay-on to a code-reading agent or code-execution
+  - **bd-build-up** orient phase needs to read prototype or production codebase → bd-belay-on to a code-reading agent
+  - **bd-build-down** agent conflict resolution has looped twice → bd-belay-on to code-execution for manual resolution
+  - **bd-build-down** a PR's diff behavior can't be verified from GitHub MCP alone → bd-belay-on to browser MCP preview test (usually in-session, not a full belay)
+  - **Code-execution session** needs strategic context about a PR's product intent → bd-belay-on to chat
 
 **What the skill does:**
 
@@ -179,45 +181,45 @@ Then continue the host skill's workflow from the recorded resume point.
 If the user hasn't returned within the span of a single session and appears to have moved on:
 
 - Do not assume results. The uncertainty that triggered the belay is still unresolved.
-- If the host skill can proceed with the uncertainty flagged (e.g., summit-push marks the issue as 3/5 confidence and continues), do that.
+- If the host skill can proceed with the uncertainty flagged (e.g., bd-summit-push marks the issue as 3/5 confidence and continues), do that.
 - If the host skill cannot proceed, summarize what's pending and stop. The user will resume when they return.
 
 ---
 
 ## Integration with Host Skills
 
-### Summit-push → belay-on
+### bd-summit-push → bd-belay-on
 
-Summit-push rates issues 1-5. A score of 3 or below often means "I can't verify the codebase assumption this issue description is making." Belay-on to a code-reading agent with specific questions about the assumption.
+bd-summit-push rates issues 1-5. A score of 3 or below often means "I can't verify the codebase assumption this issue description is making." bd-belay-on to a code-reading agent with specific questions about the assumption.
 
 Example dispatch:
 > "{ISSUE-ID} scored 3/5 — the issue assumes `some-component.tsx` still has phase routing. Can't verify from here. Dispatching recon to code-reading agent."
 
-### Build-up → belay-on
+### bd-build-up → bd-belay-on
 
-Build-up Phase 1 orient often needs to read prototype or production codebase to write accurate issue descriptions. In chat, belay-on to a code-reading agent for the read.
+bd-build-up Phase 1 orient often needs to read prototype or production codebase to write accurate issue descriptions. In chat, bd-belay-on to a code-reading agent for the read.
 
 Example dispatch:
 > "Need the exact database query pattern for the relevant predictions before I can write {ISSUE-ID}. Dispatching recon to code-reading agent."
 
-### Build-down → belay-on
+### bd-build-down → bd-belay-on
 
-Build-down mostly self-contains in chat (tracker MCP + GitHub MCP covers most needs). Belay-on fires when:
+bd-build-down mostly self-contains in chat (tracker MCP + GitHub MCP covers most needs). bd-belay-on fires when:
 
 - The agent has failed twice on the same conflict — dispatch to code-execution for manual resolution
-- A PR's behavior needs to be verified in the preview, and browser MCP in-session isn't enough — dispatch to smoke-jumper or code-execution for deeper testing
+- A PR's behavior needs to be verified in the preview, and browser MCP in-session isn't enough — dispatch to bd-smoke-jumper or code-execution for deeper testing
 - A migration needs manual application — dispatch to code-execution
 
-### Build-down in code-execution → belay-on
+### bd-build-down in code-execution → bd-belay-on
 
 If a code-execution session needs strategic context about a PR's product intent or history, dispatch to chat.
 
 Example dispatch (from code-execution):
 > "Before I resolve this conflict manually, I need the product-intent context for why PR #447 took this approach. Dispatching to chat."
 
-### Super-build-down does NOT use belay-on
+### bd-super-build-down does NOT use bd-belay-on
 
-Super-build-down is designed to run autonomously. If it hits a condition that would warrant a belay, that's a pattern break — it goes to the Tier 3 batch escalation instead. Do not dispatch recon prompts from a super-build-down session.
+bd-super-build-down is designed to run autonomously. If it hits a condition that would warrant a belay, that's a pattern break — it goes to the Tier 3 batch escalation instead. Do not dispatch recon prompts from a bd-super-build-down session.
 
 ---
 
@@ -227,21 +229,21 @@ Super-build-down is designed to run autonomously. If it hits a condition that wo
 - Prompts destined for chat (when code-execution or code-reading agent is calling back) use the same chat-capability vocabulary
 - When dispatching to browser MCP, use current production/preview URLs — confirm these are still correct if in doubt
 - Project-specific path conventions apply for code-execution and code-reading prompts working in a particular repo
-- If the user says "belay-on" without specifying a target tool, infer from the question type:
+- If the user says "bd-belay-on" without specifying a target tool, infer from the question type:
   - Code content questions → code-reading agent (read-only) or code-execution (if write needed)
   - "Does this actually work?" → browser MCP (in-session if possible) or code-execution
   - "Can you fix this?" → code-execution
   - Strategic/planning questions → chat
-- Belay-on is general-purpose. The build-system examples in this skill illustrate the pattern; other contexts can use the same skill with different host-skill integrations.
+- bd-belay-on is general-purpose. The build-system examples in this skill illustrate the pattern; other contexts can use the same skill with different host-skill integrations.
 
 ---
 
 ## Key Principles
 
-1. **Belay-on formalizes a handoff, not a workaround.** It exists because tools have real capability differences — not because any single tool is broken.
+1. **bd-belay-on formalizes a handoff, not a workaround.** It exists because tools have real capability differences — not because any single tool is broken.
 2. **Pause, don't guess.** If the host skill needs information it can't get, dispatch a recon. Don't proceed with speculation.
 3. **Bounded investigation.** 3-7 questions per recon. Bigger asks get split.
 4. **Specific beats open-ended.** File paths, exact commands, concrete output formats. No "look around."
 5. **The dispatch is complete before waiting.** Save the prompt file, present it, post the pause marker — then stop. Don't keep working.
-6. **Not for autonomous runs.** Super-build-down and overnight sessions escalate instead of belay.
+6. **Not for autonomous runs.** bd-super-build-down and overnight sessions escalate instead of belay.
 7. **Tool perspectives are capability, not preference.** Route based on what the tool can see, not on what feels familiar.

@@ -1,0 +1,13 @@
+{
+  "name": "builddown",
+  "owner": {
+    "name": "BuildDownAI"
+  },
+  "plugins": [
+    {
+      "name": "builddown",
+      "source": "./plugin",
+      "description": "Planning and landing skills for AI-assisted software delivery (bd-build-up, bd-build-down, bd-summit-push, bd-smoke-jumper, bd-belay-on, bd-project-setup, and more)."
+    }
+  ]
+}
