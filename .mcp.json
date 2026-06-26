@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "linear-server": {
+    "linear-eudoxus": {
       "type": "http",
       "url": "https://mcp.linear.app/mcp"
     }
