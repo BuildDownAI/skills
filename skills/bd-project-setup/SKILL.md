@@ -19,11 +19,26 @@ provided by the plugin.
 > **The plugin bundles the tracker server.** When these skills are installed via the `builddown`
 > plugin, the plugin ships its own `.mcp.json` declaring **`linear-server`** (Linear at
 > `https://mcp.linear.app/mcp`). That server travels with the plugin into every project, so for a
-> Linear project you do **not** write a project-scoped `.mcp.json` — you just authenticate
-> `linear-server` and record the workspace/team binding. Only author a project `.mcp.json` for servers
-> the plugin doesn't ship (e.g. `github`) or to override the tracker for a non-Linear project.
-> Whatever name you bind, keep it identical across the bundled server, `enabledMcpjsonServers`, the
-> `CLAUDE.md` binding, and the `mcp__<name>__*` tool calls — the canonical name is **`linear-server`**.
+> Linear project you usually do **not** write a project-scoped `.mcp.json` — you just authenticate
+> `linear-server` and record the workspace/team binding.
+>
+> **What actually varies per project — and where it lives:**
+> - **Team** (e.g. `BDS`): a `CLAUDE.md` binding only, passed as a tool *parameter*. Different team →
+>   edit `CLAUDE.md`, nothing else. The server is unchanged.
+> - **Workspace**: chosen at OAuth time and tied to the token. A single named server holds **one**
+>   workspace's auth at a time.
+>
+> So the bundled `linear-server` is genuinely shared across every project **that lives in the same
+> Linear workspace** (only their `CLAUDE.md` team binding differs). A project in a **different
+> workspace** cannot share it — author a project-scoped server with a **distinct name**
+> (e.g. `linear-<workspace-slug>`), pre-approve it, bind `{{TRACKER}}` to it in that project's
+> `CLAUDE.md`, and authenticate it to that workspace. **Do not reuse the name `linear-server` for a
+> second workspace** — it collides with the bundled server. Also author a project `.mcp.json` for
+> servers the plugin doesn't ship (e.g. `github`) or a non-Linear tracker.
+>
+> Whatever name a project binds, keep it identical across that server's `.mcp.json` entry,
+> `enabledMcpjsonServers`, the `CLAUDE.md` binding, and the `mcp__<name>__*` tool calls. The bundled
+> default is **`linear-server`**; additional workspaces get their own distinct names.
 
 **What setup cannot automate:** the in-browser approval itself. OAuth requires a human to open the link,
 approve, and pick the workspace — there is no token until that happens. But the human never has to leave
@@ -192,9 +207,11 @@ start; the rest can be filled in later as the project needs them.
 
 ## Phase 2 — `.mcp.json` (only for servers the plugin doesn't bundle)
 
-**Skip this phase for the tracker on a Linear project** — the `builddown` plugin already ships
-`linear-server`. Run it only to add a server the plugin doesn't bundle (`github`) or to override the
-tracker for a non-Linear project.
+**Skip this phase for the tracker on a Linear project in your default workspace** — the `builddown`
+plugin already ships `linear-server`. Run it only to:
+- add a server the plugin doesn't bundle (`github`),
+- point at a **non-Linear tracker**, or
+- point at a **different Linear workspace** than the bundled `linear-server`'s auth.
 
 Linear and GitHub both expose a single fixed remote endpoint each. The **workspace** is chosen at OAuth
 time, not in the URL. Never put a `linear.app/<workspace>/...` web URL in the server `url`.
@@ -207,21 +224,25 @@ time, not in the URL. Never put a `linear.app/<workspace>/...` web URL in the se
 }
 ```
 
-If a project genuinely needs its own tracker server (e.g. the plugin isn't installed, or a second
-workspace), name it **`linear-server`** to match the canonical binding:
+**Different-workspace tracker.** A single named server holds one workspace's OAuth, so a project in a
+*second* workspace needs its own server under a **distinct name** — `linear-<workspace-slug>`, never
+`linear-server` (that collides with the bundled server). Bind `{{TRACKER}}` to this name in the
+project's `CLAUDE.md`:
 
 ```json
-{ "mcpServers": { "linear-server": { "type": "http", "url": "https://mcp.linear.app/mcp" } } }
+{ "mcpServers": { "linear-acme": { "type": "http", "url": "https://mcp.linear.app/mcp" } } }
 ```
 
-Only include servers the project actually uses. Validate it parses (`python3 -m json.tool .mcp.json`).
+Only write a bare `linear-server` here if the plugin is **not** installed in this project (no bundled
+server exists to collide with). Validate the file parses (`python3 -m json.tool .mcp.json`).
 
-> **Reuse the existing server name (from Step 0.2b).** If the tracker is already permissioned under a
-> different name in `permissions.allow` (e.g. `mcp__linear-server__*`) or already Connected, use **that**
-> name as the `mcpServers` key — don't introduce a second name. A mismatch means the server won't inherit
-> the existing approval and the Phase 3 pre-approval and Phase 5 OAuth will target the wrong name. Keep
-> the key identical across `.mcp.json`, `enabledMcpjsonServers`, the `CLAUDE.md` binding, and the
-> `mcp__<name>__*` tool calls. Canonical name: **`linear-server`**.
+> **Reuse the existing server name (from Step 0.2b).** If a tracker is already permissioned under a name
+> in `permissions.allow` (e.g. `mcp__linear-acme__*`) or already Connected, use **that** name as the
+> `mcpServers` key — don't introduce a second name for the same workspace. A mismatch means the server
+> won't inherit the existing approval and the Phase 3 pre-approval and Phase 5 OAuth will target the
+> wrong name. Keep the key identical across `.mcp.json`, `enabledMcpjsonServers`, the `CLAUDE.md`
+> binding, and the `mcp__<name>__*` tool calls. The bundled default is **`linear-server`**; each
+> additional workspace gets its own distinct name.
 
 ## Phase 3 — Pre-approve the servers (skip the trust prompt)
 
