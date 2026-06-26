@@ -131,6 +131,24 @@ The skills are tooling-agnostic where possible — service names appear as `{{TR
 
 ## Installation
 
+This repo is also a **Claude Code plugin marketplace**, so the simplest install is:
+
+```
+/plugin marketplace add BuildDownAI/skills
+/plugin install builddown@builddown
+```
+
+That tracks the repo's default branch and is managed by `/plugin` (update with `/plugin marketplace update builddown`). To install from a specific branch or tag, append `@ref` (GitHub shorthand) or `#ref` (full git URL):
+
+```
+/plugin marketplace add BuildDownAI/skills@ai-implement/feature/bds-1
+/plugin install builddown@builddown
+```
+
+### Script install (symlink / copy)
+
+If you'd rather not use the plugin system:
+
 ```bash
 git clone https://github.com/BuildDownAI/skills.git builddown-skills
 cd builddown-skills
@@ -185,8 +203,8 @@ Skills without the marker are never touched.
 If you'd rather not run the script, each skill is a self-contained directory under `skills/`. Copy or symlink whichever ones you want into `~/.claude/skills/` (or `<project>/.claude/skills/`):
 
 ```bash
-ln -s "$PWD/bd-build-down" ~/.claude/skills/bd-build-down
-ln -s "$PWD/bd-build-up"   ~/.claude/skills/bd-build-up
+ln -s "$PWD/skills/bd-build-down" ~/.claude/skills/bd-build-down
+ln -s "$PWD/skills/bd-build-up"   ~/.claude/skills/bd-build-up
 # ...etc
 ```
 
