@@ -38,12 +38,23 @@ server's OAuth flow from inside the session** (the server's `authenticate` tool 
 > - **Workspace / site**: chosen at OAuth time and tied to the token. A single named server holds **one**
 >   workspace/site's auth at a time.
 >
-> Because there's no shared/bundled server, project `.mcp.json` files are independent — two projects in
-> the **same** workspace/site can both use the canonical name (`linear-server` / `jira-server`). If you
-> operate **multiple** workspaces or sites of the same tracker kind and want zero ambiguity in auth, give
-> each a **distinct name** (`linear-<workspace-slug>` / `jira-<site-slug>`). Whatever name a project binds,
-> keep it identical across the `.mcp.json` entry, `enabledMcpjsonServers`, the `CLAUDE.md` binding, and the
-> `mcp__<name>__*` tool calls.
+> **Name the server after its workspace/site — not a generic `linear-server` — the moment more than one
+> workspace is in play.** Claude Code ties a server's OAuth **token to the server name**, so every project
+> that uses the name `linear-server` shares **one** token = **one** workspace. The failure this causes:
+> a new project's `linear-server` comes up **already Connected** to whatever workspace that shared token
+> holds (e.g. `oolidata`), and Linear's OAuth often **auto-completes to your default workspace** without
+> showing a picker. The only way to put `linear-server` on a *different* workspace is to re-authenticate
+> it — which **repoints every other project using that name**. That is a trap, not a fix.
+>
+> **Rule:**
+> - **One Linear workspace ever** → `linear-server` is fine.
+> - **More than one workspace** (or any doubt) → name each per workspace: **`linear-<workspace-slug>`**
+>   (e.g. `linear-eudoxus`, `linear-oolidata`). Each gets its own token, so they coexist and never steal
+>   each other's auth. Same for Jira sites: **`jira-<site-slug>`**.
+>
+> Whatever name a project binds, keep it identical across the `.mcp.json` entry, `enabledMcpjsonServers`,
+> the `CLAUDE.md` binding, and the `mcp__<name>__*` tool calls. **Never repoint a shared-name server to
+> "fix" a workspace** — give the new workspace its own name instead (see Step 0.2c).
 
 **What setup cannot automate:** the in-browser approval itself. OAuth requires a human to open the link,
 approve, and pick the workspace/site — there is no token until that happens. But the human never has to
@@ -100,6 +111,27 @@ before assuming "Not configured":
    Record the existing tracker server name(s). **In Phase 2, reuse the existing name rather than
    hardcoding `linear`** — a `.mcp.json` server whose name doesn't match the already-permissioned
    `mcp__<name>__*` won't inherit that approval and will re-trigger the trust prompt.
+
+### Step 0.2c — If a tracker is Connected, verify it's on THIS project's workspace/site
+
+A Connected tracker server is **not** proof it's the right one — it may be authenticated to a different
+workspace/site (and may have auto-completed there without a picker). Before binding anything:
+
+1. **Check which workspace/site it holds.** Linear: call `mcp__<name>__list_teams` and see whether this
+   project's target team is present. Jira: list projects/sites and check for the target project. Record
+   the workspace/site the server is actually on.
+2. **If it matches** the project's target → good, proceed.
+3. **If it does NOT match** (e.g. server is on `oolidata`, project needs `eudoxus`) → **do not
+   re-authenticate the shared server and do not propose removing the other workspace.** Re-auth repoints
+   that name for *every* project using it. Instead, pick one of:
+
+   | Situation | Action |
+   |---|---|
+   | Another project already has a server on the target workspace (found in Step 0.5) | Reuse **that** server's name/definition for this project; just authenticate it here if needed. |
+   | No server exists yet for the target workspace | Define a **new, distinctly-named** server `linear-<target-workspace>` (e.g. `linear-eudoxus`) in Phase 2. Because the name is new and unauthenticated, its `authenticate` tool **is** exposed, so setup can drive first-time OAuth from the session — and the user picks the right workspace in the grant. |
+   | You truly want to MOVE the shared server to the new workspace and nothing else uses it | Only then re-authenticate — and because a *Connected* server hides its `authenticate` tool, this goes through the interactive `/mcp` panel → select the server → **Reauthenticate** (see Phase 5). |
+
+   Default to the **distinct name** path — it never disturbs an existing workspace's auth.
 
 > If a tracker is **already Connected** (step 1) and the project has no local `.mcp.json`, do **not**
 > silently treat it as "Not configured." Surface it: *"A `<name>` tracker server is already connected
@@ -216,12 +248,18 @@ Write **exactly one** tracker server, matching `tracker.kind`. Each tracker expo
 endpoint; the workspace/site is chosen at OAuth time, never in the URL (never put a
 `linear.app/<workspace>/...` or `<site>.atlassian.net` web URL in `url`).
 
-**Linear project** (`tracker.kind: linear`):
+**Pick the server name by how many workspaces/sites you run** (see the intro callout + Step 0.2c):
+use the bare `linear-server` / `jira-server` only if there will ever be **one** workspace/site of that
+kind; otherwise name it after the workspace/site — `linear-<workspace>` / `jira-<site>` — so each gets
+its own OAuth token and they never steal each other's auth.
+
+**Linear project** (`tracker.kind: linear`) — single-workspace name shown; use `linear-<workspace>` if
+you run more than one:
 
 ```json
 {
   "mcpServers": {
-    "linear-server": { "type": "http", "url": "https://mcp.linear.app/mcp" }
+    "linear-eudoxus": { "type": "http", "url": "https://mcp.linear.app/mcp" }
   }
 }
 ```
@@ -231,7 +269,7 @@ endpoint; the workspace/site is chosen at OAuth time, never in the URL (never pu
 ```json
 {
   "mcpServers": {
-    "jira-server": { "type": "http", "url": "https://mcp.atlassian.com/v1/sse" }
+    "jira-cloudshare": { "type": "http", "url": "https://mcp.atlassian.com/v1/sse" }
   }
 }
 ```
@@ -308,8 +346,11 @@ Once a server is approved (Phase 3) but unauthenticated, it surfaces two auth to
 user to an MCP panel:
 
 1. **Start the flow.** Call `mcp__<server>__authenticate`. It returns an authorization URL.
-2. **Hand the user the link.** Ask them to open it, approve, and **select the target workspace** (Linear,
-   e.g. `eudoxus`) or **site** (Jira, e.g. `cloudshare.atlassian.net`) in the grant.
+2. **Hand the user the link.** Ask them to open it, approve, and **explicitly select the target workspace**
+   (Linear, e.g. `eudoxus`) or **site** (Jira, e.g. `cloudshare.atlassian.net`) in the grant — Linear's
+   consent page has a workspace switcher near the top. **Do not let it auto-complete to the default
+   workspace** (a common cause of landing on the wrong one). If it does, that's the wrong-workspace case —
+   handle it per Step 0.2c (give this workspace its own server name), not by repointing a shared server.
 3. **Finish the flow.** Two outcomes:
    - The redirect page loads and auth completes automatically — the server's real tools appear. Done.
    - The redirect page shows a connection error (common when nothing is listening on the
@@ -318,6 +359,14 @@ user to an MCP panel:
 4. **Verify.** `claude mcp list` should show the server **Connected** (not Pending / Needs
    authentication). Confirm the right workspace/site by listing the container — Linear: `list_teams`,
    checking the target team is present; Jira: list projects / the target epic's children — before filing.
+   If the wrong workspace/site shows up, go back to Step 0.2c — **don't** bind the project to it.
+
+> **Re-authenticating an already-Connected server.** Once a server is Connected, its `authenticate` /
+> `complete_authentication` tools are **no longer exposed**, so setup cannot re-drive OAuth from the
+> session. Re-auth then goes through the interactive `/mcp` panel → select the server → **Reauthenticate**.
+> Remember this **repoints that server name for every project using it** — only do it for a server you
+> intend to move wholesale. To put a *different* workspace on a fresh project, prefer a new distinctly-named
+> server (Step 0.2c), whose `authenticate` tool *is* exposed because it has never connected.
 
 > Note: the in-browser approval is the one irreducible human step. Everything around it — starting the
 > flow, presenting the link, consuming the callback, verifying — runs from inside the session.
