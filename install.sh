@@ -133,7 +133,7 @@ resolve_from_git() {
 }
 
 skill_names() {
-  find "${SCRIPT_DIR}/skills" -mindepth 2 -maxdepth 2 -name SKILL.md -print0 \
+  find "${SCRIPT_DIR}/plugin/skills" -mindepth 2 -maxdepth 2 -name SKILL.md -print0 \
     | xargs -0 -n1 dirname \
     | xargs -n1 basename \
     | sort
@@ -176,7 +176,7 @@ prune_stale() {
 
 install_one() {
   local name="$1"
-  local src="${SCRIPT_DIR}/skills/${name}"
+  local src="${SCRIPT_DIR}/plugin/skills/${name}"
   local dst="${TARGET_DIR}/${name}"
 
   if [[ -e "$dst" || -L "$dst" ]]; then

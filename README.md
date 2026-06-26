@@ -23,7 +23,9 @@ Each skill in this repo answers one of those questions, with a consistent autono
 
 ### `bd-project-setup` — wire a project's tools and bindings
 
-Runs once per project to configure everything the other skills need: writes `.mcp.json` with the project-scoped MCP servers (Linear, GitHub, etc.), pre-approves them so the trust prompt never fires, drives each server's OAuth flow from inside the session, and writes the `{{PLACEHOLDER}}` → value bindings into `CLAUDE.md` (tracker workspace/team, GitHub repo, build command, etc.). The rest of the skills read those bindings — you only run setup once.
+Runs once per project to configure everything the other skills need: writes `.mcp.json` with the project's MCP servers, pre-approves them so the trust prompt never fires, drives each server's OAuth flow from inside the session, and writes the `{{PLACEHOLDER}}` → value bindings into `CLAUDE.md` (tracker workspace/team, GitHub repo, build command, etc.). The rest of the skills read those bindings — you only run setup once.
+
+The plugin ships **skills only** — it bundles no MCP servers. So each project provisions **exactly one** tracker server, chosen by `tracker.kind`: `linear-server` for a Linear project or `jira-server` for a Jira project, never both. (GitHub is added per project only where needed.)
 
 Trigger: *"bd-project-setup"*, *"set up the skills"*, *"wire up the relationships"*, *"configure the MCP servers"*, *"point Linear at this project"*.
 
@@ -200,11 +202,11 @@ Skills without the marker are never touched.
 
 ### Manual install
 
-If you'd rather not run the script, each skill is a self-contained directory under `skills/`. Copy or symlink whichever ones you want into `~/.claude/skills/` (or `<project>/.claude/skills/`):
+If you'd rather not run the script, each skill is a self-contained directory under `plugin/skills/`. Copy or symlink whichever ones you want into `~/.claude/skills/` (or `<project>/.claude/skills/`):
 
 ```bash
-ln -s "$PWD/skills/bd-build-down" ~/.claude/skills/bd-build-down
-ln -s "$PWD/skills/bd-build-up"   ~/.claude/skills/bd-build-up
+ln -s "$PWD/plugin/skills/bd-build-down" ~/.claude/skills/bd-build-down
+ln -s "$PWD/plugin/skills/bd-build-up"   ~/.claude/skills/bd-build-up
 # ...etc
 ```
 

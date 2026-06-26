@@ -1,6 +1,6 @@
 ---
 name: bd-project-setup
-description: "Wire this repo's BuildDown skills to concrete tools for a project — bind the {{PLACEHOLDER}} tokens (tracker workspace/team, GitHub repo, AI-Implement label, build command, etc.) in CLAUDE.md, pre-approve the MCP servers, and drive each server's OAuth from inside the session. The builddown plugin already bundles the tracker server (linear-server), so setup usually does NOT need to write .mcp.json — it only authors .mcp.json for servers the plugin doesn't ship (e.g. github, or a non-default tracker). Trigger when the user says 'bd-project-setup', 'set up the skills', 'setup', 'wire up the relationships', 'configure the MCP servers', 'point Linear at this project', 'connect this repo to Linear/GitHub', or starts using these skills in a new project. Setup automates everything except the single in-browser OAuth approval, which is a hard boundary of OAuth."
+description: "Wire this repo's BuildDown skills to concrete tools for a project — write exactly ONE tracker MCP server (.mcp.json) for the project's tracker.kind (Linear OR Jira, never both), pre-approve it, drive its OAuth from inside the session, and bind the {{PLACEHOLDER}} tokens (tracker workspace/team, GitHub repo, AI-Implement label, build command, etc.) in CLAUDE.md. The builddown plugin ships skills only — it bundles no MCP servers — so every project provisions its own tracker here. Trigger when the user says 'bd-project-setup', 'set up the skills', 'setup', 'wire up the relationships', 'configure the MCP servers', 'point Linear at this project', 'connect this repo to Linear/Jira/GitHub', or starts using these skills in a new project. Setup automates everything except the single in-browser OAuth approval, which is a hard boundary of OAuth."
 metadata:
   suite: builddown
 ---
@@ -11,38 +11,43 @@ Wires the BuildDown skills (bd-build-up, bd-summit-push, bd-build-down, bd-super
 to the concrete tools for **one** project. Everything the skills reference is a `{{PLACEHOLDER}}`
 token; setup turns those tokens into real servers and values.
 
-**What setup can automate:** pre-approving MCP servers, **starting each server's OAuth flow from inside
-the session** (the server's `authenticate` tool returns a link, and `complete_authentication` finishes
-it), and writing the `CLAUDE.md` bindings. It writes `.mcp.json` only when a needed server isn't already
-provided by the plugin.
+**What setup can automate:** writing the project's `.mcp.json`, pre-approving its servers, **starting each
+server's OAuth flow from inside the session** (the server's `authenticate` tool returns a link, and
+`complete_authentication` finishes it), and writing the `CLAUDE.md` bindings.
 
-> **The plugin bundles the tracker server.** When these skills are installed via the `builddown`
-> plugin, the plugin ships its own `.mcp.json` declaring **`linear-server`** (Linear at
-> `https://mcp.linear.app/mcp`). That server travels with the plugin into every project, so for a
-> Linear project you usually do **not** write a project-scoped `.mcp.json` — you just authenticate
-> `linear-server` and record the workspace/team binding.
+> **One tracker per project — Linear XOR Jira.** The `builddown` plugin ships **skills only**; it bundles
+> **no** MCP servers. So each project declares its own tracker in its own `.mcp.json`, and a project has
+> **exactly one** tracker server, chosen by `tracker.kind`:
 >
-> **What actually varies per project — and where it lives:**
-> - **Team** (e.g. `BDS`): a `CLAUDE.md` binding only, passed as a tool *parameter*. Different team →
->   edit `CLAUDE.md`, nothing else. The server is unchanged.
-> - **Workspace**: chosen at OAuth time and tied to the token. A single named server holds **one**
->   workspace's auth at a time.
+> | `tracker.kind` | Server name | Endpoint |
+> |---|---|---|
+> | `linear` | `linear-server` | `https://mcp.linear.app/mcp` |
+> | `jira` | `jira-server` | Atlassian remote MCP (confirm the current URL/transport from Atlassian's docs) |
 >
-> So the bundled `linear-server` is genuinely shared across every project **that lives in the same
-> Linear workspace** (only their `CLAUDE.md` team binding differs). A project in a **different
-> workspace** cannot share it — author a project-scoped server with a **distinct name**
-> (e.g. `linear-<workspace-slug>`), pre-approve it, bind `{{TRACKER}}` to it in that project's
-> `CLAUDE.md`, and authenticate it to that workspace. **Do not reuse the name `linear-server` for a
-> second workspace** — it collides with the bundled server. Also author a project `.mcp.json` for
-> servers the plugin doesn't ship (e.g. `github`) or a non-Linear tracker.
+> Never put both in one project. The two trackers are exact analogs — everything below applies to each:
 >
-> Whatever name a project binds, keep it identical across that server's `.mcp.json` entry,
-> `enabledMcpjsonServers`, the `CLAUDE.md` binding, and the `mcp__<name>__*` tool calls. The bundled
-> default is **`linear-server`**; additional workspaces get their own distinct names.
+> | Concept | Linear | Jira |
+> |---|---|---|
+> | Chosen at OAuth time (one per server token) | **workspace** | **site** (`<site>.atlassian.net`) |
+> | A `CLAUDE.md` binding / tool parameter only | **team** (e.g. `BDS`) | **project / epic** (e.g. `BAC`) |
+> | Issue container | team | project + epic |
+>
+> **What varies per project — and where it lives:**
+> - **Team / project** (the issue container): a `CLAUDE.md` binding only, passed as a tool *parameter*.
+>   Different team → edit `CLAUDE.md`, nothing else; the server is unchanged.
+> - **Workspace / site**: chosen at OAuth time and tied to the token. A single named server holds **one**
+>   workspace/site's auth at a time.
+>
+> Because there's no shared/bundled server, project `.mcp.json` files are independent — two projects in
+> the **same** workspace/site can both use the canonical name (`linear-server` / `jira-server`). If you
+> operate **multiple** workspaces or sites of the same tracker kind and want zero ambiguity in auth, give
+> each a **distinct name** (`linear-<workspace-slug>` / `jira-<site-slug>`). Whatever name a project binds,
+> keep it identical across the `.mcp.json` entry, `enabledMcpjsonServers`, the `CLAUDE.md` binding, and the
+> `mcp__<name>__*` tool calls.
 
 **What setup cannot automate:** the in-browser approval itself. OAuth requires a human to open the link,
-approve, and pick the workspace — there is no token until that happens. But the human never has to leave
-the session to find an MCP panel; setup produces the link and consumes the callback.
+approve, and pick the workspace/site — there is no token until that happens. But the human never has to
+leave the session to find an MCP panel; setup produces the link and consumes the callback.
 
 ---
 
@@ -205,44 +210,52 @@ start; the rest can be filled in later as the project needs them.
 | `{{PLAN_DIR}}` | "Where do plan drafts go?" | `docs/plans/` (default) |
 | `{{ARCHITECT_NAME}}` | "Persona name for bd-mega-build-up review?" | — |
 
-## Phase 2 — `.mcp.json` (only for servers the plugin doesn't bundle)
+## Phase 2 — Write `.mcp.json` (one tracker server, by `tracker.kind`)
 
-**Skip this phase for the tracker on a Linear project in your default workspace** — the `builddown`
-plugin already ships `linear-server`. Run it only to:
-- add a server the plugin doesn't bundle (`github`),
-- point at a **non-Linear tracker**, or
-- point at a **different Linear workspace** than the bundled `linear-server`'s auth.
+Write **exactly one** tracker server, matching `tracker.kind`. Each tracker exposes a single fixed remote
+endpoint; the workspace/site is chosen at OAuth time, never in the URL (never put a
+`linear.app/<workspace>/...` or `<site>.atlassian.net` web URL in `url`).
 
-Linear and GitHub both expose a single fixed remote endpoint each. The **workspace** is chosen at OAuth
-time, not in the URL. Never put a `linear.app/<workspace>/...` web URL in the server `url`.
+**Linear project** (`tracker.kind: linear`):
 
 ```json
 {
   "mcpServers": {
-    "github": { "type": "http", "url": "https://api.githubcopilot.com/mcp/" }
+    "linear-server": { "type": "http", "url": "https://mcp.linear.app/mcp" }
   }
 }
 ```
 
-**Different-workspace tracker.** A single named server holds one workspace's OAuth, so a project in a
-*second* workspace needs its own server under a **distinct name** — `linear-<workspace-slug>`, never
-`linear-server` (that collides with the bundled server). Bind `{{TRACKER}}` to this name in the
-project's `CLAUDE.md`:
+**Jira project** (`tracker.kind: jira`):
 
 ```json
-{ "mcpServers": { "linear-acme": { "type": "http", "url": "https://mcp.linear.app/mcp" } } }
+{
+  "mcpServers": {
+    "jira-server": { "type": "http", "url": "https://mcp.atlassian.com/v1/sse" }
+  }
+}
 ```
 
-Only write a bare `linear-server` here if the plugin is **not** installed in this project (no bundled
-server exists to collide with). Validate the file parses (`python3 -m json.tool .mcp.json`).
+> Confirm the current Atlassian remote-MCP URL and transport (`http` vs `sse`) against Atlassian's docs
+> before committing — the tracker adapters discover Jira tool names at runtime, but the server URL must be
+> right. Do **not** add a Linear server to a Jira project or vice versa: one tracker per project.
 
-> **Reuse the existing server name (from Step 0.2b).** If a tracker is already permissioned under a name
-> in `permissions.allow` (e.g. `mcp__linear-acme__*`) or already Connected, use **that** name as the
-> `mcpServers` key — don't introduce a second name for the same workspace. A mismatch means the server
-> won't inherit the existing approval and the Phase 3 pre-approval and Phase 5 OAuth will target the
-> wrong name. Keep the key identical across `.mcp.json`, `enabledMcpjsonServers`, the `CLAUDE.md`
-> binding, and the `mcp__<name>__*` tool calls. The bundled default is **`linear-server`**; each
-> additional workspace gets its own distinct name.
+Add `github` **only if** the project needs GitHub MCP operations (it is not a tracker, so it doesn't
+break the one-tracker rule):
+
+```json
+{ "mcpServers": { "github": { "type": "http", "url": "https://api.githubcopilot.com/mcp/" } } }
+```
+
+Include only the servers the project actually uses. Validate it parses (`python3 -m json.tool .mcp.json`).
+
+> **Reuse an already-permissioned name (from Step 0.2b).** If this project already has the tracker
+> permissioned under a name in `permissions.allow` (e.g. `mcp__linear-server__*`) or already Connected,
+> use **that** name as the `mcpServers` key rather than introducing a second one — a mismatch means the
+> server won't inherit the existing approval and Phase 3/Phase 5 will target the wrong name. Keep the key
+> identical across `.mcp.json`, `enabledMcpjsonServers`, the `CLAUDE.md` binding, and the `mcp__<name>__*`
+> tool calls. Canonical names: **`linear-server`** / **`jira-server`**; for multiple workspaces/sites of
+> the same kind, use distinct `linear-<slug>` / `jira-<slug>` names.
 
 ## Phase 3 — Pre-approve the servers (skip the trust prompt)
 
@@ -255,43 +268,56 @@ Project `.mcp.json` servers are untrusted until enabled. Add them to the **share
 }
 ```
 
-List every server the project relies on, **including the plugin-bundled `linear-server`** — pre-approving
-it here means the bundled tracker never triggers a trust prompt in this project. Use the shared
-`settings.json` (not `settings.local.json`, which is gitignored and personal) so new joiners get the
-approval. (`enableAllProjectMcpServers: true` trusts every server in `.mcp.json` at once.)
+List exactly the servers in this project's `.mcp.json` — the one tracker (`linear-server` **or**
+`jira-server`) plus `github` if used. Use the shared `settings.json` (not `settings.local.json`, which is
+gitignored and personal) so new joiners get the approval. (`enableAllProjectMcpServers: true` trusts every
+server in `.mcp.json` at once.)
 
 ## Phase 4 — Write the `CLAUDE.md` bindings
 
 Record the placeholder → value mapping at the project level so every skill resolves the same tools. At
 minimum, the tracker workspace + **team** must be explicit, because issues get filed there.
 
+**Linear:**
+
 ```md
 ## Issue tracker — Linear
 - tracker.kind: linear
-- MCP server: `linear-server` (bundled by the builddown plugin; pre-approved in .claude/settings.json)
+- MCP server: `linear-server` (project .mcp.json; pre-approved in .claude/settings.json)
 - Workspace: `eudoxus` (bound at OAuth time)
 - Team: `BDS`  ← issues filed/listed/searched against this team
 - Team URL: https://linear.app/eudoxus/team/BDS/overview
 ```
 
+**Jira** (same shape; site replaces workspace, project/epic replaces team):
+
+```md
+## Issue tracker — Jira
+- tracker.kind: jira
+- MCP server: `jira-server` (project .mcp.json; pre-approved in .claude/settings.json)
+- Site: `cloudshare` (cloudshare.atlassian.net — bound at OAuth time)
+- Project / epic: `BAC` / epic `BAC-23858`  ← issues filed as children of this epic
+- Browse URL: https://cloudshare.atlassian.net/browse/{KEY}
+```
+
 ## Phase 5 — Authenticate each server (driven from the session)
 
-Once a server is approved (Phase 3) but unauthenticated, it surfaces two auth tools — for the bundled
-Linear server, `mcp__linear-server__authenticate` and `mcp__linear-server__complete_authentication`
-(other servers follow the same `mcp__<server>__authenticate` pattern). Drive the flow without sending the
+Once a server is approved (Phase 3) but unauthenticated, it surfaces two auth tools —
+`mcp__<server>__authenticate` and `mcp__<server>__complete_authentication` (e.g.
+`mcp__linear-server__authenticate` / `mcp__jira-server__authenticate`). Drive the flow without sending the
 user to an MCP panel:
 
 1. **Start the flow.** Call `mcp__<server>__authenticate`. It returns an authorization URL.
-2. **Hand the user the link.** Ask them to open it, approve, and — for Linear — **select the target
-   workspace** (e.g. `eudoxus`) in the grant.
+2. **Hand the user the link.** Ask them to open it, approve, and **select the target workspace** (Linear,
+   e.g. `eudoxus`) or **site** (Jira, e.g. `cloudshare.atlassian.net`) in the grant.
 3. **Finish the flow.** Two outcomes:
    - The redirect page loads and auth completes automatically — the server's real tools appear. Done.
    - The redirect page shows a connection error (common when nothing is listening on the
      `http://localhost:<port>/callback` redirect). Ask the user to copy the **full URL from the browser
      address bar** and call `mcp__<server>__complete_authentication` with it as `callback_url`.
 4. **Verify.** `claude mcp list` should show the server **Connected** (not Pending / Needs
-   authentication). Confirm the workspace by listing teams (`list_teams`) and checking the target team is
-   present.
+   authentication). Confirm the right workspace/site by listing the container — Linear: `list_teams`,
+   checking the target team is present; Jira: list projects / the target epic's children — before filing.
 
 > Note: the in-browser approval is the one irreducible human step. Everything around it — starting the
 > flow, presenting the link, consuming the callback, verifying — runs from inside the session.
@@ -300,8 +326,11 @@ user to an MCP panel:
 
 ## Notes
 
+- The `builddown` plugin bundles **no** MCP servers — it ships skills only. Every project provisions its
+  own one tracker here, so a Linear project never carries a Jira server and vice versa.
 - `.mcp.json` is safe to commit — endpoints are non-secret and OAuth tokens are stored separately. Only
   gitignore it if a project wants per-developer server choices.
 - Re-running setup is safe: it merges into existing config rather than clobbering it.
-- For a different Linear workspace later, re-authenticate the server and pick the new workspace — the URL
-  never changes.
+- For a different workspace/site later, re-authenticate the same server and pick the new one — the URL
+  never changes. (Switching `tracker.kind` between Linear and Jira means replacing the one tracker server,
+  not adding a second.)
