@@ -129,6 +129,24 @@ For each issue, estimate which files it will touch based on description and code
 
 In chat: blast radius is an estimate from description + project knowledge. In code-execution: verify against actual repo state. State confidence accordingly.
 
+**2e. Feature-branch grouping (Linear only)**
+
+When the plan contains a parent/child **feature node** (`docs/feature-branch-grouping.md`), the dependency
+graph is not "all PRs → base." Model the **cascade**:
+
+- Leaf children PR into their parent's **feature branch** (`ai-implement/feature/<key>`), not the base.
+- A parent's **own closing work** is implicitly `Blocked by:` all its labelled children — it runs only
+  after they're terminal. Schedule it last on the parent's branch.
+- **Internal roll-ups** (child feature branch → parent branch) are automatic direct merges, **not nodes
+  that need scheduling**.
+- The **critical path runs *through* the feature node** and ends at the single **top-of-tree
+  `feature → base` PR** (the human gate). Time-to-land = longest leaf→…→top chain, plus the human review.
+- **Labelling sequence:** whole-tree labelling is safe (the race guard keeps a parent from being worked
+  before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to base before its
+  children.
+
+(Jira: no grouping — keep the flat "all PRs → base" model.)
+
 ### Phase 3: One-Shot Quality Audit
 
 Evaluate each issue description for one-shot success likelihood through the AI coding agent.
@@ -262,6 +280,13 @@ Scope: {N} issues, {points} story points, {tracks} parallel tracks
 
 - Track A: {description} — Issues: {list} — No overlap
 - Track B: {description} — Issues: {list} — ⚠️ Overlaps with Track A on {files}
+
+## Feature-branch trees (Linear grouping)
+
+{For each feature node: its feature branch `ai-implement/feature/<key>`, the child issues that PR into it,
+and the parent's deferred closing work. Grouped children form a track whose merges target the feature
+branch, not base. The tree's terminal node is the top-of-tree `feature → base` PR — the human gate, merged
+last, never auto-merged. Omit this section when there are no feature nodes / on Jira.}
 
 ## Migration Sequence
 
