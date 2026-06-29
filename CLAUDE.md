@@ -49,3 +49,14 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 ## Preview deployment — `{{PREVIEW_HOST}}` / `{{AUTH_PROVIDER}}`
 
 - *(not applicable — this repo has no preview deployments; bd-smoke-jumper is not used here)*
+
+## Releasing — ⚠️ bump the plugin version on every skill change
+
+> **Reminder:** the plugin **`version`** is the *only* signal that tells `/plugin update` (and the
+> marketplace) to pull new content. `marketplace.json` carries no version — it just sources `./plugin`.
+
+- **Any change to `plugin/skills/**` (or other shipped plugin content) must bump `version` in
+  [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** Skip it and
+  installs keep serving the stale skills.
+- **Minor** (`0.x.0`) for additive / backward-compatible changes; **patch** (`0.0.x`) for fixes and wording.
+- Current: **`0.5.0`**.
