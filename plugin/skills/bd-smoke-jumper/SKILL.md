@@ -104,6 +104,7 @@ Before running tests, check if a bd-smoke-jumper report already exists on the PR
 - Preview deploy URL: `{{PREVIEW_HOST}}` substituted with the PR number
 - Associated tracker issue ID (from PR title or body)
 - Changed files list (`get_pull_request_files`)
+- The PR's **base branch** — for a grouped **child PR** (Linear feature-branch grouping) this is a feature branch `ai-implement/feature/<key>`, not the repo base; the preview reflects this PR's slice *on top of the feature branch* (see the grouping note in Phase 2)
 
 ---
 
@@ -160,6 +161,19 @@ Examples of what workstream profiles look like (replace with project-specific en
 - "Map view" profile → verify map renders, watch for z-index issues with overlays, check status markers, verify filters work
 - "List view" profile → verify table renders, check sort/filter state, verify pagination
 - "Form/config view" profile → verify form fields render, check validation, test save flow
+
+### 2e. Feature-branch grouping (Linear only)
+
+Under AI-Implement parent/child **feature-branch grouping** (`docs/feature-branch-grouping.md`), a child PR
+targets a feature branch, not the repo base. Two implications for what you're actually testing:
+
+- A **child PR's** preview reflects *this slice on top of the feature branch* (the feature-in-progress),
+  not on top of the Default Branch. Read 🟡 data/empty-state results in that light.
+- When a feature is complete, the **top-of-tree `feature → base` PR** (`[ai-implement] Feature branch ready
+  for review`) is the highest-value smoke target: smoke-test the **whole integrated feature branch** before
+  a human merges it. bd-super-build-down dispatches exactly this before surfacing that PR for human merge.
+
+(Jira: no grouping — every PR targets base; skip this.)
 
 ---
 

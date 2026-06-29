@@ -383,3 +383,8 @@ user to an MCP panel:
 - For a different workspace/site later, re-authenticate the same server and pick the new one — the URL
   never changes. (Switching `tracker.kind` between Linear and Jira means replacing the one tracker server,
   not adding a second.)
+- **Feature-branch grouping (Linear only).** If a project will use AI-Implement parent/child
+  *feature-branch grouping*, re-sync workflows so the target repo's `claude-implement.yml` accepts the
+  `base_branch` input — un-synced repos 422 on grouped dispatch (the non-grouped path keeps working).
+  Grouping is **Linear-only**: the Jira path always PRs to the base branch. Full model:
+  `docs/feature-branch-grouping.md`.
