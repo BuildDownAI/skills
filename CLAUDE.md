@@ -24,6 +24,9 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
   `https://ai-implement-testing-orchestrator.fly.dev/admin#projects`
 - **Team it polls:** `BDS` — so labeled BDS issues are safe to experiment with; they do not touch the
   production AI-Implement backlog (team AI-Implement / AII-*).
+- **Feature-branch grouping behaviour** the skills must respect (parent/child feature nodes, child PRs into
+  `ai-implement/feature/<key>`, internal roll-ups vs the top-of-tree human-gate PR): see
+  `docs/feature-branch-grouping.md`.
 
 ## GitHub repo — `{{REPO}}`
 
