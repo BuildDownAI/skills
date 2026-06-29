@@ -223,7 +223,7 @@ When a PR has a conflict:
 - Both branches added config entries → keep both
 - Independent additions to the same file with no functional overlap
 
-Post an agent comment (Phase 3 template) instructing `git merge main` and keeping both sets of changes. Do not merge until the agent resolves and re-verifies.
+Post an agent comment (Phase 3 template) instructing `git merge <the PR's base branch>` — the feature branch for a grouped child PR (§2i), else `main` — and keeping both sets of changes. Do not merge until the agent resolves and re-verifies.
 
 **If the conflict involves business logic (escalate):**
 - Both branches modified the same function differently
@@ -245,7 +245,7 @@ PRs that show "No data" or "Not found" errors in preview usually indicate mock d
 Before merging anything, check for file overlap across open PRs:
 
 - Via GitHub MCP: `get_pull_request_files` for each open PR, compare paths
-- Via code-execution environment: `git diff --name-only origin/main...origin/{branch}` per branch, then `comm -12` on sorted outputs
+- Via code-execution environment: `git diff --name-only origin/{base}...origin/{branch}` per branch, then `comm -12` on sorted outputs. Use each PR's **real base** — for a grouped child PR (§2i) that's the feature branch `ai-implement/feature/<key>`, not `main`
 
 If any two open PRs touch the same file:
 - Flag in the triage table: "⚠️ Overlaps with PR #X on `{file}`"
@@ -261,6 +261,31 @@ Recommended merge order (when no overlap or dependencies dictate):
 4. Oldest among equals (don't let PRs go stale)
 
 Phase 2h's ordering rules override any default "oldest first" instinct.
+
+### 2i. Feature-branch grouping (Linear only)
+
+When AI-Implement parent/child **feature-branch grouping** is in play, not every PR targets the repo base
+branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
+
+- **Recognize the PR class by base branch + title:**
+  - **Child PR** — base is a feature branch `ai-implement/feature/<key>` (not the repo base). Drive it to
+    merge like any normal PR, but *all conflict and diff operations use that feature branch as base, not
+    `main`* (see §2f, §2h).
+  - **Top-of-tree PR** — title `[ai-implement] Feature branch ready for review`, head
+    `ai-implement/feature/<key>` → repo base. This is the **human-review gate for the whole integrated
+    feature.** Review the feature branch as a unit; merge it **last**, after every child has landed (see
+    Phase 4 merge criteria).
+- **Internal roll-ups are NOT PRs.** AI-Implement merges a completed child feature branch into its
+  parent's branch with a direct `git merge` (commit `[ai-implement] Automated feature-branch roll-up`).
+  Don't look for a roll-up PR and don't create one.
+- **A roll-up can conflict silently.** Symptom: a child issue is Done but its work is missing from the
+  parent feature branch (or the parent's closing-work PR is missing expected child changes). That's a
+  **roll-up conflict** needing a manual `git merge` of the child feature branch into the parent — surface
+  it as a manual step (Phase 5), don't `@agent` it.
+- **Merge order is bottom-up:** leaf child PRs → parent's closing-work PR → (internal roll-ups happen
+  automatically) → top-of-tree PR last.
+
+(Jira: no grouping — every PR targets the base branch; skip this subsection.)
 
 ---
 
@@ -285,6 +310,8 @@ This should be a scoped change within this PR — no need to open a new branch.
 ```
 
 ### Template: merge conflict
+
+> For a grouped **child PR** (§2i), replace `main` with the PR's feature branch `ai-implement/feature/<key>` everywhere in this template — that's the PR's real base.
 
 ```
 @agent There is a merge conflict in `{file path}`. Please resolve by running `git merge main` and keeping both sets of changes:
@@ -313,7 +340,7 @@ If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a
 ### Posting rules
 
 - **Never wrap the agent mention in backticks** — markdown rendering can prevent the agent from recognizing it
-- **Always instruct `git merge main` explicitly** for conflict resolution — many coding agents default to forward-port, which leaves conflicts visible on GitHub
+- **Always instruct `git merge <base branch>` explicitly** for conflict resolution — the PR's base (the feature branch for a grouped child PR per §2i, else `main`); many coding agents default to forward-port, which leaves conflicts visible on GitHub
 - **Include the build command as verification** for any typed-code change
 - **Post autonomously** for agent-fixable gaps and clear-cut conflicts
 - **Post via GitHub MCP** (`add_issue_comment` or PR comment equivalent) as the primary method
@@ -338,6 +365,7 @@ A PR is clean to merge when all of these are true:
 - ✅ No SQL migrations (those escalate per 2e)
 - ✅ No auth/security changes (those escalate per 2d)
 - ✅ Verified ✅ Implemented claims hold up
+- ✅ Not the **top-of-tree `feature → base` PR** — that one is a human-review gate (§2i); surface it, review the integrated feature, and merge it explicitly last, never as a routine auto-merge
 
 Merge via GitHub MCP using squash merge as the default method. After merging:
 
