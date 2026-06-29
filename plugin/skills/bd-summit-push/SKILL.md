@@ -134,7 +134,7 @@ In chat: blast radius is an estimate from description + project knowledge. In co
 When the plan contains a parent/child **feature node** (`docs/feature-branch-grouping.md`), the dependency
 graph is not "all PRs → base." Model the **cascade**:
 
-- Leaf children PR into their parent's **feature branch** (`ai-implement/feature/<key>`), not the base.
+- Leaf children PR into their parent's **feature branch** (`ai-implement/feature/<key>`), not the Default Branch.
 - A parent's **own closing work** is implicitly `Blocked by:` all its labelled children — it runs only
   after they're terminal. Schedule it last on the parent's branch.
 - **Internal roll-ups** (child feature branch → parent branch) are automatic direct merges, **not nodes
@@ -142,8 +142,8 @@ graph is not "all PRs → base." Model the **cascade**:
 - The **critical path runs *through* the feature node** and ends at the single **top-of-tree
   `feature → base` PR** (the human gate). Time-to-land = longest leaf→…→top chain, plus the human review.
 - **Labelling sequence:** whole-tree labelling is safe (the race guard keeps a parent from being worked
-  before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to base before its
-  children.
+  before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
+  before its children.
 
 (Jira: no grouping — keep the flat "all PRs → base" model.)
 
@@ -361,7 +361,7 @@ Given open PRs:
 
 - Are multiple open PRs adding SQL migrations?
 - Which should merge first? (Simpler/additive before destructive, typically)
-- Pre-draft the `git merge main` agent comment for the second PR
+- Pre-draft the `git merge <base branch>` agent comment for the second PR (its base — feature branch for a grouped child, else the **Default Branch**, never assumed `main`)
 
 **2d. Dependency gap detection**
 
@@ -370,7 +370,7 @@ Given open PRs:
 
 **2e. Codebase drift detection**
 
-- PRs modifying the same area — later PRs may be working against a stale view of main
+- PRs modifying the same area — later PRs may be working against a stale view of the Default Branch
 - Flag any PR open for >3 days — increasingly likely to need rebase
 
 ### Phase 3: Risk Report

@@ -60,7 +60,7 @@ State the environment at session start and adapt.
 - Issues filed with `state: Todo` and label `{{IMPLEMENT_LABEL}}` are picked up within minutes
 - Issues filed with `state: Backlog` sit until explicitly promoted
 - The default filing state depends on the bd-build-up's intent — see Phase 3
-- **Parent/child trees become feature nodes (Linear only).** A parent labelled `{{IMPLEMENT_LABEL}}` with labelled children owns a feature branch `ai-implement/feature/<key>`; children PR **into that branch**, not the base, and the tree rolls up to one human-reviewed `feature → base` PR. See `docs/feature-branch-grouping.md`. (Jira: no grouping.)
+- **Parent/child trees become feature nodes (Linear only).** A parent labelled `{{IMPLEMENT_LABEL}}` with labelled children owns a feature branch `ai-implement/feature/<key>`; children PR **into that branch**, not the **Default Branch**, and the tree rolls up to one human-reviewed `feature → base` PR. See `docs/feature-branch-grouping.md`. (Jira: no grouping.)
 
 ---
 
@@ -214,7 +214,7 @@ If any of those fail, split the issue.
 
 **Backend before frontend.** Schema migrations and API endpoints are separate issues that ship before UI issues that consume them. Prevents the bd-build-down footgun where a frontend PR merges but its migration hasn't been applied.
 
-**Feature-node trees (Linear grouping).** When you decompose into a parent + children, the labelled parent becomes a *feature node*: children PR into its feature branch `ai-implement/feature/<key>` (not the base), and the parent's own closing work is `Blocked by:` all its children (it runs last). Label the whole tree at once — the race guard keeps the parent from being worked before a child carries `{{IMPLEMENT_LABEL}}`. See `docs/feature-branch-grouping.md`. (Jira: no grouping.)
+**Feature-node trees (Linear grouping).** When you decompose into a parent + children, the labelled parent becomes a *feature node*: children PR into its feature branch `ai-implement/feature/<key>` (not the Default Branch), and the parent's own closing work is `Blocked by:` all its children (it runs last). Label the whole tree at once — the race guard keeps the parent from being worked before a child carries `{{IMPLEMENT_LABEL}}`. See `docs/feature-branch-grouping.md`. (Jira: no grouping.)
 
 **Routing rules:**
 - **Architect (`{{ARCHITECT_NAME}}`)** — schema migrations, security policies, infra, complex architecture. Assign these directly, do not label `{{IMPLEMENT_LABEL}}`.
@@ -291,7 +291,7 @@ bd-build-up's job is to launch work, not park it. Get the agents going. File iss
 - **Wave 1** (issues with no dependencies) → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Pipeline picks up within minutes.
 - **Wave 2+** (issues with unmet dependencies) → `state: Backlog`. Promote to Todo during bd-build-down as blockers merge.
 - **Architect-routed issues** (schema, security, infra) → `state: Todo`, assigned to the architect, no `{{IMPLEMENT_LABEL}}`. The architect decides their own sequencing.
-- **Feature-node trees (Linear grouping)** → label the parent *and* its children together. The children PR into the feature branch `ai-implement/feature/<key>` (not the base); the parent's own closing work waits until every child lands (the race guard makes whole-tree labelling safe). Don't expect the parent to merge to base before its children. See `docs/feature-branch-grouping.md`.
+- **Feature-node trees (Linear grouping)** → label the parent *and* its children together. The children PR into the feature branch `ai-implement/feature/<key>` (not the Default Branch); the parent's own closing work waits until every child lands (the race guard makes whole-tree labelling safe). Don't expect the parent to merge to the Default Branch before its children. See `docs/feature-branch-grouping.md`.
 
 This is the point of a bd-build-up. A well-staged bd-build-up has Wave 1 running by the time the session ends.
 

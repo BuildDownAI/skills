@@ -10,7 +10,8 @@ in AI-Implement: `docs/feature-branch-grouping.md`, `src/feature-branch.ts`, `sr
 this doc.
 
 > **Linear-only.** Feature-branch grouping exists only on the Linear provider. On Jira there is no
-> grouping: every `AI-Implement` issue PRs straight to the repo base branch, and everything below is
+> grouping: every `AI-Implement` issue PRs straight to the **Default Branch** (the repo's configured
+> default — `mapping.defaultBranch`, e.g. `testing`; **not** necessarily `main`), and everything below is
 > moot. The skills' grouping sections all carry this caveat.
 
 ---
@@ -21,16 +22,16 @@ A Linear issue tree maps onto a tree of git branches.
 
 - A **feature node** is an issue that carries the `AI-Implement` label *and* has at least one
   `AI-Implement` child. It owns a long-running **feature branch** `ai-implement/feature/<key>`.
-- Its labelled **children PR into that feature branch**, not into the repo base branch.
+- Its labelled **children PR into that feature branch**, not into the **Default Branch**.
 - The tree is **recursive**: a child that is itself a feature node gets its own feature branch cut from
   its parent's, and so on.
 - A feature node can also carry **its own closing work** (work not done in any child — e.g. a final
   cleanup). That work runs **last**, after all children land, on the node's own feature branch.
 - Completed feature branches **roll up** into their parent's branch automatically; the single
-  top-of-tree merge into the base branch is left as a human-reviewed PR.
+  top-of-tree merge into the **Default Branch** is left as a human-reviewed PR.
 
 ```
-testing                                  (repo base branch)
+testing                                  (the repo's Default Branch)
 └─ ai-implement/feature/PROJ-100         parent PROJ-100 (feature node)
    ├─ ai-implement/feature/PROJ-101      child PROJ-101 (also a feature node)
    │   ├─ child PR: PROJ-103 ──────────► feature/PROJ-101
@@ -40,15 +41,15 @@ testing                                  (repo base branch)
 
 ## 2. What changes vs the flat model
 
-The skills were written for a **flat** model: every `AI-Implement` issue PRs to the base branch and is
+The skills were written for a **flat** model: every `AI-Implement` issue PRs to the Default Branch and is
 independently mergeable, ordered only by `Blocked by:`. Under grouping:
 
-- **Children no longer PR to base.** A child PR's base is its parent's feature branch. Diff, conflict,
-  and merge operations use that branch, not `main`/`testing`.
+- **Children no longer PR to the Default Branch.** A child PR's base is its parent's feature branch. Diff,
+  conflict, and merge operations use that feature branch, not the Default Branch.
 - **Sequencing runs *through* the feature node**, not around it. The critical path is leaf → … →
   feature branch → top-of-tree PR.
 - **One human-gate PR at the top** replaces N independent merges. The reviewer sees the whole integrated
-  feature once, instead of merging each child to base separately.
+  feature once, instead of merging each child to the Default Branch separately.
 
 ## 3. Classification & the race guard
 
@@ -66,7 +67,7 @@ Each poll, AI-Implement classifies every `AI-Implement`, non-terminal issue:
 
 **Planning consequence:** label the whole tree at once and let the gates sequence it. A parent's own
 closing work is effectively `Blocked by:` all its labelled children. Never write a parent that must merge
-to base *before* its children — children PR into the parent's branch, not the reverse.
+to the Default Branch *before* its children — children PR into the parent's branch, not the reverse.
 
 ## 4. The roll-up (merge-up)
 
@@ -92,7 +93,7 @@ step — merge the child feature branch into the parent yourself; don't `@agent`
 
 | Skill | What grouping changes |
 |---|---|
-| **bd-build-down** | Recognize a **child PR** (base = a feature branch) vs the **top-of-tree PR** (human gate, merged last). Internal roll-ups aren't PRs. A roll-up conflict = manual merge. Conflict base = the feature branch, not `main`. Merge bottom-up. |
+| **bd-build-down** | Recognize a **child PR** (base = a feature branch) vs the **top-of-tree PR** (human gate, merged last). Internal roll-ups aren't PRs. A roll-up conflict = manual merge. Conflict base = the feature branch, not the Default Branch. Merge bottom-up. |
 | **bd-super-build-down** | Same, plus: **never auto-merge the top-of-tree PR** — drive the children, let internal roll-ups happen, smoke-test the integrated branch, then surface the top PR for a human. |
 | **bd-summit-push** | Model the cascade (leaf → feature branch → roll-up → top PR); the critical path ends at the top-of-tree human gate. |
 | **bd-mega-build-up / bd-build-up** | Plan parent + children as a feature node; the parent's closing work is `Blocked by:` all children; whole-tree labelling is race-guard-safe; children PR into the feature branch. |
@@ -100,13 +101,13 @@ step — merge the child feature branch into the parent yourself; don't `@agent`
 
 ## 6. Boundaries & prerequisites
 
-- **Linear-only** — Jira always PRs to base; no grouping.
+- **Linear-only** — Jira always PRs to the Default Branch; no grouping.
 - **Workflows must accept `base_branch`.** AI-Implement passes the resolved feature branch to the runner
   as the `base_branch` workflow input. The target repo's `claude-implement.yml` must accept it — **re-sync
   workflows before relying on grouping**, or grouped dispatch 422s. (Un-synced repos still work for the
   non-grouped path, because the orchestrator only sends `base_branch` when grouping moved it off the
   default.)
-- **Fails open.** Any branch-resolution error falls back to the base branch, so a grouping failure never
+- **Fails open.** Any branch-resolution error falls back to the Default Branch, so a grouping failure never
   blocks the work — it just degrades to the flat model for that issue.
 
 ## 7. Upstream source of truth

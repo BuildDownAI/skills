@@ -140,7 +140,7 @@ Clean enough to handle autonomously but has one manageable issue:
 **Action:**
 - For agent-fixable gaps: post the agent comment autonomously. Do not merge until the fix cycles through and the PR re-enters triage clean.
 - For data-only 🟡: merge, log the caveat as out-of-scope.
-- For clear-cut conflicts: post `git merge main` agent comment autonomously. Do not merge until resolved.
+- For clear-cut conflicts: post a `git merge <base branch>` agent comment autonomously — `<base branch>` is the PR's base (a feature branch for a grouped child PR, otherwise the **Default Branch**; never `main` by assumption). Do not merge until resolved.
 
 ### Tier 3: Escalate (batch, not inline)
 
@@ -202,7 +202,7 @@ For agent-fixable gaps:
 3. Do not merge — the PR will re-enter triage when the agent resolves and CI goes green
 
 For clear-cut conflicts:
-1. Post `git merge main` agent comment
+1. Post a `git merge <base branch>` agent comment (the PR's base — feature branch for a grouped child, else the **Default Branch**)
 2. Log one line: `💬 Conflict resolution agent comment posted on PR #{N}`
 3. Do not merge
 
@@ -434,7 +434,7 @@ Abort means: finish writing the session summary (including what was completed an
 
 Same as bd-build-down:
 - Never wrap the agent mention in backticks
-- Always instruct `git merge <base branch>` explicitly for conflict resolution — the PR's base (the feature branch for a grouped child PR, else `main`)
+- Always instruct `git merge <base branch>` explicitly for conflict resolution — the PR's base (a feature branch for a grouped child PR, otherwise the **Default Branch**; not assumed to be `main`)
 - Include `{{BUILD_CMD}}` as verification for typed-code changes
 - Resolve `{ISSUE-ID}` placeholders to real IDs before posting
 

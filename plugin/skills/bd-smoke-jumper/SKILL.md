@@ -168,7 +168,7 @@ Under AI-Implement parent/child **feature-branch grouping** (`docs/feature-branc
 targets a feature branch, not the repo base. Two implications for what you're actually testing:
 
 - A **child PR's** preview reflects *this slice on top of the feature branch* (the feature-in-progress),
-  not on top of production base. Read 🟡 data/empty-state results in that light.
+  not on top of the Default Branch. Read 🟡 data/empty-state results in that light.
 - When a feature is complete, the **top-of-tree `feature → base` PR** (`[ai-implement] Feature branch ready
   for review`) is the highest-value smoke target: smoke-test the **whole integrated feature branch** before
   a human merges it. bd-super-build-down dispatches exactly this before surfacing that PR for human merge.

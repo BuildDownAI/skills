@@ -223,7 +223,7 @@ When a PR has a conflict:
 - Both branches added config entries → keep both
 - Independent additions to the same file with no functional overlap
 
-Post an agent comment (Phase 3 template) instructing `git merge <the PR's base branch>` — the feature branch for a grouped child PR (§2i), else `main` — and keeping both sets of changes. Do not merge until the agent resolves and re-verifies.
+Post an agent comment (Phase 3 template) instructing `git merge <the PR's base branch>` — the branch the PR actually targets: a feature branch for a grouped child PR (§2i), otherwise the repo's **Default Branch** (resolve to the real ref; **never assume `main`** — it may be `testing`, `develop`, etc.) — and keeping both sets of changes. Do not merge until the agent resolves and re-verifies.
 
 **If the conflict involves business logic (escalate):**
 - Both branches modified the same function differently
@@ -245,7 +245,7 @@ PRs that show "No data" or "Not found" errors in preview usually indicate mock d
 Before merging anything, check for file overlap across open PRs:
 
 - Via GitHub MCP: `get_pull_request_files` for each open PR, compare paths
-- Via code-execution environment: `git diff --name-only origin/{base}...origin/{branch}` per branch, then `comm -12` on sorted outputs. Use each PR's **real base** — for a grouped child PR (§2i) that's the feature branch `ai-implement/feature/<key>`, not `main`
+- Via code-execution environment: `git diff --name-only origin/{base}...origin/{branch}` per branch, then `comm -12` on sorted outputs. Use each PR's **real base** — a feature branch `ai-implement/feature/<key>` for a grouped child PR (§2i), otherwise the **Default Branch** (which is not necessarily `main`) — never hard-code `main`
 
 If any two open PRs touch the same file:
 - Flag in the triage table: "⚠️ Overlaps with PR #X on `{file}`"
@@ -270,7 +270,7 @@ branch. See `docs/feature-branch-grouping.md` for the full model. What changes f
 - **Recognize the PR class by base branch + title:**
   - **Child PR** — base is a feature branch `ai-implement/feature/<key>` (not the repo base). Drive it to
     merge like any normal PR, but *all conflict and diff operations use that feature branch as base, not
-    `main`* (see §2f, §2h).
+    the Default Branch* (see §2f, §2h).
   - **Top-of-tree PR** — title `[ai-implement] Feature branch ready for review`, head
     `ai-implement/feature/<key>` → repo base. This is the **human-review gate for the whole integrated
     feature.** Review the feature branch as a unit; merge it **last**, after every child has landed (see
@@ -311,13 +311,13 @@ This should be a scoped change within this PR — no need to open a new branch.
 
 ### Template: merge conflict
 
-> For a grouped **child PR** (§2i), replace `main` with the PR's feature branch `ai-implement/feature/<key>` everywhere in this template — that's the PR's real base.
+> Resolve `<base branch>` below to the PR's real base before posting: a feature branch `ai-implement/feature/<key>` for a grouped **child PR** (§2i), otherwise the repo's **Default Branch** — **not** necessarily `main`.
 
 ```
-@agent There is a merge conflict in `{file path}`. Please resolve by running `git merge main` and keeping both sets of changes:
+@agent There is a merge conflict in `{file path}`. Please resolve by running `git merge <base branch>` and keeping both sets of changes:
 
 - **From this branch ({ISSUE-ID}):** {what this branch added — be specific about functions, components, logic}
-- **From main ({OTHER-ID}):** {what main added that conflicts}
+- **From the base branch ({OTHER-ID}):** {what the base branch added that conflicts}
 
 These changes are complementary — {one sentence on why both should coexist}. Do not discard either set.
 
@@ -333,14 +333,15 @@ For PRs with multiple conflicts, use labeled sections (Conflict 1, Conflict 2, e
 Before posting, resolve every `{ISSUE-ID}` placeholder to the real issue ID:
 
 - This PR's issue: from the PR title or branch name
-- The main-side conflicting issue: check recent merge history via GitHub MCP `list_pull_requests` with state closed, find the PR that touched the same file, read its linked issue
+- The base-side conflicting issue (whatever already landed on the PR's base): check recent merge history via GitHub MCP `list_pull_requests` with state closed, find the PR that touched the same file, read its linked issue
+- The `<base branch>` placeholder: resolve to the PR's actual base ref — the repo's **Default Branch**, or a feature branch `ai-implement/feature/<key>` for a grouped child (§2i). Never hard-code `main`
 
 If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a posted comment.
 
 ### Posting rules
 
 - **Never wrap the agent mention in backticks** — markdown rendering can prevent the agent from recognizing it
-- **Always instruct `git merge <base branch>` explicitly** for conflict resolution — the PR's base (the feature branch for a grouped child PR per §2i, else `main`); many coding agents default to forward-port, which leaves conflicts visible on GitHub
+- **Always instruct `git merge <base branch>` explicitly** for conflict resolution — the PR's base (a feature branch for a grouped child PR per §2i, otherwise the **Default Branch**; not assumed to be `main`); many coding agents default to forward-port, which leaves conflicts visible on GitHub
 - **Include the build command as verification** for any typed-code change
 - **Post autonomously** for agent-fixable gaps and clear-cut conflicts
 - **Post via GitHub MCP** (`add_issue_comment` or PR comment equivalent) as the primary method
@@ -377,7 +378,7 @@ Merge via GitHub MCP using squash merge as the default method. After merging:
 
 After each merge, re-evaluate remaining open PRs:
 
-- Do any now have conflicts against the new main? (Check `get_pull_request` mergeable state)
+- Do any now have conflicts against the now-updated base branch? (Check `get_pull_request` mergeable state)
 - If so, post the pre-drafted agent conflict comment for each
 
 ### Transient infra failure handling
@@ -509,7 +510,7 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 | API error after merge ("Failed to fetch...") | Migration not applied — code references a column that doesn't exist | Apply the pending migration; 🔴 escalation next session |
 | "Not found" errors on linked-detail pages | Mock data IDs don't exist in DB | Not a code defect; check acceptance criteria |
 | Preview deploy timeout | Transient infra | Re-run deploy job |
-| GitHub still shows conflicts after agent ran | Agent forward-ported instead of merging | Post new agent comment instructing `git merge main` |
+| GitHub still shows conflicts after agent ran | Agent forward-ported instead of merging | Post new agent comment instructing `git merge <base branch>` |
 | Gap analysis flags columns that exist | Agent didn't check current schema | Cross-reference the schema source of truth |
 | Merging breaks a prod page | Code deployed before migration applied | The Phase 2e escalation exists to prevent this — the most common footgun |
 | PR open >5 days with no activity | Likely stale | Check context before driving; may need rebase or close |

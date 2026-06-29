@@ -51,7 +51,7 @@ The downstream consumer of this bd-build-up is the **AI-Implement harness** (htt
 2. **Gap analysis only catches what the spec specified.** Vague acceptance criteria → vague gap analysis → bad PRs.
 3. **Parallel pickup is the default.** Multiple unblocked `AI-Implement` issues run concurrently across separate branches. Issues must be independently mergeable, or use `Blocked by:` to serialize them.
 4. **The pickup signal is tracker-specific.** Linear uses state + label; Jira uses a Status field. The pickup signal present = picked up within minutes; parked = not picked up. (Exact mechanism per the active adapter's **Pickup trigger** section.)
-5. **Parent/child trees become feature nodes (Linear only).** A parent issue labelled `{{IMPLEMENT_LABEL}}` with `{{IMPLEMENT_LABEL}}` children becomes a *feature node* owning `ai-implement/feature/<key>`; its children PR **into that feature branch**, not the base, and the tree rolls up to a single human-reviewed `feature → base` PR. Plan the tree, the labelling order, and the parent's deferred closing work accordingly. Full model: `docs/feature-branch-grouping.md`. (Jira: no grouping — every issue PRs to base.)
+5. **Parent/child trees become feature nodes (Linear only).** A parent issue labelled `{{IMPLEMENT_LABEL}}` with `{{IMPLEMENT_LABEL}}` children becomes a *feature node* owning `ai-implement/feature/<key>`; its children PR **into that feature branch**, not the **Default Branch**, and the tree rolls up to a single human-reviewed `feature → base` PR. Plan the tree, the labelling order, and the parent's deferred closing work accordingly. Full model: `docs/feature-branch-grouping.md`. (Jira: no grouping — every issue PRs to the Default Branch.)
 
 ---
 
@@ -91,7 +91,7 @@ Every task is **either** wide-and-shallow **or** deep-and-targeted. Never both.
 
    **Cleanup-phase preflight is a code question, not a data question.** Replace "all existing rows satisfy the constraint" with "**(a)** zero writers in the census omit the column, **and (b)** CI on a throwaway branch with the constraint pre-applied is green." A `SELECT COUNT(*) WHERE col IS NULL` tells you about the past; it tells you nothing about the next write.
 
-10. **Feature-node parents defer their own work (Linear feature-branch grouping).** When a plan uses a parent/child feature node, the parent's *own* closing work is `Blocked by:` **all** its labelled children — it dispatches only after every child is terminal (Done or Cancelled), onto the parent's own feature branch `ai-implement/feature/<key>`. Children PR **into the parent's branch**, never the reverse: a parent task that must merge to base *before* its children is a grouping violation — split the parent's closing work out and block it on the children. (See `docs/feature-branch-grouping.md`. Jira: no grouping — ignore this rule.)
+10. **Feature-node parents defer their own work (Linear feature-branch grouping).** When a plan uses a parent/child feature node, the parent's *own* closing work is `Blocked by:` **all** its labelled children — it dispatches only after every child is terminal (Done or Cancelled), onto the parent's own feature branch `ai-implement/feature/<key>`. Children PR **into the parent's branch**, never the reverse: a parent task that must merge to the Default Branch *before* its children is a grouping violation — split the parent's closing work out and block it on the children. (See `docs/feature-branch-grouping.md`. Jira: no grouping — ignore this rule.)
 
 ### Soft signals (every task answers every signal)
 
