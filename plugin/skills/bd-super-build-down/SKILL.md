@@ -86,6 +86,7 @@ Faster than bd-build-down's orient because bd-super-build-down trusts pipeline s
 **What to capture per PR:**
 
 - Issue ID (from branch name or title)
+- **Base branch** (`get_pull_request` → `baseRefName`) — never assume `main`. It's a feature branch `ai-implement/feature/<key>` for a grouped child PR (Linear grouping → §4f), otherwise the repo's **Default Branch**. This is the ref every conflict/diff/`git merge` instruction must use.
 - Gap analysis: count of ⚠️ items, any 🔧 manual steps
 - CI check status
 - Mergeable state (clean / conflicted / behind)
@@ -96,7 +97,7 @@ Faster than bd-build-down's orient because bd-super-build-down trusts pipeline s
 **Orientation table (single print, no commentary):**
 
 ```
-PR # | Issue | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
+PR # | Issue | Base | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
 ```
 
 The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the session summary.
@@ -304,7 +305,7 @@ For each merged PR, check `blockedBy` on tracker issues. Any issue whose blocker
 
 If 2+ PRs escalated for the same reason, log the pattern. Examples:
 - "3 PRs escalated for the same gap type: missing security context in new endpoints"
-- "2 PRs escalated for conflicts with the same main-side PR"
+- "2 PRs escalated for conflicts with the same base-side PR"
 
 Pattern logs go into the session summary "Observations" section and signal pipeline health issues worth addressing in a separate bd-build-up.
 
