@@ -183,10 +183,10 @@ Escalate to the user (ask before acting) when ANY of these apply:
 
 1. **Gap requires a product decision** — "should we show X or Y?" — the user decides
 2. **Agent has already failed on this specific gap** in this PR (one prior attempt in the comment history)
-3. **Any SQL migration** — additive, data-only, or destructive. The architect (if defined) owns migration application.
-4. **Touches auth, row-level security, security middleware, or auth provider config** — never autonomous
+3. **Any SQL migration** — additive, data-only, or destructive. The architect (if defined) owns migration application. **A feature-branch (child-PR) base does not waive this** — the migration still rolls up to the real database (§2i).
+4. **Touches auth, row-level security, security middleware, or auth provider config** — never autonomous. **A feature-branch (child-PR) base does not waive this** — the change still rolls up to real users (§2i).
 5. **Fix would modify >5 files or cross PR boundaries**
-6. **PR is >5 days old** — context may have shifted, check before driving
+6. **PR is >5 days old** — context may have shifted, check before driving (relaxed for child PRs — §2i)
 
 For escalations, present:
 
@@ -268,13 +268,29 @@ When AI-Implement parent/child **feature-branch grouping** is in play, not every
 branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
 
 - **Recognize the PR class by base branch + title:**
-  - **Child PR** — base is a feature branch `ai-implement/feature/<key>` (not the repo base). Drive it to
-    merge like any normal PR, but *all conflict and diff operations use that feature branch as base, not
+  - **Child PR** — base is a feature branch `ai-implement/feature/<key>` (not the repo base). It lands in a
+    **contained sandbox**, not the Default Branch — so merge it *more* aggressively than a normal PR (see
+    "Sandbox posture" below), with *all conflict and diff operations using that feature branch as base, not
     the Default Branch* (see §2f, §2h).
   - **Top-of-tree PR** — title `[ai-implement] Feature branch ready for review`, head
     `ai-implement/feature/<key>` → repo base. This is the **human-review gate for the whole integrated
     feature.** Review the feature branch as a unit; merge it **last**, after every child has landed (see
     Phase 4 merge criteria).
+- **Sandbox posture for child PRs — lower the merge bar, but keep the load-bearing gates.** The child PR's
+  blast radius is the feature branch; the whole feature still gets the top-of-tree human gate. So:
+  - **Still drive gaps to standard** — post the `@agent` comment for every fixable ⚠️ gap, same as always.
+  - **Lower the *merge-blocking* bar.** A clean child PR with only a residual *non-load-bearing* gap
+    (cosmetic, edge case, polish) can merge now — **file the residual as a new child issue under the same
+    feature node** so it's caught before roll-up. Don't hold a contained PR for polish.
+  - **Relax merge-sequencing, file-overlap, and staleness** — overlap between two child PRs resolves inside
+    the feature branch; Phase 2h ordering and the >5-day flag are advisory here, not blocking.
+  - **Auth and migrations STILL escalate (§2d/§2e) — the feature branch is NOT an exemption.** Grouping
+    defers *where* the change lands, not *whether* it's reviewed: the migration rolls up to the real
+    database and the auth change to real users, and the top-of-tree PR is one human glance at a multi-issue
+    diff, not a migration review. "It's just a sandbox," "it can be tightened in a follow-up before
+    roll-up," and "the roll-up review will catch it" are exactly the rationalizations that land an
+    unreviewed migration in production. If a child PR touches a SQL migration or auth/security, escalate —
+    the base branch is irrelevant to that decision.
 - **Internal roll-ups are NOT PRs.** AI-Implement merges a completed child feature branch into its
   parent's branch with a direct `git merge` (commit `[ai-implement] Automated feature-branch roll-up`).
   Don't look for a roll-up PR and don't create one.
@@ -360,11 +376,11 @@ If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a
 
 A PR is clean to merge when all of these are true:
 
-- ✅ All ⚠️ Gaps are resolved (fixed, filed as follow-ups, or acknowledged as out of scope)
+- ✅ All ⚠️ Gaps are resolved (fixed, filed as follow-ups, or acknowledged as out of scope) — on a **child PR** (§2i), a residual non-load-bearing gap filed as a new child issue counts as resolved
 - ✅ CI checks passing (or a known transient infra failure is the only failure)
-- ✅ No merge conflicts
-- ✅ No SQL migrations (those escalate per 2e)
-- ✅ No auth/security changes (those escalate per 2d)
+- ✅ No merge conflicts (relaxed/advisory for **child PRs** — they resolve inside the feature branch, §2i)
+- ✅ No SQL migrations (those escalate per 2e — **on every PR class, child PRs included**)
+- ✅ No auth/security changes (those escalate per 2d — **on every PR class, child PRs included**)
 - ✅ Verified ✅ Implemented claims hold up
 - ✅ Not the **top-of-tree `feature → base` PR** — that one is a human-review gate (§2i); surface it, review the integrated feature, and merge it explicitly last, never as a routine auto-merge
 
@@ -511,6 +527,7 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 | "Not found" errors on linked-detail pages | Mock data IDs don't exist in DB | Not a code defect; check acceptance criteria |
 | Preview deploy timeout | Transient infra | Re-run deploy job |
 | GitHub still shows conflicts after agent ran | Agent forward-ported instead of merging | Post new agent comment instructing `git merge <base branch>` |
+| Merged a migration/auth child PR because it targeted a feature branch | Treated the sandbox as a review exemption | It isn't — the change rolls up to real DB/users. Escalate migrations/auth on every PR class (§2i, §2d/§2e) |
 | Gap analysis flags columns that exist | Agent didn't check current schema | Cross-reference the schema source of truth |
 | Merging breaks a prod page | Code deployed before migration applied | The Phase 2e escalation exists to prevent this — the most common footgun |
 | PR open >5 days with no activity | Likely stale | Check context before driving; may need rebase or close |
