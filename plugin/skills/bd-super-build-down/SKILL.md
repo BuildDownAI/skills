@@ -156,7 +156,7 @@ Escalation triggers (same pattern-break list as bd-build-down):
 8. CI failing (not transient infra)
 9. Merge conflict involves business logic
 10. File overlap with another open PR (merge ordering decision)
-11. The **top-of-tree `feature → base` roll-up PR** (`[ai-implement] Feature branch ready for review`) — always a human gate, never auto-merged (Linear feature-branch grouping)
+11. The **top-of-tree `feature → base` roll-up PR** (`[ai-implement] Feature branch ready for review`) — always a human gate, never auto-merged (feature-branch grouping — both trackers)
 
 **Action for bd-super-build-down:** DO NOT present Tier 3 items as they appear. Collect them all. Present once at the end of Phase 4 as a batch.
 
@@ -233,7 +233,7 @@ PR # | Pattern break trigger | Smoke verdict | My recommendation | Draft action
 
 Present the full batch in Phase 5.
 
-### 4f. Feature-branch grouping (Linear only)
+### 4f. Feature-branch grouping (both trackers)
 
 When the queue is a parent/child feature-node tree (`docs/feature-branch-grouping.md`): work **child PRs**
 (base = a feature branch `ai-implement/feature/<key>`) in the usual tiers. **Internal roll-ups are
@@ -242,7 +242,7 @@ parent feature branch, that's a **roll-up conflict** → log it as a manual step
 **top-of-tree `feature → base` PR is always Tier 3** — smoke-jump the integrated feature branch, then
 surface it for a human (see Autonomy Guardrails → Never auto-merge when).
 
-(Jira: no grouping — every PR targets the base branch; skip this.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
 ---
 
@@ -385,7 +385,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 - bd-smoke-jumper returned 🔴
 - CI failing (not transient infra)
 - PR open >5 days (aligned with bd-build-down's threshold)
-- The PR is the **top-of-tree `feature → base` roll-up PR** (title `[ai-implement] Feature branch ready for review`). Under Linear feature-branch grouping, bd-super-build-down drives every leaf and parent-closing PR to merge and lets internal roll-ups happen automatically, but the final feature-branch merge is a deliberate human review of the whole integrated feature. Smoke-jump the feature branch, post the summary, and **surface this PR for a human — do not merge it.**
+- The PR is the **top-of-tree `feature → base` roll-up PR** (title `[ai-implement] Feature branch ready for review`). Under feature-branch grouping (Linear or Jira), bd-super-build-down drives every leaf and parent-closing PR to merge and lets internal roll-ups happen automatically, but the final feature-branch merge is a deliberate human review of the whole integrated feature. Smoke-jump the feature branch, post the summary, and **surface this PR for a human — do not merge it.**
 
 ### Never auto-post agent comments when
 
