@@ -129,7 +129,7 @@ For each issue, estimate which files it will touch based on description and code
 
 In chat: blast radius is an estimate from description + project knowledge. In code-execution: verify against actual repo state. State confidence accordingly.
 
-**2e. Feature-branch grouping (Linear only)**
+**2e. Feature-branch grouping (both trackers)**
 
 When the plan contains a parent/child **feature node** (`docs/feature-branch-grouping.md`), the dependency
 graph is not "all PRs → base." Model the **cascade**:
@@ -145,7 +145,7 @@ graph is not "all PRs → base." Model the **cascade**:
   before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
   before its children.
 
-(Jira: no grouping — keep the flat "all PRs → base" model.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
 ### Phase 3: One-Shot Quality Audit
 
@@ -281,12 +281,12 @@ Scope: {N} issues, {points} story points, {tracks} parallel tracks
 - Track A: {description} — Issues: {list} — No overlap
 - Track B: {description} — Issues: {list} — ⚠️ Overlaps with Track A on {files}
 
-## Feature-branch trees (Linear grouping)
+## Feature-branch trees (both trackers)
 
 {For each feature node: its feature branch `ai-implement/feature/<key>`, the child issues that PR into it,
 and the parent's deferred closing work. Grouped children form a track whose merges target the feature
 branch, not base. The tree's terminal node is the top-of-tree `feature → base` PR — the human gate, merged
-last, never auto-merged. Omit this section when there are no feature nodes / on Jira.}
+last, never auto-merged. Omit this section only when there are no feature nodes (either tracker).}
 
 ## Migration Sequence
 

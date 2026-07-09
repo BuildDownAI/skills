@@ -104,7 +104,7 @@ Before running tests, check if a bd-smoke-jumper report already exists on the PR
 - Preview deploy URL: `{{PREVIEW_HOST}}` substituted with the PR number
 - Associated tracker issue ID (from PR title or body)
 - Changed files list (`get_pull_request_files`)
-- The PR's **base branch** — for a grouped **child PR** (Linear feature-branch grouping) this is a feature branch `ai-implement/feature/<key>`, not the repo base; the preview reflects this PR's slice *on top of the feature branch* (see the grouping note in Phase 2)
+- The PR's **base branch** — for a grouped **child PR** (feature-branch grouping — Linear or Jira) this is a feature branch `ai-implement/feature/<key>`, not the repo base; the preview reflects this PR's slice *on top of the feature branch* (see the grouping note in Phase 2)
 
 ---
 
@@ -162,7 +162,7 @@ Examples of what workstream profiles look like (replace with project-specific en
 - "List view" profile → verify table renders, check sort/filter state, verify pagination
 - "Form/config view" profile → verify form fields render, check validation, test save flow
 
-### 2e. Feature-branch grouping (Linear only)
+### 2e. Feature-branch grouping (both trackers)
 
 Under AI-Implement parent/child **feature-branch grouping** (`docs/feature-branch-grouping.md`), a child PR
 targets a feature branch, not the repo base. Two implications for what you're actually testing:
@@ -173,7 +173,7 @@ targets a feature branch, not the repo base. Two implications for what you're ac
   for review`) is the highest-value smoke target: smoke-test the **whole integrated feature branch** before
   a human merges it. bd-super-build-down dispatches exactly this before surfacing that PR for human merge.
 
-(Jira: no grouping — every PR targets base; skip this.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
 ---
 

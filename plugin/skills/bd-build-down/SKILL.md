@@ -262,7 +262,7 @@ Recommended merge order (when no overlap or dependencies dictate):
 
 Phase 2h's ordering rules override any default "oldest first" instinct.
 
-### 2i. Feature-branch grouping (Linear only)
+### 2i. Feature-branch grouping (both trackers)
 
 When AI-Implement parent/child **feature-branch grouping** is in play, not every PR targets the repo base
 branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
@@ -301,7 +301,7 @@ branch. See `docs/feature-branch-grouping.md` for the full model. What changes f
 - **Merge order is bottom-up:** leaf child PRs → parent's closing-work PR → (internal roll-ups happen
   automatically) → top-of-tree PR last.
 
-(Jira: no grouping — every PR targets the base branch; skip this subsection.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
 ---
 

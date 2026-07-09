@@ -100,3 +100,23 @@ The "reference design context" link is for humans reviewing the PR, not for the 
 Same as `bd-build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify bd-build-down readiness (issues in In Review or with open PRs).
 
 If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents and surface them, don't reconstruct from issue bodies.
+
+## Feature-node grouping
+
+A **feature node** is a parent issue carrying the `AI-Implement` label with ≥1 `AI-Implement`-labelled
+child. It owns `ai-implement/feature/<key>`; its labelled **children PR into that feature branch**, not the
+Default Branch. The parent's own closing work is `Blocked by:` **all** its labelled children and runs
+**last**, on the parent's own feature branch. Recursive: a child that is itself a labelled parent gets its
+own feature branch cut from its parent's. Completed feature branches roll up automatically (internal levels
+via a direct `git merge`, the top of the tree as a human-reviewed `feature → base` PR
+`[ai-implement] Feature branch ready for review`).
+
+**Designation = the `AI-Implement` label.** Terminal = the issue is Done or Cancelled.
+
+**Designate (label) the parent LAST.** Build the whole tree first — create children + parent, set every
+`parent` relationship and every `Blocked by:` relation — then label children, then the parent last of all.
+The orchestrator's race guard only skips a parent while *no* child is labelled yet; it does **not** cover
+the "children labelled, relations not yet set" window. Label the parent into that window and the
+orchestrator classifies it as dispatchable and picks it up in parallel with its children (observed failure).
+
+Full model: `docs/feature-branch-grouping.md`.
