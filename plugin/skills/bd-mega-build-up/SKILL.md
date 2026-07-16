@@ -514,6 +514,28 @@ After all issues are filed, present:
 - Wave 1 issues (currently being picked up by the pipeline)
 - Critical-path summary: longest dependency chain, so the user sees minimum time-to-complete
 
+### Step 6: Post the build-up learnings comment (required capstone)
+
+The build-up is not done until the learnings comment is posted. On the project/epic parent (or umbrella issue), post a `# ai-implement-build-up-learnings` comment — **one canonical comment per issue, edited in place**, distilled to the load-bearing *why* a future reader would be surprised by (not a second copy of the plan). The marker is an exact-match first line; never reuse `# ai-implement.yml` (opposite semantics — orchestrator config, stripped from the spec). Works identically on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+
+**Provenance:** self-report the harness + model you planned under (e.g. `Claude Code · Opus 4.8`). If you cannot determine the model, ask the operator once — never guess or silently omit.
+
+```
+# ai-implement-build-up-learnings
+
+**Feature:** <one line + tree shape>
+**Planned by:** <harness · model>          e.g. Claude Code · Opus 4.8
+
+## Decisions & why
+- <decision> — <why; what was rejected and the concrete failure it avoids>
+
+## The one idea worth carrying forward
+<the single most reusable insight>
+
+## Applies to
+<future situations this learning generalizes to>
+```
+
 ---
 
 ## Status Check Mode
@@ -564,6 +586,7 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 - **Overlap Inventory entry has no committed action.** → Silent overlap. Force a decision in Phase 2 grilling before approving the design.
 - **Issue body says "see design doc" without inlining the spec.** → Pipeline can't read links. Inline the spec.
 - **Grilling skipped because "the user seemed sure".** → bd-mega-build-up exists for the grill. If skipping was right, plain `bd-build-up` was the right skill.
+- **Issues filed but no `# ai-implement-build-up-learnings` comment posted.** → The compounding trace is the capstone of Phase 4, not an optional extra. Post it on the parent (Step 6) before declaring the build-up done.
 
 ---
 
