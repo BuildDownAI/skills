@@ -373,6 +373,37 @@ Post as a tracker issue assigned to the architect (or to the user, single-operat
 {What to tackle next, blockers to address}
 ```
 
+### Closing step — post/update the build-down learnings comment (required, autonomous)
+
+Same autonomy rule as the summary — no approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+
+**Record the outcome of every PR this session drove or observed:** `merged` | `closed-unmerged (failure)` (closed without merging — a failure; record the concrete reason; detect from `state=CLOSED` and not merged) | `open / never-landed` | `superseded`. Abandonment is a valid terminal outcome, not a gap.
+
+**Scope is session-only** — a PR closed with no session running is not auto-captured (partially covered by the absence signal: a build-up comment with no build-down sibling = never landed). Do not reconcile historical closed PRs unless asked.
+
+**Provenance:** `**Driven by:**` = your harness + model (self-report; ask once if unknown). `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — from the PR body when present, else `unknown (see BDS-28)`.
+
+```
+# ai-implement-build-down-learnings
+
+**Feature:** <one line>
+**Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
+**PRs implemented by:** <harness · model>  the AI-Implement runner; `unknown (see BDS-28)` until it emits this
+
+## Outcome
+Per PR this session drove or observed:
+- PR #<n> <title> — <merged | closed-unmerged (failure) | open / never-landed | superseded>
+
+## Deltas from plan
+<what actually shipped vs. what was planned>
+
+## Failures & gotchas
+<each closed-unmerged PR with the concrete reason it failed; what bit us during landing>
+
+## Status
+<landed with these caveats | abandoned because X | superseded by Y>
+```
+
 ---
 
 ## Autonomy Guardrails
@@ -402,6 +433,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 - Every bd-smoke-jumper dispatch and result
 - Every follow-up issue filed
 - Every pattern observation
+- The `# ai-implement-build-down-learnings` comment posted/updated on each driven parent (outcome incl. `closed-unmerged` failures + harness/model provenance)
 
 ### Session-abort triggers (critical for unattended runs)
 
@@ -461,3 +493,4 @@ bd-super-build-down comments include a trailing marker so the architect can filt
 5. **Silence is never the default.** Every gap is fixed, escalated, or filed.
 6. **Abort beats damage.** Session-abort triggers exist because unattended runs can cause harm. Honor them.
 7. **Pattern-break list is identical to bd-build-down.** This skill is bd-build-down at speed, not with different rules.
+8. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Autonomous write, required — outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. Not done without it. See `docs/learnings-comments.md`.

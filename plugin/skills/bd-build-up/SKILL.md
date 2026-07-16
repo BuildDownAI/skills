@@ -358,6 +358,28 @@ Present a manifest table: `Issue # | Title | Labels | Dependencies | Priority | 
 
 This is the bd-build-up's reference point for later status checks and bd-build-down sessions.
 
+### Closing step — post the build-up learnings comment (required)
+
+A build-up that files issues without leaving a learnings comment is not done. On the parent/umbrella issue (the decision node — narrow per-task learnings may go on a child), post a `# ai-implement-build-up-learnings` comment: **one canonical comment per issue, edited in place**, distilled to the load-bearing *why* a future reader would be surprised by — not a second copy of the plan. The marker is an exact-match first line; never reuse `# ai-implement.yml` (opposite semantics — orchestrator config, stripped from the spec). Works identically on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+
+**Provenance:** self-report the harness + model you planned under (e.g. `Claude Code · Opus 4.8`). If you cannot determine the model, ask the operator once — never guess or silently omit.
+
+```
+# ai-implement-build-up-learnings
+
+**Feature:** <one line + tree shape>
+**Planned by:** <harness · model>          e.g. Claude Code · Opus 4.8
+
+## Decisions & why
+- <decision> — <why; what was rejected and the concrete failure it avoids>
+
+## The one idea worth carrying forward
+<the single most reusable insight>
+
+## Applies to
+<future situations this learning generalizes to>
+```
+
 ### When to suggest bd-build-down handoff
 
 Only suggest switching to bd-build-down mode when:
@@ -500,3 +522,4 @@ Present a concise status summary. If there are PRs ready, say "there are N PRs r
 5. **Stage waves, don't park.** Wave 1 files to Todo + `{{IMPLEMENT_LABEL}}` — get the agents going. Later waves to Backlog, promoted as blockers merge. Exception: user explicitly says "stage only, don't start."
 6. **Suggest bd-build-down only when there's something to drive down.** PR open or issue in In Review.
 7. **bd-build-up is not bd-build-down.** This skill plans; the other drives. Don't mix their autonomy models — bd-build-up asks permission to file, bd-build-down acts and reports.
+8. **Every build-up ends with a `# ai-implement-build-up-learnings` comment on the parent.** The compounding trace — required, not optional. Distilled *why* + harness/model provenance. See `docs/learnings-comments.md`.

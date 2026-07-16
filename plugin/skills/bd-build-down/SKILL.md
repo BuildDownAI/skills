@@ -501,6 +501,44 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 {Patterns noticed — recurring gap types, pipeline health signals, anything worth flagging for next session}
 ```
 
+### Closing step — post/update the build-down learnings comment (required)
+
+An **autonomous write** — no approval gate, same as the session summary. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+
+**Record the outcome of every PR this session drove or observed**, using this taxonomy:
+
+- **merged** — landed.
+- **closed-unmerged (failure)** — PR closed without merging. A failure: record the concrete reason. Detect from the PR state you already read (GitHub `state=CLOSED` and not merged).
+- **open / never-landed** — still open at session end, or planned but never PR'd.
+- **superseded** — replaced by another PR/issue.
+
+Abandonment is a valid, valuable terminal outcome — "killed because X" is a learning, not a gap.
+
+**Scope is session-only.** Record PRs this session drove or observed. A PR closed with no build-down session running is not auto-captured here — a deliberate boundary, partially covered by the absence signal (a build-up learnings comment with no build-down sibling = never landed). Do not reconcile historical closed PRs unless asked.
+
+**Provenance:** `**Driven by:**` = the harness + model you (the build-down agent) are running under — self-report; ask the operator once if the model is unknown. `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — read it from the PR body when present; until the orchestrator emits it (BDS-28), write `unknown (see BDS-28)`.
+
+```
+# ai-implement-build-down-learnings
+
+**Feature:** <one line>
+**Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
+**PRs implemented by:** <harness · model>  the AI-Implement runner; `unknown (see BDS-28)` until it emits this
+
+## Outcome
+Per PR this session drove or observed:
+- PR #<n> <title> — <merged | closed-unmerged (failure) | open / never-landed | superseded>
+
+## Deltas from plan
+<what actually shipped vs. what was planned>
+
+## Failures & gotchas
+<each closed-unmerged PR with the concrete reason it failed; what bit us during landing>
+
+## Status
+<landed with these caveats | abandoned because X | superseded by Y>
+```
+
 ---
 
 ## Key Principles (the non-negotiables)
@@ -517,6 +555,8 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 
 6. **Reading is free; writing requires care.** Read PRs, diffs, comments liberally. Write operations (agent comments, merges, issue filings) are autonomous but logged. Escalations are the exception, not the default.
 
+7. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Required, not optional — the durable record of outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. A session that ends without it is not done. See `docs/learnings-comments.md`.
+
 ---
 
 ## Common Failure Patterns
@@ -531,6 +571,7 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 | Gap analysis flags columns that exist | Agent didn't check current schema | Cross-reference the schema source of truth |
 | Merging breaks a prod page | Code deployed before migration applied | The Phase 2e escalation exists to prevent this — the most common footgun |
 | PR open >5 days with no activity | Likely stale | Check context before driving; may need rebase or close |
+| A driven PR was closed without merging | Failure outcome, not a silent gap | Record it as `closed-unmerged (failure)` in the parent's `# ai-implement-build-down-learnings` comment with the concrete reason |
 
 If a symptom doesn't clearly match a row, don't force-fit. Investigate and escalate.
 
