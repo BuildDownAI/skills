@@ -523,14 +523,14 @@ Abandonment is a valid, valuable terminal outcome — "killed because X" is a le
 
 **Scope is session-only.** Record PRs this session drove or observed. A PR closed with no build-down session running is not auto-captured here — a deliberate boundary, partially covered by the absence signal (a build-up learnings comment with no build-down sibling = never landed). Do not reconcile historical closed PRs unless asked.
 
-**Provenance:** `**Driven by:**` = the harness + model you (the build-down agent) are running under — self-report; ask the operator once if the model is unknown. `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — read it from the PR body when present; until the orchestrator emits it (BDS-28), write `unknown (see BDS-28)`.
+**Provenance:** `**Driven by:**` = the harness + model you (the build-down agent) are running under — self-report; ask the operator once if the model is unknown. `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — read it from the PR body when present; until the orchestrator emits it (AII-229), write `unknown (see AII-229)`.
 
 ```
 # ai-implement-build-down-learnings
 
 **Feature:** <one line>
 **Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
-**PRs implemented by:** <harness · model>  the AI-Implement runner; `unknown (see BDS-28)` until it emits this
+**PRs implemented by:** <harness · model>  the AI-Implement runner; `unknown (see AII-229)` until it emits this
 
 ## Outcome
 Per PR this session drove or observed:
