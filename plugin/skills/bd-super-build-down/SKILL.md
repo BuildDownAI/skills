@@ -236,7 +236,9 @@ Present the full batch in Phase 5.
 ### 4f. Feature-branch grouping (both trackers)
 
 When the queue is a parent/child feature-node tree (`docs/feature-branch-grouping.md`): work **child PRs**
-(base = a feature branch `ai-implement/feature/<key>`) in the usual tiers. **Internal roll-ups are
+(base = a grouped branch `ai-implement/<mode>/<key>`, where `<mode>` is `feature` **or** `multi-issue` — same
+behavior, only the path segment differs; multi-issue is selected by a `# ai-implement.yml` block in the
+parent's description) in the usual tiers. **Internal roll-ups are
 automatic direct merges, not PRs** — don't chase them. If a child is Done but its work is missing from the
 parent feature branch, that's a **roll-up conflict** → log it as a manual step (don't `@agent`). The
 **top-of-tree `feature → base` PR is always Tier 3** — smoke-jump the integrated feature branch, then

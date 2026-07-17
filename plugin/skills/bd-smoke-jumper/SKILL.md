@@ -104,7 +104,7 @@ Before running tests, check if a bd-smoke-jumper report already exists on the PR
 - Preview deploy URL: `{{PREVIEW_HOST}}` substituted with the PR number
 - Associated tracker issue ID (from PR title or body)
 - Changed files list (`get_pull_request_files`)
-- The PR's **base branch** — for a grouped **child PR** (feature-branch grouping — Linear or Jira) this is a feature branch `ai-implement/feature/<key>`, not the repo base; the preview reflects this PR's slice *on top of the feature branch* (see the grouping note in Phase 2)
+- The PR's **base branch** — for a grouped **child PR** (feature-branch grouping — Linear or Jira) this is a grouped branch `ai-implement/<mode>/<key>` (`feature` or `multi-issue` — same behavior, only the path segment differs), not the repo base; the preview reflects this PR's slice *on top of that branch* (see the grouping note in Phase 2)
 
 ---
 

@@ -267,6 +267,12 @@ Phase 2h's ordering rules override any default "oldest first" instinct.
 When AI-Implement parent/child **feature-branch grouping** is in play, not every PR targets the repo base
 branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
 
+- **Two grouping modes, one recognition rule.** A grouped base branch is `ai-implement/<mode>/<key>` —
+  `<mode>` is `feature` (default) or `multi-issue` (the parent's description carries a `# ai-implement.yml`
+  block with `feature_branch.mode: multi-issue`). **The mode changes only the branch path segment** — treat
+  `ai-implement/multi-issue/<key>` exactly like `ai-implement/feature/<key>` for every rule below. The
+  top-of-tree PR body lists the grouped child issues under **`Grouped issues:`** — use it to confirm every
+  child landed.
 - **Recognize the PR class by base branch + title:**
   - **Child PR** — base is a feature branch `ai-implement/feature/<key>` (not the repo base). It lands in a
     **contained sandbox**, not the Default Branch — so merge it *more* aggressively than a normal PR (see

@@ -134,7 +134,7 @@ In chat: blast radius is an estimate from description + project knowledge. In co
 When the plan contains a parent/child **feature node** (`docs/feature-branch-grouping.md`), the dependency
 graph is not "all PRs → base." Model the **cascade**:
 
-- Leaf children PR into their parent's **feature branch** (`ai-implement/feature/<key>`), not the Default Branch.
+- Leaf children PR into their parent's **grouped branch** (`ai-implement/<mode>/<key>` — `feature` or `multi-issue`; same cascade either way, only the path segment differs), not the Default Branch.
 - A parent's **own closing work** is implicitly `Blocked by:` all its labelled children — it runs only
   after they're terminal. Schedule it last on the parent's branch.
 - **Internal roll-ups** (child feature branch → parent branch) are automatic direct merges, **not nodes
