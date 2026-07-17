@@ -216,6 +216,16 @@ If any of those fail, split the issue.
 
 **Feature-node trees (both trackers).** When you decompose into a parent + children, the *designated* parent becomes a *feature node*: children PR into its feature branch `ai-implement/feature/<key>` (not the Default Branch), and the parent's own closing work is `Blocked by:` all its children (it runs last). **Designate the parent LAST** — build the whole tree (children + parent relationships + every `blocks`/`Blocks` relation) first, then designate children, then the parent. The race guard only covers "parent designated, *no* child designated yet"; it does **not** cover "children designated, relations not yet set," and designating the parent into that window makes the orchestrator pick it up in parallel with its children (observed failure). Designation is the `{{IMPLEMENT_LABEL}}` label on Linear and a non-empty `AI-Implement-Status` + matching Repo field on Jira. See `docs/feature-branch-grouping.md`.
 
+**Multi-issue grouping (a mode of the above).** To group *otherwise-unrelated* issues that should still land as one reviewable unit, make the parent a **multi-issue** group by putting a marked, **fenced** block in its **description** (an unfenced marker is ignored — the parent stays in feature mode):
+
+```
+# ai-implement.yml (example)
+feature_branch:
+  mode: "multi-issue"
+```
+
+Its branch is then `ai-implement/multi-issue/<key>` instead of `ai-implement/feature/<key>`; **everything else is identical** — designation order, blocking, roll-up, the human gate. Feature-node (label / no block) is the default. Always write the example with `# ai-implement.yml (example)` — a bare `# ai-implement.yml` first line is the real marker and gets stripped from that issue's own spec. See `docs/feature-branch-grouping.md`.
+
 **Routing rules:**
 - **Architect (`{{ARCHITECT_NAME}}`)** — schema migrations, security policies, infra, complex architecture. Assign these directly, do not label `{{IMPLEMENT_LABEL}}`.
 - **AI coding agent pipeline** — frontend convergence, UI fixes, well-defined backend tasks. Label `{{IMPLEMENT_LABEL}}`, leave unassigned.

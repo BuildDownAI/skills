@@ -30,6 +30,30 @@ An issue tree — Linear or Jira — maps onto a tree of git branches.
 - Completed feature branches **roll up** into their parent's branch automatically; the single
   top-of-tree merge into the **Default Branch** is left as a human-reviewed PR.
 
+**Two grouping modes — identical except the branch name.** A grouping parent owns
+`ai-implement/<mode>/<key>`, where `<mode>` comes from a `# ai-implement.yml` block in the parent's
+**description** (`feature_branch.mode`); absent or unreadable → `feature`.
+
+- **`feature`** (default) — groups *sub-parts of one feature*: `ai-implement/feature/<key>`.
+- **`multi-issue`** — groups *otherwise-unrelated issues* that should still land as one reviewable unit:
+  `ai-implement/multi-issue/<key>`.
+
+```
+# ai-implement.yml (example)
+feature_branch:
+  mode: "multi-issue"
+```
+
+The mode's **only** effect anywhere is the branch path segment. Dispatch, child PRs, recursion, roll-up,
+the human gate, classification (§3), and gating are **identical** between the modes — a reader who looks
+for other differences won't find any. The grouped issues are meant to be enumerated in the top-of-tree
+roll-up PR body (§4, `Grouped issues:` — pending AII-227), not in the branch name. The block must be a **fenced code block** (any ``` fence — the language
+tag is ignored), with `# ai-implement.yml` as its first line; an *unfenced* marker line is not recognized
+and the parent silently stays in `feature` mode. Write every in-issue example with
+`# ai-implement.yml (example)` — a bare `# ai-implement.yml` first line is the real marker and gets
+stripped from that issue's own spec. Any parse problem (unknown mode, bad YAML, missing key) **fails open
+to `feature`**.
+
 ```
 testing                                  (the repo's Default Branch)
 └─ ai-implement/feature/PROJ-100         parent PROJ-100 (feature node)
@@ -118,6 +142,10 @@ they look different to a landing skill:**
   - A direct merge can **conflict** → a **roll-up conflict** that needs a manual `git merge`.
 - **Top-of-tree PR** (no feature-node parent) → an open `feature → base` PR titled
   `[ai-implement] Feature branch ready for review`, **never auto-merged**. This is the **human gate**.
+  Its body **will** enumerate a **`Grouped issues:`** list of the grouped child issues (**both modes**) —
+  this compensates for the branch name not carrying the child keys, so a landing skill can confirm every
+  child made it in. *(Pending orchestrator support — **AII-227**; until it ships, the roll-up PR references
+  only the parent via `Fixes <parent>`, so verify child landing against the tracker hierarchy instead.)*
 
 **Roll-up conflict — the silent failure mode.** Because internal roll-ups aren't PRs, a conflicted one
 surfaces only as: a child issue is **Done** but its work is **missing from the parent feature branch**
