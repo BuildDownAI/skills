@@ -47,9 +47,12 @@ feature_branch:
 The mode's **only** effect anywhere is the branch path segment. Dispatch, child PRs, recursion, roll-up,
 the human gate, classification (§3), and gating are **identical** between the modes — a reader who looks
 for other differences won't find any. The grouped issues are meant to be enumerated in the top-of-tree
-roll-up PR body (§4, `Grouped issues:` — pending AII-227), not in the branch name. Write every in-issue example with
+roll-up PR body (§4, `Grouped issues:` — pending AII-227), not in the branch name. The block must be a **fenced code block** (any ``` fence — the language
+tag is ignored), with `# ai-implement.yml` as its first line; an *unfenced* marker line is not recognized
+and the parent silently stays in `feature` mode. Write every in-issue example with
 `# ai-implement.yml (example)` — a bare `# ai-implement.yml` first line is the real marker and gets
-stripped from that issue's own spec.
+stripped from that issue's own spec. Any parse problem (unknown mode, bad YAML, missing key) **fails open
+to `feature`**.
 
 ```
 testing                                  (the repo's Default Branch)

@@ -111,7 +111,7 @@ own feature branch cut from its parent's. Completed feature branches roll up aut
 via a direct `git merge`, the top of the tree as a human-reviewed `feature → base` PR
 `[ai-implement] Feature branch ready for review`).
 
-**Multi-issue mode.** A parent whose **description** carries a `# ai-implement.yml` block with
+**Multi-issue mode.** A parent whose **description** carries a **fenced** `# ai-implement.yml` block with
 `feature_branch.mode: "multi-issue"` owns `ai-implement/multi-issue/<key>` instead — for grouping
 *otherwise-unrelated* issues as one reviewable unit. Identical to the above in every respect except the
 branch path segment. The selector lives in the description, not a label; write examples as

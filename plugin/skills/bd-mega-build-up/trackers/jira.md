@@ -143,7 +143,7 @@ runs **last** on the same branch. When the sub-tasks are all terminal, the Story
 its feature branch → the single human-gate PR `[ai-implement] Feature branch ready for review`. The Epic
 stays un-designated, which halts the ancestor walk at the Story — so the Epic is never a feature branch.
 
-**Multi-issue mode.** A Story whose **description** carries a `# ai-implement.yml` block with
+**Multi-issue mode.** A Story whose **description** carries a **fenced** `# ai-implement.yml` block with
 `feature_branch.mode: "multi-issue"` owns `ai-implement/multi-issue/<slug(STORY-KEY)>` instead — for
 grouping *otherwise-unrelated* issues as one reviewable unit. Identical to the above except the branch
 path segment; the `AI-Implement-Status` / Repo designation and Epic rules are unchanged. Write examples as
