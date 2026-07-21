@@ -203,6 +203,15 @@ An issue is right-sized when ALL of these hold:
 
 If any of those fail, split the issue.
 
+**Wide-and-shallow turn-budget risk.** The sizing test above guards cognitive load per file, but a wide-and-shallow issue — many files, each edit mechanical — also risks exhausting the AI-Implement runner's **per-pass turn budget** (a project Max-Turns setting, commonly ~50) even when no single file edit is hard. Heuristic: ~2–4 turns per file (read + edit + verify), so an issue touching >~12–15 files risks the runner hitting the cap before it finishes and pushes. When a wide-and-shallow issue approaches the threshold, either **(1) split** (deep core change + wide propagation blocked by it) or **(2) raise the project's Max Turns** before dispatch and note it on the issue. File count is the tell — check it at planning time, not when a run dies at the cap.
+
+**Silent `max_turns` failure mode.** When the runner hits the turn cap mid-edit, it pushes *nothing* — no partial PR, no branch. The issue appears to have never been picked up. To diagnose: check the implement run's result field directly (`result=max_turns` means the run was killed mid-edit, not still queued). Don't interpret a missing PR as "not yet started."
+
+**Reshaping an existing detailed issue.** The sizing test above is designed for authoring issues from scratch. When bd-build-up reshapes an existing, already-detailed tracker issue (condensing it to hit the size target), there is a distinct risk: **right-sizing can silently drop a substantive acceptance item** that the original issue spelled out. Before finishing a reshape:
+1. **Diff the reshaped version against the original.** Identify every substantive acceptance item in the original. Confirm each is preserved in the reshaped version or explicitly split out.
+2. **Split, don't drop.** If right-sizing forces a cut, move the dropped requirement into a sibling issue — never omit it silently.
+3. **Surface the cut for confirmation.** Name what was dropped and ask the user to confirm the split before filing.
+
 **Sizing guide:**
 - **1 point** — trivial: single-file change, label swap, copy change
 - **2 points** — single API endpoint, one migration, straightforward component
