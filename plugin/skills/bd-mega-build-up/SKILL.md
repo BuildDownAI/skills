@@ -63,7 +63,7 @@ Every task in the plan and every issue filed must pass the rubric. Phases 3 and 
 
 Every task is **either** wide-and-shallow **or** deep-and-targeted. Never both.
 
-- **Wide & shallow** — touches many files, each touch is mechanical: rename, propagate a type, add the same import, add a tracking call. Low cognitive load per file. Risk: missing a file. Mitigation: explicit file list in the spec.
+- **Wide & shallow** — touches many files, each touch is mechanical: rename, propagate a type, add the same import, add a tracking call. Low cognitive load per file. Risk 1: missing a file — mitigation: explicit file list in the spec. Risk 2: **turn-budget exhaustion** — the AI-Implement runner caps Claude turns per implement pass (a project Max-Turns setting, commonly ~50); at ~2–4 turns/file (read + edit + verify), >~12–15 files risks hitting the cap before the agent finishes and pushes. When a wide-and-shallow issue approaches the threshold, either **(1) split** (deep core change + wide propagation blocked by it) or **(2) raise the project's Max Turns** before dispatch and note it on the issue.
 - **Deep & targeted** — touches few files, each touch requires reasoning: new algorithm, new state machine, new component logic. Concentrated cognitive load. Risk: getting the logic wrong. Mitigation: testable acceptance criteria + test-first.
 - **Wide & deep is forbidden.** A task that touches many files AND requires reasoning at each touch point is unsplit. Refuse to file. Split into a deep core change + a wide propagation that's `Blocked by:` it.
 
@@ -92,6 +92,13 @@ Every task is **either** wide-and-shallow **or** deep-and-targeted. Never both.
    **Cleanup-phase preflight is a code question, not a data question.** Replace "all existing rows satisfy the constraint" with "**(a)** zero writers in the census omit the column, **and (b)** CI on a throwaway branch with the constraint pre-applied is green." A `SELECT COUNT(*) WHERE col IS NULL` tells you about the past; it tells you nothing about the next write.
 
 10. **Feature-node parents defer their own work (both trackers).** When a plan uses a parent/child feature node, the parent's *own* closing work is `Blocked by:` **all** its designated children — it dispatches only after every child is terminal (Done/Cancelled; on Jira, `statusCategory` = done), onto the parent's own feature branch `ai-implement/feature/<key>`. Children PR **into the parent's branch**, never the reverse: a parent task that must merge to the Default Branch *before* its children is a grouping violation — split the parent's closing work out and block it on the children. Designation is the `{{IMPLEMENT_LABEL}}` label on Linear and a non-empty `AI-Implement-Status` + Repo match on Jira (active adapter's **Feature-node grouping** section). See `docs/feature-branch-grouping.md`.
+
+**Silent `max_turns` failure mode.** When the runner hits the turn cap mid-edit, it pushes *nothing* — no partial PR, no branch. The issue reads as never picked up. Diagnose by checking the implement run's result field directly (`result=max_turns` = killed mid-edit, not still queued). A wide-and-shallow issue with >~12–15 files is the primary trigger — file count is the tell.
+
+**Reshaping an existing detailed issue.** The rubric above is designed for authoring tasks from scratch. When bd-mega-build-up reshapes an existing, already-detailed issue (condensing it to hit the size target), there is a distinct risk: **right-sizing can silently drop a substantive acceptance item** the original spelled out. Before finalizing a reshape:
+1. **Diff the reshaped version against the original.** Identify every substantive acceptance item. Confirm each is preserved or explicitly split out.
+2. **Split, don't drop.** If right-sizing forces a cut, move the dropped requirement into a sibling issue — never omit it silently.
+3. **Surface the cut for confirmation.** Name what was dropped and ask for explicit confirmation before filing.
 
 ### Soft signals (every task answers every signal)
 
@@ -590,6 +597,8 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 - **Issue body says "see design doc" without inlining the spec.** → Pipeline can't read links. Inline the spec.
 - **Grilling skipped because "the user seemed sure".** → bd-mega-build-up exists for the grill. If skipping was right, plain `bd-build-up` was the right skill.
 - **Issues filed but no `# ai-implement-build-up-learnings` comment posted.** → The compounding trace is the capstone of Phase 4, not an optional extra. Post it on the parent (Step 6) before declaring the build-up done.
+- **Wide-and-shallow issue with >~12–15 files filed without checking the turn budget.** → File count is the tell for runner cap risk. Either split (deep core + wide propagation blocked by it) or raise the project's Max Turns before dispatch and note it on the issue. Don't discover the ceiling when a run dies at it and pushes nothing.
+- **Reshape of an existing detailed issue with no diff against the original.** → Reshape-without-diff risks silently dropping a substantive acceptance item. Diff the reshaped version against the original; split-not-drop any item that was cut; surface the cut for user confirmation before filing.
 
 ---
 
