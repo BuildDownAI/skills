@@ -162,6 +162,8 @@ step — merge the child feature branch into the parent yourself; don't `@agent`
 | **bd-mega-build-up / bd-build-up** | Plan parent + children as a feature node; the parent's closing work is `Blocked by:` all children; whole-tree **designation** is race-guard-safe; children PR into the feature branch. Linear designates by label; Jira by `AI-Implement-Status` + Repo (canonical shape: a Story with sub-task children under an un-designated tracking Epic). |
 | **bd-smoke-jumper** | Child-PR previews reflect the feature-in-progress (on top of the feature branch); the integrated feature branch at the top PR is the highest-value smoke target. |
 
+**Driving a grouped tree to merge:** run under `bd-super-build-down` — it owns the autonomous driving loop (per-child rigor, completion checkpoint, and capstone discipline) that `bd-build-down` points to for unattended sessions.
+
 ## 6. Boundaries & prerequisites
 
 - **Both providers.** Grouping works on Linear and Jira. The only per-tracker difference is designation +
