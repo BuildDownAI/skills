@@ -315,13 +315,14 @@ changes only where the change lands, not the standard it must meet.
   automatically) → top-of-tree PR last.
 - **Completion checkpoint — required once all children land.** When every child has merged and the
   top-of-tree PR (`ai-implement/<mode>/<key> → base`) is open + green:
-  1. **Explicitly state "grouped tree complete — {one-line summary}"** and **ask before proceeding or
-     handing off.** Never slide from "children landed" into the next action without the finished→confirm
-     beat — this is an explicit gate, not optional.
-  2. As the first step of that gate, **post the mandatory `# ai-implement-build-down-learnings` comment on
-     the umbrella/parent issue.** The grouped-tree gate is a build-down session close for that tree — the
-     capstone is required at this point, same as at the end of any session (Phase 6). This step is named
-     and explicit so it cannot be skipped when a tree finishes.
+  1. **Explicitly state "grouped tree complete — {one-line summary}."** Never slide from "children
+     landed" into the next action without this finished→confirm beat.
+  2. **Post the mandatory `# ai-implement-build-down-learnings` comment on the umbrella/parent issue.**
+     The grouped-tree gate is a build-down session close for that tree — the capstone is required at this
+     point, same as at the end of any session (Phase 6). This step is named and explicit so it cannot be
+     skipped when a tree finishes.
+  3. **Ask before proceeding or handing off.** Surface the top-of-tree PR for human review and wait for
+     explicit confirmation — in addition to the existing "never auto-merge" guardrail.
 - **Autonomous driving lives in `bd-super-build-down`.** Driving a grouped tree to its gate in an
   unattended loop (poll → verify → merge each child → completion checkpoint) belongs to
   `bd-super-build-down`. `bd-build-down` is fully compatible — it carries all the per-child rigor,
