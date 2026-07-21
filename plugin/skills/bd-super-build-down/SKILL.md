@@ -411,14 +411,14 @@ Same autonomy rule as the summary — no approval gate. For each parent/umbrella
 
 **Scope is session-only** — a PR closed with no session running is not auto-captured (partially covered by the absence signal: a build-up comment with no build-down sibling = never landed). Do not reconcile historical closed PRs unless asked.
 
-**Provenance:** `**Driven by:**` = your harness + model (self-report; ask once if unknown). `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — from the PR body when present, else `unknown (see AII-229)`.
+**Provenance:** `**Driven by:**` = your harness + model (self-report; ask once if unknown). `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — read from the PR body's provenance line (the orchestrator stamps `harness · model · provider` on every PR).
 
 ```
 # ai-implement-build-down-learnings
 
 **Feature:** <one line>
 **Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
-**PRs implemented by:** <harness · model>  the AI-Implement runner; `unknown (see AII-229)` until it emits this
+**PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
 
 ## Outcome
 Per PR this session drove or observed:

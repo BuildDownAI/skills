@@ -50,13 +50,13 @@ GLM 5.2, …) behind the work, on a `harness · model` line (middle dot).
 - **Build-down** records **two lines when they differ**:
   - `**Driven by:** <harness · model>` — the agent running the build-down.
   - `**PRs implemented by:** <harness · model>` — the AI-Implement runner that actually wrote the PRs.
-    Read it from the PR body when the orchestrator emits it; until then write
-    `unknown (see AII-229)`. ("Planned by Opus, PRs written by GLM, driven by Opus" is exactly the
+    Read it from the PR body's provenance line — the orchestrator stamps
+    `harness · model · provider` on every PR. ("Planned by Opus, PRs written by GLM, driven by Opus" is exactly the
     provenance a future reader needs — collapsing it hides which agent/model produced which outcome.)
 
-> **AII-229 dependency.** The orchestrator knows the model internally but does not yet stamp it on the
-> PR, so `PRs implemented by` is `unknown (see AII-229)` until AII-229 lands and redeploys. No skills
-> change is needed when it does — build-down already reads the PR body; the field simply populates.
+> **Provenance is emitted (AII-229 — shipped).** The orchestrator stamps `Generated with AI-Implement ·
+> harness: … · model: … · provider: …` on every PR body, so `PRs implemented by` reads directly from the
+> PR. If a PR lacks the line (older PR / non-standard runner), fall back to `unknown`.
 
 ## PR outcome (build-down)
 
@@ -119,7 +119,7 @@ writes, so the convention is identical on both providers — zero new API surfac
 
 **Feature:** <one line>
 **Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
-**PRs implemented by:** <harness · model>  the AI-Implement runner; `unknown (see AII-229)` until it emits this
+**PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
 
 ## Outcome
 Per PR this session drove or observed:
