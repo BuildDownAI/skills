@@ -277,9 +277,9 @@ changes only where the change lands, not the standard it must meet.
   `<mode>` is `feature` (default) or `multi-issue` (the parent's description carries a `# ai-implement.yml`
   block with `feature_branch.mode: multi-issue`). **The mode changes only the branch path segment** — treat
   `ai-implement/multi-issue/<key>` exactly like `ai-implement/feature/<key>` for every rule below. The
-  top-of-tree PR body **will** list the grouped child issues under **`Grouped issues:`** — use it to confirm
-  every child landed *(pending orchestrator support, AII-227; until then the roll-up PR references only the
-  parent, so confirm child landing against the tracker's parent/child hierarchy)*.
+  top-of-tree PR body lists the grouped child issues under **`Grouped issues:`** — use it to confirm
+  every child landed. (If a roll-up PR lacks the line — older PR / hand-opened — confirm child landing
+  against the tracker's parent/child hierarchy instead.)
 - **Recognize the PR class by base branch + title:**
   - **Child PR** — base is a feature branch `ai-implement/feature/<key>` (not the repo base). It lands in a
     **contained sandbox**, not the Default Branch — so merge it *more* aggressively than a normal PR (see
@@ -544,14 +544,14 @@ Abandonment is a valid, valuable terminal outcome — "killed because X" is a le
 
 **Scope is session-only.** Record PRs this session drove or observed. A PR closed with no build-down session running is not auto-captured here — a deliberate boundary, partially covered by the absence signal (a build-up learnings comment with no build-down sibling = never landed). Do not reconcile historical closed PRs unless asked.
 
-**Provenance:** `**Driven by:**` = the harness + model you (the build-down agent) are running under — self-report; ask the operator once if the model is unknown. `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — read it from the PR body when present; until the orchestrator emits it (AII-229), write `unknown (see AII-229)`.
+**Provenance:** `**Driven by:**` = the harness + model you (the build-down agent) are running under — self-report; ask the operator once if the model is unknown. `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — read it from the PR body's provenance line (the orchestrator stamps `harness · model · provider` on every PR).
 
 ```
 # ai-implement-build-down-learnings
 
 **Feature:** <one line>
 **Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
-**PRs implemented by:** <harness · model>  the AI-Implement runner; `unknown (see AII-229)` until it emits this
+**PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
 
 ## Outcome
 Per PR this session drove or observed:
