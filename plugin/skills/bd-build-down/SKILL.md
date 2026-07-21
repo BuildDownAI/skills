@@ -267,6 +267,12 @@ Phase 2h's ordering rules override any default "oldest first" instinct.
 When AI-Implement parent/child **feature-branch grouping** is in play, not every PR targets the repo base
 branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
 
+**Per-child rigor (process layer atop BDS-26's recognition layer).** A grouped tree — feature *or*
+multi-issue — is **N first-class PRs, not one unit.** Each child PR gets the same full build-down treatment
+as a standalone PR: read the gap analysis, tier-classify it, run bd-smoke-jumper/verify, drive agent
+gap-fills to resolution, apply the same merge criteria — before it merges into the group branch. The sandbox
+changes only where the change lands, not the standard it must meet.
+
 - **Two grouping modes, one recognition rule.** A grouped base branch is `ai-implement/<mode>/<key>` —
   `<mode>` is `feature` (default) or `multi-issue` (the parent's description carries a `# ai-implement.yml`
   block with `feature_branch.mode: multi-issue`). **The mode changes only the branch path segment** — treat
@@ -307,6 +313,20 @@ branch. See `docs/feature-branch-grouping.md` for the full model. What changes f
   it as a manual step (Phase 5), don't `@agent` it.
 - **Merge order is bottom-up:** leaf child PRs → parent's closing-work PR → (internal roll-ups happen
   automatically) → top-of-tree PR last.
+- **Completion checkpoint — required once all children land.** When every child has merged and the
+  top-of-tree PR (`ai-implement/<mode>/<key> → base`) is open + green:
+  1. **Explicitly state "grouped tree complete — {one-line summary}"** and **ask before proceeding or
+     handing off.** Never slide from "children landed" into the next action without the finished→confirm
+     beat — this is an explicit gate, not optional.
+  2. As the first step of that gate, **post the mandatory `# ai-implement-build-down-learnings` comment on
+     the umbrella/parent issue.** The grouped-tree gate is a build-down session close for that tree — the
+     capstone is required at this point, same as at the end of any session (Phase 6). This step is named
+     and explicit so it cannot be skipped when a tree finishes.
+- **Autonomous driving lives in `bd-super-build-down`.** Driving a grouped tree to its gate in an
+  unattended loop (poll → verify → merge each child → completion checkpoint) belongs to
+  `bd-super-build-down`. `bd-build-down` is fully compatible — it carries all the per-child rigor,
+  completion checkpoint, and capstone above — but for the autonomous driving loop, invoke
+  `bd-super-build-down` rather than recreating it here.
 
 (Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
