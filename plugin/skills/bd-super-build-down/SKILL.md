@@ -244,6 +244,34 @@ parent feature branch, that's a **roll-up conflict** → log it as a manual step
 **top-of-tree `feature → base` PR is always Tier 3** — smoke-jump the integrated feature branch, then
 surface it for a human (see Autonomy Guardrails → Never auto-merge when).
 
+**Per-child rigor (process/rigor layer atop BDS-26's recognition layer).** A grouped tree — feature *or*
+multi-issue — is **N first-class PRs, not one unit.** Each child PR gets exactly the same full
+bd-super-build-down treatment as a standalone PR: gap-analysis read, tier classification,
+bd-smoke-jumper/verify, agent gap-fills, same merge criteria — before it merges into the group branch. The
+sandbox changes only where the change lands, not the standard it must meet.
+
+**Autonomous driving loop (bd-super-build-down owns this for grouped trees).** bd-super-build-down runs the
+unattended loop that drives a grouped tree to its completion gate. Repeat until all designated children are
+terminal:
+1. **Poll** — list open child PRs (base = the group branch) and tracker child issue states.
+2. **Triage each open child PR** — assign tier, run bd-smoke-jumper, post agent comments for fixable gaps,
+   merge when clean. Full per-child rigor applies (above).
+3. **Post-merge sweep** — internal roll-ups happen automatically. If a child is Done but its work is absent
+   from the group branch, surface a roll-up conflict as a manual step (don't `@agent`).
+4. **Check completion** — all designated children terminal? → proceed to the completion checkpoint below.
+   Otherwise wait for the next cycle (agent gap-fills resolve before a child re-enters triage).
+
+**Completion checkpoint — required once all children land.** When every child has merged and the top-of-tree
+PR (`ai-implement/<mode>/<key> → base`) is open + green:
+1. **Explicitly state "grouped tree complete — {one-line summary}."** Never slide from "children landed"
+   into the next action without this finished→confirm beat.
+2. **Post the mandatory `# ai-implement-build-down-learnings` comment on the umbrella/parent issue.** The
+   grouped-tree gate is a build-down session close for that tree — the capstone is required at this point,
+   same as at the close of any session (Phase 7). This is an explicit, named step so it cannot be skipped.
+3. **Ask before proceeding or handing off.** Smoke-jump the integrated feature branch, surface the
+   top-of-tree PR for human review, and wait for explicit confirmation — in addition to the existing "never
+   auto-merge" guardrail.
+
 (Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
 ---
@@ -418,7 +446,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 - bd-smoke-jumper returned 🔴
 - CI failing (not transient infra)
 - PR open >5 days (aligned with bd-build-down's threshold)
-- The PR is the **top-of-tree `feature → base` roll-up PR** (title `[ai-implement] Feature branch ready for review`). Under feature-branch grouping (Linear or Jira), bd-super-build-down drives every leaf and parent-closing PR to merge and lets internal roll-ups happen automatically, but the final feature-branch merge is a deliberate human review of the whole integrated feature. Smoke-jump the feature branch, post the summary, and **surface this PR for a human — do not merge it.**
+- The PR is the **top-of-tree `feature → base` roll-up PR** (title `[ai-implement] Feature branch ready for review`). Under feature-branch grouping (Linear or Jira), bd-super-build-down drives every leaf and parent-closing PR to merge and lets internal roll-ups happen automatically, but the final feature-branch merge is a deliberate human review of the whole integrated feature. Before surfacing it: **run the completion checkpoint** (§4f) — explicitly state "grouped tree complete — {summary}", **post the `# ai-implement-build-down-learnings` comment on the umbrella/parent**, and ask before proceeding. Then smoke-jump the integrated feature branch and **surface this PR for a human — do not merge it.**
 
 ### Never auto-post agent comments when
 
