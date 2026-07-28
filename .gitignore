@@ -8,3 +8,6 @@
 .idea/
 *.swp
 *.swo
+
+# Local install symlinks created by ./install.sh --project .
+.claude/skills/

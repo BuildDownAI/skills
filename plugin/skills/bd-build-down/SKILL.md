@@ -1,13 +1,15 @@
 ---
-name: build-down
-description: "Run a build-down session — drive open PRs to merge. Trigger this skill when the user says 'build-down', 'let's do a build-down', 'drive PRs to merge', 'PR triage', or asks to review and merge open pull requests. A build-down is an active sprint-closure session — survey the issue tracker and open GitHub PRs, assess each one against its gap analysis, drive gaps to resolution autonomously via PR comments to the AI coding agent, merge clean PRs, file minimal new tracker issues only when blockers are discovered, and leave the board cleaner than it started. This skill assumes a workflow with an issue tracker (e.g., Linear MCP), GitHub MCP, browser automation MCP for preview testing, and an AI coding agent that opens PRs in response to issues."
+name: bd-build-down
+description: "Run a bd-build-down session — drive open PRs to merge. Trigger this skill when the user says 'bd-build-down', 'let's do a bd-build-down', 'drive PRs to merge', 'PR triage', or asks to review and merge open pull requests. A bd-build-down is an active sprint-closure session — survey the issue tracker and open GitHub PRs, assess each one against its gap analysis, drive gaps to resolution autonomously via PR comments to the AI coding agent, merge clean PRs, file minimal new tracker issues only when blockers are discovered, and leave the board cleaner than it started. This skill assumes a workflow with an issue tracker (e.g., Linear MCP), GitHub MCP, browser automation MCP for preview testing, and an AI coding agent that opens PRs in response to issues."
+metadata:
+  suite: builddown
 ---
 
 # Build-Down Skill
 
-A build-down drives open PRs to merge. Mission: fewer open PRs, cleaner tracker, no blockers left undocumented, no gaps left unfixed when they could be fixed in-session.
+A bd-build-down drives open PRs to merge. Mission: fewer open PRs, cleaner tracker, no blockers left undocumented, no gaps left unfixed when they could be fixed in-session.
 
-**Guiding principle — drive to standard.** If a gap is visible and a coding-agent comment can fix it in the existing PR, post the comment now. Don't defer real work to "future build-up" or "follow-up issue" when the fix is one comment away. The park-and-trash rule: if we're walking past it and can pick it up, we pick it up.
+**Guiding principle — drive to standard.** If a gap is visible and a coding-agent comment can fix it in the existing PR, post the comment now. Don't defer real work to "future bd-build-up" or "follow-up issue" when the fix is one comment away. The park-and-trash rule: if we're walking past it and can pick it up, we pick it up.
 
 **Autonomy default.** This skill runs autonomously by default. Post coding-agent comments, merge clean PRs, file session summaries, and move issues between states without asking. Escalate to the user only for pattern breaks (defined below).
 
@@ -17,7 +19,7 @@ A build-down drives open PRs to merge. Mission: fewer open PRs, cleaner tracker,
 
 This skill assumes some setup the user has wired up. Names of services and roles vary — substitute as needed.
 
-- `{{TRACKER}}` — the issue tracker (e.g., Linear, Jira, GitHub Issues). The skill assumes an MCP integration that supports `list_issues`, `get_issue`, `save_issue` (or equivalent create/update).
+- `{{TRACKER}}` — the issue tracker for this bd-build-down: `linear` or `jira`. Determines which `trackers/{{TRACKER}}.md` adapter the core follows for all tracker-touching steps.
 - `{{REPO}}` — the GitHub repo, owner/name format.
 - `{{PREVIEW_HOST}}` — the preview deploy URL pattern, typically `pr-{N}-{app}.{provider}.dev` or similar.
 - `{{AGENT_MENTION}}` — how the AI coding agent listens for follow-up requests on PRs (e.g., `@claude`, `@copilot`, an explicit command). The skill uses `@agent` as a placeholder — substitute the real mention.
@@ -39,13 +41,13 @@ This skill runs in three environments with different capabilities. Detect which 
 - Has: tracker MCP, GitHub MCP (via connector), browser automation MCP (when extension active), project context, conversation memory, past-chat search
 - Lacks: bash, local filesystem, git, ability to run build commands or apply migrations
 - Use for: triage, sequencing, agent comments, merging via GitHub MCP, session summaries, filing issues
-- Belay-on to a code-execution environment when: a conflict needs local resolution, a migration needs manual application, a test needs to run locally
+- bd-belay-on to a code-execution environment when: a conflict needs local resolution, a migration needs manual application, a test needs to run locally
 
 **Code-execution environment (terminal, e.g., Claude Code):**
 - Has: bash, local filesystem, git, can push commits, tracker MCP if configured
 - Lacks: project memory across sessions, broad strategic context
 - Use for: local conflict resolution, running build commands, applying migrations, testing fixes before push
-- Belay-on to chat when: the session needs strategic context about a PR's history or product intent
+- bd-belay-on to chat when: the session needs strategic context about a PR's history or product intent
 
 **Code-reading agent (e.g., a desktop tool with deep filesystem access):**
 - Has: deep codebase reading, grep across files
@@ -60,7 +62,7 @@ This skill runs in three environments with different capabilities. Detect which 
 Pick the active tracker at session start and load its adapter:
 
 - Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (a `linear-*` MCP → Linear, an `atlassian-*` MCP → Jira). If ambiguous, ask once.
-- Read `trackers/<tracker>.md`. Every tracker-touching step below (issue scan, pickup trigger, post-merge completion, unblock, follow-up filing) follows that adapter's matching `## ` section.
+- Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (issue scan, pickup trigger, post-merge completion, unblock, follow-up filing) follows that adapter's matching `## ` section.
 - State the tracker in the opening declaration.
 
 ### The AI coding agent pipeline (running system, not manual workflow)
@@ -187,10 +189,10 @@ Escalate to the user (ask before acting) when ANY of these apply:
 
 1. **Gap requires a product decision** — "should we show X or Y?" — the user decides
 2. **Agent has already failed on this specific gap** in this PR (one prior attempt in the comment history)
-3. **Any SQL migration** — additive, data-only, or destructive. The architect (if defined) owns migration application.
-4. **Touches auth, row-level security, security middleware, or auth provider config** — never autonomous
+3. **Any SQL migration** — additive, data-only, or destructive. The architect (if defined) owns migration application. **A feature-branch (child-PR) base does not waive this** — the migration still rolls up to the real database (§2i).
+4. **Touches auth, row-level security, security middleware, or auth provider config** — never autonomous. **A feature-branch (child-PR) base does not waive this** — the change still rolls up to real users (§2i).
 5. **Fix would modify >5 files or cross PR boundaries**
-6. **PR is >5 days old** — context may have shifted, check before driving
+6. **PR is >5 days old** — context may have shifted, check before driving (relaxed for child PRs — §2i)
 
 For escalations, present:
 
@@ -227,7 +229,7 @@ When a PR has a conflict:
 - Both branches added config entries → keep both
 - Independent additions to the same file with no functional overlap
 
-Post an agent comment (Phase 3 template) instructing `git merge main` and keeping both sets of changes. Do not merge until the agent resolves and re-verifies.
+Post an agent comment (Phase 3 template) instructing `git merge <the PR's base branch>` — the branch the PR actually targets: a feature branch for a grouped child PR (§2i), otherwise the repo's **Default Branch** (resolve to the real ref; **never assume `main`** — it may be `testing`, `develop`, etc.) — and keeping both sets of changes. Do not merge until the agent resolves and re-verifies.
 
 **If the conflict involves business logic (escalate):**
 - Both branches modified the same function differently
@@ -249,7 +251,7 @@ PRs that show "No data" or "Not found" errors in preview usually indicate mock d
 Before merging anything, check for file overlap across open PRs:
 
 - Via GitHub MCP: `get_pull_request_files` for each open PR, compare paths
-- Via code-execution environment: `git diff --name-only origin/main...origin/{branch}` per branch, then `comm -12` on sorted outputs
+- Via code-execution environment: `git diff --name-only origin/{base}...origin/{branch}` per branch, then `comm -12` on sorted outputs. Use each PR's **real base** — a feature branch `ai-implement/feature/<key>` for a grouped child PR (§2i), otherwise the **Default Branch** (which is not necessarily `main`) — never hard-code `main`
 
 If any two open PRs touch the same file:
 - Flag in the triage table: "⚠️ Overlaps with PR #X on `{file}`"
@@ -265,6 +267,75 @@ Recommended merge order (when no overlap or dependencies dictate):
 4. Oldest among equals (don't let PRs go stale)
 
 Phase 2h's ordering rules override any default "oldest first" instinct.
+
+### 2i. Feature-branch grouping (both trackers)
+
+When AI-Implement parent/child **feature-branch grouping** is in play, not every PR targets the repo base
+branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
+
+**Per-child rigor (process layer atop BDS-26's recognition layer).** A grouped tree — feature *or*
+multi-issue — is **N first-class PRs, not one unit.** Each child PR gets the same full build-down treatment
+as a standalone PR: read the gap analysis, tier-classify it, run bd-smoke-jumper/verify, drive agent
+gap-fills to resolution, apply the same merge criteria — before it merges into the group branch. The sandbox
+changes only where the change lands, not the standard it must meet.
+
+- **Two grouping modes, one recognition rule.** A grouped base branch is `ai-implement/<mode>/<key>` —
+  `<mode>` is `feature` (default) or `multi-issue` (the parent's description carries a `# ai-implement.yml`
+  block with `feature_branch.mode: multi-issue`). **The mode changes only the branch path segment** — treat
+  `ai-implement/multi-issue/<key>` exactly like `ai-implement/feature/<key>` for every rule below. The
+  top-of-tree PR body lists the grouped child issues under **`Grouped issues:`** — use it to confirm
+  every child landed. (If a roll-up PR lacks the line — older PR / hand-opened — confirm child landing
+  against the tracker's parent/child hierarchy instead.)
+- **Recognize the PR class by base branch + title:**
+  - **Child PR** — base is a feature branch `ai-implement/feature/<key>` (not the repo base). It lands in a
+    **contained sandbox**, not the Default Branch — so merge it *more* aggressively than a normal PR (see
+    "Sandbox posture" below), with *all conflict and diff operations using that feature branch as base, not
+    the Default Branch* (see §2f, §2h).
+  - **Top-of-tree PR** — title `[ai-implement] Feature branch ready for review`, head
+    `ai-implement/feature/<key>` → repo base. This is the **human-review gate for the whole integrated
+    feature.** Review the feature branch as a unit; merge it **last**, after every child has landed (see
+    Phase 4 merge criteria).
+- **Sandbox posture for child PRs — lower the merge bar, but keep the load-bearing gates.** The child PR's
+  blast radius is the feature branch; the whole feature still gets the top-of-tree human gate. So:
+  - **Still drive gaps to standard** — post the `@agent` comment for every fixable ⚠️ gap, same as always.
+  - **Lower the *merge-blocking* bar.** A clean child PR with only a residual *non-load-bearing* gap
+    (cosmetic, edge case, polish) can merge now — **file the residual as a new child issue under the same
+    feature node** so it's caught before roll-up. Don't hold a contained PR for polish.
+  - **Relax merge-sequencing, file-overlap, and staleness** — overlap between two child PRs resolves inside
+    the feature branch; Phase 2h ordering and the >5-day flag are advisory here, not blocking.
+  - **Auth and migrations STILL escalate (§2d/§2e) — the feature branch is NOT an exemption.** Grouping
+    defers *where* the change lands, not *whether* it's reviewed: the migration rolls up to the real
+    database and the auth change to real users, and the top-of-tree PR is one human glance at a multi-issue
+    diff, not a migration review. "It's just a sandbox," "it can be tightened in a follow-up before
+    roll-up," and "the roll-up review will catch it" are exactly the rationalizations that land an
+    unreviewed migration in production. If a child PR touches a SQL migration or auth/security, escalate —
+    the base branch is irrelevant to that decision.
+- **Internal roll-ups are NOT PRs.** AI-Implement merges a completed child feature branch into its
+  parent's branch with a direct `git merge` (commit `[ai-implement] Automated feature-branch roll-up`).
+  Don't look for a roll-up PR and don't create one.
+- **A roll-up can conflict silently.** Symptom: a child issue is Done but its work is missing from the
+  parent feature branch (or the parent's closing-work PR is missing expected child changes). That's a
+  **roll-up conflict** needing a manual `git merge` of the child feature branch into the parent — surface
+  it as a manual step (Phase 5), don't `@agent` it.
+- **Merge order is bottom-up:** leaf child PRs → parent's closing-work PR → (internal roll-ups happen
+  automatically) → top-of-tree PR last.
+- **Completion checkpoint — required once all children land.** When every child has merged and the
+  top-of-tree PR (`ai-implement/<mode>/<key> → base`) is open + green:
+  1. **Explicitly state "grouped tree complete — {one-line summary}."** Never slide from "children
+     landed" into the next action without this finished→confirm beat.
+  2. **Post the mandatory `# ai-implement-build-down-learnings` comment on the umbrella/parent issue.**
+     The grouped-tree gate is a build-down session close for that tree — the capstone is required at this
+     point, same as at the end of any session (Phase 6). This step is named and explicit so it cannot be
+     skipped when a tree finishes.
+  3. **Ask before proceeding or handing off.** Surface the top-of-tree PR for human review and wait for
+     explicit confirmation — in addition to the existing "never auto-merge" guardrail.
+- **Autonomous driving lives in `bd-super-build-down`.** Driving a grouped tree to its gate in an
+  unattended loop (poll → verify → merge each child → completion checkpoint) belongs to
+  `bd-super-build-down`. `bd-build-down` is fully compatible — it carries all the per-child rigor,
+  completion checkpoint, and capstone above — but for the autonomous driving loop, invoke
+  `bd-super-build-down` rather than recreating it here.
+
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
 ---
 
@@ -290,11 +361,13 @@ This should be a scoped change within this PR — no need to open a new branch.
 
 ### Template: merge conflict
 
+> Resolve `<base branch>` below to the PR's real base before posting: a feature branch `ai-implement/feature/<key>` for a grouped **child PR** (§2i), otherwise the repo's **Default Branch** — **not** necessarily `main`.
+
 ```
-@agent There is a merge conflict in `{file path}`. Please resolve by running `git merge main` and keeping both sets of changes:
+@agent There is a merge conflict in `{file path}`. Please resolve by running `git merge <base branch>` and keeping both sets of changes:
 
 - **From this branch ({ISSUE-ID}):** {what this branch added — be specific about functions, components, logic}
-- **From main ({OTHER-ID}):** {what main added that conflicts}
+- **From the base branch ({OTHER-ID}):** {what the base branch added that conflicts}
 
 These changes are complementary — {one sentence on why both should coexist}. Do not discard either set.
 
@@ -310,14 +383,15 @@ For PRs with multiple conflicts, use labeled sections (Conflict 1, Conflict 2, e
 Before posting, resolve every `{ISSUE-ID}` placeholder to the real issue ID:
 
 - This PR's issue: from the PR title or branch name
-- The main-side conflicting issue: check recent merge history via GitHub MCP `list_pull_requests` with state closed, find the PR that touched the same file, read its linked issue
+- The base-side conflicting issue (whatever already landed on the PR's base): check recent merge history via GitHub MCP `list_pull_requests` with state closed, find the PR that touched the same file, read its linked issue
+- The `<base branch>` placeholder: resolve to the PR's actual base ref — the repo's **Default Branch**, or a feature branch `ai-implement/feature/<key>` for a grouped child (§2i). Never hard-code `main`
 
 If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a posted comment.
 
 ### Posting rules
 
 - **Never wrap the agent mention in backticks** — markdown rendering can prevent the agent from recognizing it
-- **Always instruct `git merge main` explicitly** for conflict resolution — many coding agents default to forward-port, which leaves conflicts visible on GitHub
+- **Always instruct `git merge <base branch>` explicitly** for conflict resolution — the PR's base (a feature branch for a grouped child PR per §2i, otherwise the **Default Branch**; not assumed to be `main`); many coding agents default to forward-port, which leaves conflicts visible on GitHub
 - **Include the build command as verification** for any typed-code change
 - **Post autonomously** for agent-fixable gaps and clear-cut conflicts
 - **Post via GitHub MCP** (`add_issue_comment` or PR comment equivalent) as the primary method
@@ -336,12 +410,13 @@ If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a
 
 A PR is clean to merge when all of these are true:
 
-- ✅ All ⚠️ Gaps are resolved (fixed, filed as follow-ups, or acknowledged as out of scope)
+- ✅ All ⚠️ Gaps are resolved (fixed, filed as follow-ups, or acknowledged as out of scope) — on a **child PR** (§2i), a residual non-load-bearing gap filed as a new child issue counts as resolved
 - ✅ CI checks passing (or a known transient infra failure is the only failure)
-- ✅ No merge conflicts
-- ✅ No SQL migrations (those escalate per 2e)
-- ✅ No auth/security changes (those escalate per 2d)
+- ✅ No merge conflicts (relaxed/advisory for **child PRs** — they resolve inside the feature branch, §2i)
+- ✅ No SQL migrations (those escalate per 2e — **on every PR class, child PRs included**)
+- ✅ No auth/security changes (those escalate per 2d — **on every PR class, child PRs included**)
 - ✅ Verified ✅ Implemented claims hold up
+- ✅ Not the **top-of-tree `feature → base` PR** — that one is a human-review gate (§2i); surface it, review the integrated feature, and merge it explicitly last, never as a routine auto-merge
 
 Merge via GitHub MCP using squash merge as the default method. After merging:
 
@@ -353,7 +428,7 @@ Merge via GitHub MCP using squash merge as the default method. After merging:
 
 After each merge, re-evaluate remaining open PRs:
 
-- Do any now have conflicts against the new main? (Check `get_pull_request` mergeable state)
+- Do any now have conflicts against the now-updated base branch? (Check `get_pull_request` mergeable state)
 - If so, post the pre-drafted agent conflict comment for each
 
 ### Transient infra failure handling
@@ -451,14 +526,51 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 | Issue | Was blocked by | Now in state |
 
 ## Board State After Session
-(Use the active adapter's state names — see its **Issue scan & states** section.)
-- Working / in-progress: {count}
-- Ready for triage: {count}
+- {working state name — per the active adapter's **Issue scan & states** section}: {count}
+- {ready-for-triage state name}: {count}
 - Open PRs: {count}
-- Pickup queue: {count}
+- {pickup queue state name}: {count}
 
 ## Observations
 {Patterns noticed — recurring gap types, pipeline health signals, anything worth flagging for next session}
+```
+
+### Closing step — post/update the build-down learnings comment (required)
+
+An **autonomous write** — no approval gate, same as the session summary. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+
+**Record the outcome of every PR this session drove or observed**, using this taxonomy:
+
+- **merged** — landed.
+- **closed-unmerged (failure)** — PR closed without merging. A failure: record the concrete reason. Detect from the PR state you already read (GitHub `state=CLOSED` and not merged).
+- **open / never-landed** — still open at session end, or planned but never PR'd.
+- **superseded** — replaced by another PR/issue.
+
+Abandonment is a valid, valuable terminal outcome — "killed because X" is a learning, not a gap.
+
+**Scope is session-only.** Record PRs this session drove or observed. A PR closed with no build-down session running is not auto-captured here — a deliberate boundary, partially covered by the absence signal (a build-up learnings comment with no build-down sibling = never landed). Do not reconcile historical closed PRs unless asked.
+
+**Provenance:** `**Driven by:**` = the harness + model you (the build-down agent) are running under — self-report; ask the operator once if the model is unknown. `**PRs implemented by:**` = the AI-Implement harness + model that wrote the PRs — read it from the PR body's provenance line (the orchestrator stamps `harness · model · provider` on every PR).
+
+```
+# ai-implement-build-down-learnings
+
+**Feature:** <one line>
+**Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
+**PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
+
+## Outcome
+Per PR this session drove or observed:
+- PR #<n> <title> — <merged | closed-unmerged (failure) | open / never-landed | superseded>
+
+## Deltas from plan
+<what actually shipped vs. what was planned>
+
+## Failures & gotchas
+<each closed-unmerged PR with the concrete reason it failed; what bit us during landing>
+
+## Status
+<landed with these caveats | abandoned because X | superseded by Y>
 ```
 
 ---
@@ -467,15 +579,17 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 
 1. **The PR branch belongs to the AI coding agent.** Never edit a PR branch directly. Never push commits to it. All changes go through agent comments. Exceptions: main-branch hotfixes unrelated to any open PR, and session summary issues (which aren't on any PR branch).
 
-2. **Drive to standard now.** If a gap is scoped and the agent can fix it in-session, post the comment. Don't defer real work to "future build-up."
+2. **Drive to standard now.** If a gap is scoped and the agent can fix it in-session, post the comment. Don't defer real work to "future bd-build-up."
 
-3. **Follow-up context determines state.** Discovery in build-down → pickup-ready (per the active adapter) if scoped. Parked only for planning.
+3. **Follow-up context determines state.** Discovery in bd-build-down → pickup-ready (per the active adapter) if scoped. Parked only for planning.
 
 4. **Autonomous by default, escalate only on pattern breaks.** See the Phase 2d list. Everything else, act.
 
 5. **The gap analysis is the primary assessment document.** Read it first, verify load-bearing claims against the diff, act on each ⚠️ item explicitly.
 
 6. **Reading is free; writing requires care.** Read PRs, diffs, comments liberally. Write operations (agent comments, merges, issue filings) are autonomous but logged. Escalations are the exception, not the default.
+
+7. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Required, not optional — the durable record of outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. A session that ends without it is not done. See `docs/learnings-comments.md`.
 
 ---
 
@@ -486,10 +600,12 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 | API error after merge ("Failed to fetch...") | Migration not applied — code references a column that doesn't exist | Apply the pending migration; 🔴 escalation next session |
 | "Not found" errors on linked-detail pages | Mock data IDs don't exist in DB | Not a code defect; check acceptance criteria |
 | Preview deploy timeout | Transient infra | Re-run deploy job |
-| GitHub still shows conflicts after agent ran | Agent forward-ported instead of merging | Post new agent comment instructing `git merge main` |
+| GitHub still shows conflicts after agent ran | Agent forward-ported instead of merging | Post new agent comment instructing `git merge <base branch>` |
+| Merged a migration/auth child PR because it targeted a feature branch | Treated the sandbox as a review exemption | It isn't — the change rolls up to real DB/users. Escalate migrations/auth on every PR class (§2i, §2d/§2e) |
 | Gap analysis flags columns that exist | Agent didn't check current schema | Cross-reference the schema source of truth |
 | Merging breaks a prod page | Code deployed before migration applied | The Phase 2e escalation exists to prevent this — the most common footgun |
 | PR open >5 days with no activity | Likely stale | Check context before driving; may need rebase or close |
+| A driven PR was closed without merging | Failure outcome, not a silent gap | Record it as `closed-unmerged (failure)` in the parent's `# ai-implement-build-down-learnings` comment with the concrete reason |
 
 If a symptom doesn't clearly match a row, don't force-fit. Investigate and escalate.
 
