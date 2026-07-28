@@ -1,0 +1,212 @@
+# Synced to target repos by sync-workflow.yml.
+# All pipeline logic lives in the runner image (ghcr.io/builddownai/ai-implement-runner).
+# Do not edit in target repos.
+#
+# Required secrets:
+#   AI_IMPLEMENT_APP_ID      - GitHub App numeric ID
+#   AI_IMPLEMENT_PRIVATE_KEY - GitHub App PEM private key
+#   ANTHROPIC_API_KEY        - Anthropic API key
+#   CLAUDE_CODE_OAUTH_TOKEN  - Claude Code OAuth token (preferred over API key)
+#
+# Additional secret (Bedrock provider):
+#   AWS_BEDROCK_ROLE_ARN     - IAM role ARN trusted to GitHub OIDC; needs bedrock:InvokeModel
+#
+# Optional repository or organization variables:
+#   AI_IMPLEMENT_RUNNER_IMAGE                    - Default runner image for this repo/org.
+#   AI_IMPLEMENT_ALLOWED_RUNNER_IMAGE_PREFIXES   - Comma-separated image prefixes allowed in addition to ghcr.io/builddownai/.
+
+name: Claude AI Planning
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_id:
+        description: "Ticketing-system issue ID"
+        required: true
+        type: string
+      issue_identifier:
+        description: "Ticketing-system issue identifier (e.g., ENG-123)"
+        required: true
+        type: string
+      issue_title:
+        description: "Ticketing-system issue title"
+        required: true
+        type: string
+      issue_description:
+        description: "Ticketing-system issue description"
+        required: true
+        type: string
+      parent:
+        description: "Related parent issue summary for planning context"
+        required: false
+        type: string
+        default: "None"
+      siblings:
+        description: "Related sibling issues summary for planning context"
+        required: false
+        type: string
+        default: "None"
+      dependencies:
+        description: "Related dependency issues summary for planning context"
+        required: false
+        type: string
+        default: "None"
+      provider:
+        description: "Claude provider: 'anthropic' (default) or 'bedrock'"
+        required: false
+        type: string
+        default: "anthropic"
+      aws_region:
+        description: "AWS region for Bedrock (required when provider=bedrock)"
+        required: false
+        type: string
+        default: ""
+      runner_callback_url:
+        description: "Base URL the orchestrator advertises for /runner/result; empty skips callback"
+        required: false
+        type: string
+        default: ""
+      run_token:
+        description: "HMAC bearer token authorizing the result POST; empty skips callback"
+        required: false
+        type: string
+        default: ""
+      runner_image:
+        description: "Override the default runner image (must match ghcr.io/builddownai/* or AI_IMPLEMENT_ALLOWED_RUNNER_IMAGE_PREFIXES)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate-runner-image:
+    runs-on: ubuntu-latest
+    outputs:
+      runner_image: ${{ steps.resolve.outputs.runner_image }}
+    steps:
+      - name: Resolve and validate runner image
+        id: resolve
+        env:
+          REQUESTED_RUNNER_IMAGE: ${{ inputs.runner_image }}
+          CONFIGURED_RUNNER_IMAGE: ${{ vars.AI_IMPLEMENT_RUNNER_IMAGE }}
+          EXTRA_ALLOWED_PREFIXES: ${{ vars.AI_IMPLEMENT_ALLOWED_RUNNER_IMAGE_PREFIXES }}
+        run: |
+          set -euo pipefail
+
+          runner_image="${REQUESTED_RUNNER_IMAGE:-}"
+          if [ -z "$runner_image" ]; then
+            runner_image="${CONFIGURED_RUNNER_IMAGE:-}"
+          fi
+          if [ -z "$runner_image" ]; then
+            runner_image="ghcr.io/builddownai/ai-implement-runner:latest"
+          fi
+
+          case "$runner_image" in
+            *[!A-Za-z0-9._:/@-]*)
+              echo "::error::runner_image \"$runner_image\" contains invalid characters for a container image reference." >&2
+              exit 1
+              ;;
+          esac
+
+          allowed_prefixes="ghcr.io/builddownai/"
+          if [ -n "${EXTRA_ALLOWED_PREFIXES:-}" ]; then
+            allowed_prefixes="${allowed_prefixes},${EXTRA_ALLOWED_PREFIXES}"
+          fi
+
+          allowed=false
+          IFS=',' read -ra prefixes <<< "$allowed_prefixes"
+          for raw_prefix in "${prefixes[@]}"; do
+            prefix="$(echo "$raw_prefix" | xargs)"
+            [ -z "$prefix" ] && continue
+            case "$runner_image" in
+              "$prefix"*)
+                allowed=true
+                break
+                ;;
+            esac
+          done
+
+          if [ "$allowed" != "true" ]; then
+            echo "::error::runner_image \"$runner_image\" is not allowed." >&2
+            echo "::error::Allowed prefixes:" >&2
+            for raw_prefix in "${prefixes[@]}"; do
+              prefix="$(echo "$raw_prefix" | xargs)"
+              [ -z "$prefix" ] && continue
+              echo "::error::- $prefix" >&2
+            done
+            echo "::error::To allow this image, set the repository or organization variable AI_IMPLEMENT_ALLOWED_RUNNER_IMAGE_PREFIXES=<prefix>." >&2
+            echo "::error::Example: AI_IMPLEMENT_ALLOWED_RUNNER_IMAGE_PREFIXES=ghcr.io/acme/" >&2
+            echo "::error::Use comma-separated prefixes for multiple registries or namespaces." >&2
+            exit 1
+          fi
+
+          echo "runner_image=$runner_image" >> "$GITHUB_OUTPUT"
+
+  plan:
+    needs: validate-runner-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: ${{ needs.validate-runner-image.outputs.runner_image }}
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
+        with:
+          app-id: ${{ secrets.AI_IMPLEMENT_APP_ID }}
+          private-key: ${{ secrets.AI_IMPLEMENT_PRIVATE_KEY }}
+
+      - name: Validate Bedrock inputs
+        if: inputs.provider == 'bedrock'
+        env:
+          AWS_REGION: ${{ inputs.aws_region }}
+          ROLE_ARN: ${{ secrets.AWS_BEDROCK_ROLE_ARN }}
+        run: |
+          if [ -z "$AWS_REGION" ]; then
+            echo "::error::provider=bedrock but aws_region dispatch input is empty."
+            echo "::error::Set awsRegion on this team's mapping in the orchestrator admin UI."
+            exit 1
+          fi
+          if [ -z "$ROLE_ARN" ]; then
+            echo "::error::provider=bedrock but AWS_BEDROCK_ROLE_ARN repo secret is not set."
+            echo "::error::Add the IAM role ARN trusted to GitHub OIDC with bedrock:InvokeModel permission."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials (Bedrock)
+        if: inputs.provider == 'bedrock'
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c
+        with:
+          role-to-assume: ${{ secrets.AWS_BEDROCK_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+          role-session-duration: 14400
+
+      - name: Mask runner callback token
+        run: |
+          if [ -n "${{ inputs.run_token }}" ]; then
+            echo "::add-mask::${{ inputs.run_token }}"
+          fi
+
+      - name: Run planning
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_DEFAULT_BRANCH: ${{ github.ref_name }}
+          RUNNER_PHASE: planning
+          ISSUE_ID: ${{ inputs.issue_id }}
+          ISSUE_IDENTIFIER: ${{ inputs.issue_identifier }}
+          ISSUE_TITLE: ${{ inputs.issue_title }}
+          ISSUE_DESCRIPTION: ${{ inputs.issue_description }}
+          PARENT: ${{ inputs.parent }}
+          SIBLINGS: ${{ inputs.siblings }}
+          DEPENDENCIES: ${{ inputs.dependencies }}
+          PROVIDER: ${{ inputs.provider }}
+          AWS_REGION: ${{ inputs.aws_region }}
+          AI_IMPLEMENT_LOG_LEVEL: ${{ vars.AI_IMPLEMENT_LOG_LEVEL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          RUNNER_CALLBACK_URL: ${{ inputs.runner_callback_url }}
+          RUN_TOKEN: ${{ inputs.run_token }}
+        run: /opt/ai-implement/entrypoint.sh
