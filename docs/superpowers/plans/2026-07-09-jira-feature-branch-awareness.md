@@ -355,7 +355,7 @@ Replace the Container section (lines 17–23):
 ```
 ## Container
 The container is a **Jira Epic** under a fixed Jira project (e.g. epic
-`BAC-23858` in project `BAC`). Jira forbids epics-under-epics, so every bd-build-up
+`PROJ-1234` in project `PROJ`). Jira forbids epics-under-epics, so every bd-build-up
 issue is a flat child with `parent = <epic key>`. Resolve or confirm the epic key
 with the operator at session start; do not create a new project. If no epic
 exists for this bd-build-up, create one Epic-type issue in the project and use it as
@@ -365,7 +365,7 @@ with:
 ```
 ## Container
 The container is a **Jira Epic** under a fixed Jira project (e.g. epic
-`BAC-23858` in project `BAC`). Jira forbids epics-under-epics, so every bd-build-up
+`PROJ-1234` in project `PROJ`). Jira forbids epics-under-epics, so every bd-build-up
 issue is a flat child with `parent = <epic key>`. Resolve or confirm the epic key
 with the operator at session start; do not create a new project. If no epic
 exists for this bd-build-up, create one Epic-type issue in the project and use it as
@@ -483,7 +483,7 @@ The spec (§7) flags this as "confirm with author — appetite / worth it given 
 - [ ] **Step 1: RED baseline — capture that a naive agent gets it wrong pre-fix**
 
 If you still have the pre-Task-4 `trackers/jira.md` (via `git stash` or a scratch checkout of the parent commit), dispatch a subagent given **only** the old `jira.md` + core `SKILL.md` and this scenario, via the Agent tool:
-> "Filing a Jira feature node: a Story `BAC-500` with three sub-tasks `BAC-501/502/503`. Using only these skill files, list the exact order in which you set `AI-Implement-Status` on the four issues and wire the `Blocks` links, and say what happens if you leave `BAC-503`'s `AI-Implement-Status` unset."
+> "Filing a Jira feature node: a Story `PROJ-500` with three sub-tasks `PROJ-501/502/503`. Using only these skill files, list the exact order in which you set `AI-Implement-Status` on the four issues and wire the `Blocks` links, and say what happens if you leave `PROJ-503`'s `AI-Implement-Status` unset."
 Expected (RED): the agent has no grouping guidance — it does not know to designate the parent last, and does not identify that an unset-Status child is silently excluded from the group. Record the answer.
 
 (If reconstructing the old file is not worth it, note "RED trivially holds — old jira.md has zero grouping content" and proceed.)
@@ -491,10 +491,10 @@ Expected (RED): the agent has no grouping guidance — it does not know to desig
 - [ ] **Step 2: GREEN — same scenario against the fixed files**
 
 Dispatch a fresh subagent (Agent tool) given the **post-Task-4** `trackers/jira.md` + core `SKILL.md` and the identical scenario. Explicitly seed the rationalizations to counter:
-> "…A teammate argues 'BAC-503 is just a sub-task, the epic groups it anyway, and I can set its Status later.' Evaluate that."
+> "…A teammate argues 'PROJ-503 is just a sub-task, the epic groups it anyway, and I can set its Status later.' Evaluate that."
 Expected (GREEN), the agent must state:
-  1. Designate the **children first** (`AI-Implement-Status` + Repo on 501/502/503), wire `parent` + `Blocks` links, then set the Story `BAC-500` **last**.
-  2. Leaving `BAC-503` un-designated makes it **invisible to the group** — it won't gate the Story and won't roll up; it PRs to the Default Branch on its own. The "epic groups it" claim is wrong; the Epic must stay un-designated.
+  1. Designate the **children first** (`AI-Implement-Status` + Repo on 501/502/503), wire `parent` + `Blocks` links, then set the Story `PROJ-500` **last**.
+  2. Leaving `PROJ-503` un-designated makes it **invisible to the group** — it won't gate the Story and won't roll up; it PRs to the Default Branch on its own. The "epic groups it" claim is wrong; the Epic must stay un-designated.
 
 - [ ] **Step 3: Gate on the result**
 

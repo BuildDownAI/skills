@@ -29,7 +29,7 @@ server's OAuth flow from inside the session** (the server's `authenticate` tool 
 > | Concept | Linear | Jira |
 > |---|---|---|
 > | Chosen at OAuth time (one per server token) | **workspace** | **site** (`<site>.atlassian.net`) |
-> | A `CLAUDE.md` binding / tool parameter only | **team** (e.g. `BDS`) | **project / epic** (e.g. `BAC`) |
+> | A `CLAUDE.md` binding / tool parameter only | **team** (e.g. `BDS`) | **project / epic** (e.g. `PROJ`) |
 > | Issue container | team | project + epic |
 >
 > **What varies per project — and where it lives:**
@@ -42,14 +42,14 @@ server's OAuth flow from inside the session** (the server's `authenticate` tool 
 > workspace is in play.** Claude Code ties a server's OAuth **token to the server name**, so every project
 > that uses the name `linear-server` shares **one** token = **one** workspace. The failure this causes:
 > a new project's `linear-server` comes up **already Connected** to whatever workspace that shared token
-> holds (e.g. `oolidata`), and Linear's OAuth often **auto-completes to your default workspace** without
+> holds (e.g. `acme`), and Linear's OAuth often **auto-completes to your default workspace** without
 > showing a picker. The only way to put `linear-server` on a *different* workspace is to re-authenticate
 > it — which **repoints every other project using that name**. That is a trap, not a fix.
 >
 > **Rule:**
 > - **One Linear workspace ever** → `linear-server` is fine.
 > - **More than one workspace** (or any doubt) → name each per workspace: **`linear-<workspace-slug>`**
->   (e.g. `linear-eudoxus`, `linear-oolidata`). Each gets its own token, so they coexist and never steal
+>   (e.g. `linear-eudoxus`, `linear-acme`). Each gets its own token, so they coexist and never steal
 >   each other's auth. Same for Jira sites: **`jira-<site-slug>`**.
 >
 > Whatever name a project binds, keep it identical across the `.mcp.json` entry, `enabledMcpjsonServers`,
@@ -121,7 +121,7 @@ workspace/site (and may have auto-completed there without a picker). Before bind
    project's target team is present. Jira: list projects/sites and check for the target project. Record
    the workspace/site the server is actually on.
 2. **If it matches** the project's target → good, proceed.
-3. **If it does NOT match** (e.g. server is on `oolidata`, project needs `eudoxus`) → **do not
+3. **If it does NOT match** (e.g. server is on `acme`, project needs `eudoxus`) → **do not
    re-authenticate the shared server and do not propose removing the other workspace.** Re-auth repoints
    that name for *every* project using it. Instead, pick one of:
 
@@ -269,7 +269,7 @@ you run more than one:
 ```json
 {
   "mcpServers": {
-    "jira-cloudshare": { "type": "http", "url": "https://mcp.atlassian.com/v1/sse" }
+    "jira-<workspace>": { "type": "http", "url": "https://mcp.atlassian.com/v1/sse" }
   }
 }
 ```
@@ -333,9 +333,9 @@ minimum, the tracker workspace + **team** must be explicit, because issues get f
 ## Issue tracker — Jira
 - tracker.kind: jira
 - MCP server: `jira-server` (project .mcp.json; pre-approved in .claude/settings.json)
-- Site: `cloudshare` (cloudshare.atlassian.net — bound at OAuth time)
-- Project / epic: `BAC` / epic `BAC-23858`  ← issues filed as children of this epic
-- Browse URL: https://cloudshare.atlassian.net/browse/{KEY}
+- Site: `<your-workspace>` (<your-workspace>.atlassian.net — bound at OAuth time)
+- Project / epic: `PROJ` / epic `PROJ-1234`  ← issues filed as children of this epic
+- Browse URL: https://<your-workspace>.atlassian.net/browse/{KEY}
 ```
 
 ## Phase 5 — Authenticate each server (driven from the session)
@@ -347,7 +347,7 @@ user to an MCP panel:
 
 1. **Start the flow.** Call `mcp__<server>__authenticate`. It returns an authorization URL.
 2. **Hand the user the link.** Ask them to open it, approve, and **explicitly select the target workspace**
-   (Linear, e.g. `eudoxus`) or **site** (Jira, e.g. `cloudshare.atlassian.net`) in the grant — Linear's
+   (Linear, e.g. `eudoxus`) or **site** (Jira, e.g. `<your-workspace>.atlassian.net`) in the grant — Linear's
    consent page has a workspace switcher near the top. **Do not let it auto-complete to the default
    workspace** (a common cause of landing on the wrong one). If it does, that's the wrong-workspace case —
    handle it per Step 0.2c (give this workspace its own server name), not by repointing a shared server.

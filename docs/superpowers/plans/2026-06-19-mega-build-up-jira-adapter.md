@@ -139,9 +139,9 @@ After the "Opening declaration" line in Environment Detection, insert:
 
 Pick the active tracker at session start and load its adapter:
 
-- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-cloudshare` → `linear`, `atlassian-cloudshare` → `jira`). If both are present or it's ambiguous, ask once.
+- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-<workspace>` → `linear`, `atlassian-<workspace>` → `jira`). If both are present or it's ambiguous, ask once.
 - Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (overlap scan, container, doc home, pickup trigger, waves, dependencies, issue creation, status check) follows that adapter's matching `## ` section.
-- State the tracker in the opening declaration, e.g. *"…Tracker: Jira (epic BAC-23858, project BAC)."*
+- State the tracker in the opening declaration, e.g. *"…Tracker: Jira (epic PROJ-1234, project PROJ)."*
 ```
 
 - [ ] **Step 3: Replace inline Linear mechanics with adapter pointers**
@@ -211,14 +211,14 @@ exactly.
 > picked up by the pipeline. This is the single most common Jira filing mistake.
 
 ## MCP & discovery
-Use the `atlassian-cloudshare` MCP. Tool names are not hardcoded — discover them
+Use the `atlassian-<workspace>` MCP. Tool names are not hardcoded — discover them
 at runtime with ToolSearch (`jira create issue`, `jira search jql`,
 `jira edit issue`, `jira add comment`, `jira issue link`, `jira attachment`).
 The MCP covers both Jira and Confluence; this adapter uses Jira only.
 
 ## Container
 The container is a **Jira Epic** under a fixed Jira project (e.g. epic
-`BAC-23858` in project `BAC`). Jira forbids epics-under-epics, so every bd-build-up
+`PROJ-1234` in project `PROJ`). Jira forbids epics-under-epics, so every bd-build-up
 issue is a flat child with `parent = <epic key>`. Resolve or confirm the epic key
 with the operator at session start; do not create a new project. If no epic
 exists for this bd-build-up, create one Epic-type issue in the project and use it as
@@ -289,7 +289,7 @@ Never hardcode field IDs in a filed issue.
 Derive from the work kind: **Feature → Story · Improvement → Task · Bug → Bug.**
 
 ## Issue URL
-`{siteUrl}/browse/{KEY}` (e.g. `https://cloudshare.atlassian.net/browse/BAC-123`).
+`{siteUrl}/browse/{KEY}` (e.g. `https://<your-workspace>.atlassian.net/browse/PROJ-123`).
 Use this for the human "reference design context" link in issue bodies.
 
 ## Status check

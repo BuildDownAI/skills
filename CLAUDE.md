@@ -7,7 +7,7 @@ tokens. This file binds those placeholders to the concrete tools for **this** pr
 ## Issue tracker — Linear
 
 - **tracker.kind:** `linear`
-- **MCP server:** `linear-eudoxus` — this repo's own project-scoped server (`.mcp.json`), endpoint `https://mcp.linear.app/mcp`, pre-approved in `.claude/settings.json`. Named per workspace (not a generic `linear-server`) so its OAuth token stays distinct from other Linear workspaces (e.g. oolidata) and they never steal each other's auth. The `builddown` plugin bundles no MCP servers; this server is for developing the skills repo itself and is not shipped to plugin users.
+- **MCP server:** `linear-eudoxus` — this repo's own project-scoped server (`.mcp.json`), endpoint `https://mcp.linear.app/mcp`, pre-approved in `.claude/settings.json`. Named per workspace (not a generic `linear-server`) so its OAuth token stays distinct from other Linear workspaces (e.g. acme) and they never steal each other's auth. The `builddown` plugin bundles no MCP servers; this server is for developing the skills repo itself and is not shipped to plugin users.
 - **Workspace:** `eudoxus` — bound at authentication time (run `/mcp` and authenticate the `linear-eudoxus` server; choose the Eudoxus workspace in the OAuth grant)
 - **Team:** `BDS` — file/list/search issues against this team
 - **Team URL:** https://linear.app/eudoxus/team/BDS/overview

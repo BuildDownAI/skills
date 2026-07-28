@@ -9,7 +9,7 @@ Let the `bd-mega-build-up` skill drive a milestone bd-build-up into **either Lin
 Jira**, so a customer whose AI-Implement deployment is wired to Jira gets the
 same grilling → plan → file pipeline that Linear users get today. The downstream
 AI-Implement orchestrator is already provider-abstracted
-(`src/providers/types.ts` in `cloudshare/ai-implement`); this change makes the
+(`src/providers/types.ts` in `ai-implement`); this change makes the
 *planning skill* match that abstraction.
 
 ## Scope
@@ -43,17 +43,17 @@ cosmetically different*, so simple `{{TRACKER}}` find-replace would lie:
 | Concern | Linear | Jira |
 |---|---|---|
 | Pickup trigger | `state: Todo` + `AI-Implement` **label** | `AI-Implement-Status` custom field = `Ready`, Repo custom field = repoFieldValue, issue satisfies the mapping's **JQL** scope |
-| Container | Project (with attached Documents) | **Epic** — issues are flat `parent`-linked children (Jira forbids epics-under-epics); the Jira *project* (e.g. `BAC`) is fixed config |
+| Container | Project (with attached Documents) | **Epic** — issues are flat `parent`-linked children (Jira forbids epics-under-epics); the Jira *project* (e.g. `PROJ`) is fixed config |
 | Capacity bucket | team key | mapping ID / JQL scope |
 | "Blocked by" | Linear relation | Jira **"Blocks"** issue link (the *blocker* is the inward issue) |
 | Overlap scan | `search_issues` | JQL search across all statuses |
 | Docs that travel with work | Project Documents | (no native equivalent) |
 
-Reference: `cloudshare/ai-implement/src/providers/jira.ts` (poll JQL is
+Reference: `ai-implement/src/providers/jira.ts` (poll JQL is
 `(cfg.jql) AND cf[StatusField] in (Ready, "Plan Approved")` plus a Repo-field
 equality check), and
-`cloudshare/ai-implement/docs/superpowers/specs/2026-06-15-cloudshare-jira-mirror-design.md`
-(concrete field IDs and the epic-as-container layout for the live `BAC` project).
+the Jira mirror design spec under `ai-implement/docs/superpowers/specs/`
+(concrete field IDs and the epic-as-container layout for a live project).
 
 ## Architecture
 
@@ -77,7 +77,7 @@ provide a section for each of these:
 
 | Seam | Linear adapter | Jira adapter |
 |---|---|---|
-| MCP + tool discovery | `linear-cloudshare` MCP | `atlassian-cloudshare` MCP — ToolSearch for the Jira tools at runtime |
+| MCP + tool discovery | `linear-<workspace>` MCP | `atlassian-<workspace>` MCP — ToolSearch for the Jira tools at runtime |
 | Container resolution | Project (`list_projects` / create) | Epic under a fixed Jira project; resolve or confirm the epic key |
 | Design + plan docs | Project Documents (`create_document`) | **Markdown files attached to the epic** |
 | Backlog overlap scan | `search_issues` across all states | JQL search across all statuses |
@@ -98,7 +98,7 @@ provide a section for each of these:
   `trackers/<id>.md` and uses its mechanics in Phases 1 and 4, the Conventions
   section, and Status Check Mode.
 - Opening declaration gains one line, e.g.
-  *"…Tracker: Jira (epic BAC-23858, project BAC)."*
+  *"…Tracker: Jira (epic PROJ-1234, project PROJ)."*
 
 ### Refactor depth of SKILL.md
 
@@ -113,7 +113,7 @@ the two providers true peers and avoids drift.
 
 The Jira adapter (`trackers/jira.md`) must cover, at minimum:
 
-1. **MCP + discovery** — `atlassian-cloudshare`; ToolSearch for Jira create /
+1. **MCP + discovery** — `atlassian-<workspace>`; ToolSearch for Jira create /
    edit / get / JQL-search / comment / attachment / issue-link tools at runtime
    (tool names are discovered, not hardcoded, because the MCP surface can shift).
 2. **Container** — resolve the target epic key under the fixed Jira project;
@@ -169,7 +169,7 @@ No automated tests (these are prose skill files). Validation is:
 1. **Linear parity** — a Linear user reads the refactored SKILL.md +
    `linear.md` and gets the same instructions as today (diff the extracted
    content against the current inline prose; nothing dropped).
-2. **Jira dry-run walkthrough** — walk the Jira adapter against the live `BAC`
+2. **Jira dry-run walkthrough** — walk the Jira adapter against a live Jira project
    epic mentally / on a pilot issue: file one issue end-to-end, confirm it gets
    picked up (Status=Ready triggers the pipeline), confirm a Blocks link
    serializes, confirm an attachment lands on the epic.

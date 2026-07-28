@@ -135,9 +135,9 @@ State the environment at session start.
 
 Pick the active tracker at session start and load its adapter:
 
-- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-cloudshare` → `linear`, `atlassian-cloudshare` → `jira`). If both are present or it's ambiguous, ask once.
+- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (`linear-<workspace>` → `linear`, `atlassian-<workspace>` → `jira`). If both are present or it's ambiguous, ask once.
 - Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (overlap scan, container, doc home, pickup trigger, waves, dependencies, issue creation, status check, feature-node grouping) follows that adapter's matching `## ` section.
-- State the tracker in the opening declaration, e.g. *"…Tracker: Jira (epic BAC-23858, project BAC)."*
+- State the tracker in the opening declaration, e.g. *"…Tracker: Jira (epic PROJ-1234, project PROJ)."*
 
 **Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
 `trackers/jira.md` documents the Jira MCP binding and filing differences (Epic container, `AI-Implement-Status` field gate, `transition_issue` for state). The full skill conversion — Jira MCP wiring, verb replacement (`save_issue` → `create_issue`/`update_issue`), and container/pickup logic — is the work of AII-149; `trackers/jira.md` is the projected spec. `tracker.kind: jira` in `CLAUDE.md` is the signal that the Jira adapter is active.
