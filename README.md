@@ -153,6 +153,39 @@ That tracks the repo's default branch and is managed by `/plugin` (update with `
 /plugin install builddown@builddown
 ```
 
+### Versions and channels
+
+Which channel you're on depends on how you installed:
+
+| How you installed | What you get |
+|---|---|
+| `/plugin marketplace add BuildDownAI/skills` (no ref) | **Stable** — pinned to the latest release tag |
+| `/plugin marketplace add BuildDownAI/skills@testing` | **Dev** — tracks `testing`, updates as work lands |
+| `./install.sh --from-git <url>@v1.0.0` | Whatever tag you pin |
+| `./install.sh` from a checkout, or manual copy | Whatever that checkout contains — unversioned |
+
+**Stable** only changes when a new version ships. **Dev** follows `testing` and can change at any time,
+including in ways that haven't been through a release. Check which version you have with
+`/plugin list --enabled`.
+
+#### Moving between channels
+
+Your channel is recorded **on your machine** when you first run `marketplace add`. Releases in this repo
+cannot move you — switching is something you do locally.
+
+To move from dev to stable:
+
+```
+/plugin marketplace remove builddown
+/plugin marketplace add BuildDownAI/skills
+/plugin install builddown@builddown
+```
+
+Reverse the middle line (`BuildDownAI/skills@testing`) to go the other way.
+
+> **Removing a marketplace uninstalls the plugins installed from it.** The third line is not optional —
+> without it you'll have no skills installed.
+
 ### Script install (symlink / copy)
 
 If you'd rather not use the plugin system:
