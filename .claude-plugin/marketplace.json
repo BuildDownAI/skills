@@ -6,7 +6,12 @@
   "plugins": [
     {
       "name": "builddown",
-      "source": "./plugin",
+      "source": {
+        "source": "git-subdir",
+        "url": "BuildDownAI/skills",
+        "path": "plugin",
+        "ref": "v1.0.0"
+      },
       "description": "Planning and landing skills for AI-assisted software delivery (bd-build-up, bd-build-down, bd-summit-push, bd-smoke-jumper, bd-belay-on, bd-project-setup, and more)."
     }
   ]
