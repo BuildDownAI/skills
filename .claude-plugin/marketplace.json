@@ -8,7 +8,7 @@
       "name": "builddown",
       "source": {
         "source": "git-subdir",
-        "url": "BuildDownAI/skills",
+        "url": "https://github.com/BuildDownAI/skills.git",
         "path": "plugin",
         "ref": "v1.0.0"
       },
