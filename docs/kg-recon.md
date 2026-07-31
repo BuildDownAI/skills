@@ -42,9 +42,10 @@ Present the gap explicitly ("KG last built `<age>` ago; since then `N` issues ch
 
 ## Failure tolerance
 
-Any error — tool unavailable, empty index, tracker or `gh` hiccup — generates **one-line note** and **proceeds**. Recon is advisory, never blocking.
+Any error — tool unavailable, degraded response, empty index, tracker or `gh` hiccup — generates **one-line note** and **proceeds**. Recon is advisory, never blocking.
 
 - Missing tool → "KG search unavailable (tool error); proceeding without orientation."
+- Degraded index → "KG vector index not loaded (results lexical-only); run `bd-kg-refresh` and restart Claude Code for full hybrid search."
 - Empty index → "KG index empty; no prior learnings to draw on."
 - Stale graph file → "Could not stat graph.trig; KG staleness unknown."
 - Tracker query fails → "Tracker unavailable; staleness gap unknown."
