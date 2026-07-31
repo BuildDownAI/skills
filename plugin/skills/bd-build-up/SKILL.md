@@ -130,6 +130,17 @@ Weak clarifying questions to avoid:
 - "Who is this for?" (usually obvious from context)
 - Anything answered by reading the tracker or existing code
 
+### KG recon (if a KG is bound)
+
+Before drafting the plan, consult the project's knowledge graph for prior
+learnings, decisions, and issues about this objective — so we don't re-solve
+solved problems. Follow `docs/kg-recon.md`: derive 1–3 queries from **the
+objective in the user's words + its key nouns**, call **only** `kg.search_tool`
+(hybrid-search), surface the top relevant hits and cite any that change a plan
+choice, and note KG staleness. Advisory and non-blocking. If the project has no
+KG bound (`kg.present: false` / no `## Knowledge graph` block), skip this step
+silently.
+
 ### Mode 1: Convergence orient
 
 1. **Read the prototype codebase.** Confirm the path with the user if not given. Map key components, pages, and data structures. Note what the prototype does, what UI patterns it uses, where it uses mock data. In chat: bd-belay-on to a code-reading agent for this read.

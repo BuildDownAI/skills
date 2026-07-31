@@ -170,6 +170,10 @@ Understand current state before drafting anything.
 
 The orient phase produces a **working understanding**, not a plan. Don't draft issues yet.
 
+### KG recon (if a KG is bound)
+
+Before drafting the plan, consult the project's knowledge graph for prior learnings, decisions, and issues about this objective. Follow `docs/kg-recon.md`: derive queries from **the objective in the user's words + its key nouns**, call **only** `kg.search_tool` (hybrid-search), and note KG staleness. Advisory and non-blocking. If the project has no KG bound, skip silently.
+
 ### Backlog Overlap Scan
 
 Search the tracker backlog for existing work that intersects with this bd-build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.

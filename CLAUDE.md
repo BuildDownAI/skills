@@ -59,4 +59,4 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
   [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** Skip it and
   installs keep serving the stale skills.
 - **Minor** (`0.x.0`) for additive / backward-compatible changes; **patch** (`0.0.x`) for fixes and wording.
-- Current: **`0.6.0`**.
+- Current: **`1.1.0`**.

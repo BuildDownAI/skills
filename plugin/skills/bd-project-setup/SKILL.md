@@ -89,6 +89,7 @@ bullet keys, or inline text):
 | Tracker team | team short-code (e.g. `BDS`) |
 | `{{IMPLEMENT_LABEL}}` | label the coding-agent pickup trigger |
 | `enabledMcpjsonServers` / server-approval state | whether servers are pre-approved in `.claude/settings.json` |
+| `## Knowledge graph` block | `kg.present`, `kg.repo`, `kg.path`, `kg.branch`, `kg.mcp_server`, `kg.search_tool` (see Phase K) |
 
 If `CLAUDE.md` is absent or contains none of these, record: *no CLAUDE.md bindings found*.
 
@@ -370,6 +371,93 @@ user to an MCP panel:
 
 > Note: the in-browser approval is the one irreducible human step. Everything around it — starting the
 > flow, presenting the link, consuming the callback, verifying — runs from inside the session.
+
+---
+
+## Phase K — Knowledge graph (optional)
+
+Wires an **optional** per-project knowledge graph (KG) that KG-aware skills (e.g. `bd-kg-search`) query
+via hybrid search. This phase never runs automatically as part of Phases 0–5 above — it is a distinct,
+opt-in pass over the same detect → classify → confirm discipline as Phase 0. Skipping this phase entirely
+leaves KG-aware skills as silent no-ops (`docs/kg-binding.md` — *Semantics*), so a project that never runs
+Phase K is not "misconfigured," just KG-less.
+
+### Step K.1 — Detect
+
+Read the project `CLAUDE.md` for an existing `## Knowledge graph` block, and `.mcp.json` for a
+`<project-slug>-kg` server entry. Classify the result — never clobber:
+
+| State | Condition |
+|---|---|
+| **Bound & present** | `## Knowledge graph` block exists with `kg.present: true` **AND** the `<slug>-kg` server is in `.mcp.json` |
+| **Partially wired** | One of the block or the server entry exists, but not both |
+| **Not wired** | Neither the block nor the server entry exists |
+| **Deliberately absent** | `## Knowledge graph` block exists with `kg.present: false` |
+
+Report the classification to the user before doing anything else. If **Bound & present** or
+**Deliberately absent**, confirm with the user before making any change — both are valid end states.
+
+### Step K.2 — Decide
+
+Probe the discovery convention `<project-owner>/knowledge-graph-<project-slug>` read-only:
+
+```bash
+gh repo view <project-owner>/knowledge-graph-<project-slug>
+```
+
+Present the finding (repo exists / not found) to the operator and ask them to:
+- **Confirm** the probed owner/slug, or
+- **Override** the slug (a different `knowledge-graph-<slug>` name or owner), or
+- **Declare "no KG"** → write `kg.present: false` into the `## Knowledge graph` block (Step K.4's format)
+  and **end this phase** here — do not proceed to K.3.
+
+### Step K.3 — Bootstrap missing pieces
+
+Only for the pieces Step K.1 found missing:
+
+**(a) Clone, if not already checked out at `kg.path`:**
+
+```bash
+git clone <kg.repo origin> <kg.path>
+git -C <kg.path> checkout <kg.branch>   # default: knowledge-graph
+```
+
+**(b) Write the MCP server entry, if no `<project-slug>-kg` server exists in `.mcp.json`** (all paths
+absolute, derived from `kg.path`). Server name is `<project-slug>-kg` — e.g. for slug `acme`:
+
+```json
+"acme-kg": {
+  "command": "/abs/path/to/kg.path/.venv/bin/python",
+  "args": ["-m", "kg_query.server"],
+  "cwd": "/abs/path/to/kg.path",
+  "env": { "KG_BACKEND": "rdflib", "PYTHONPATH": "/abs/path/to/kg.path" }
+}
+```
+
+Then add `"<project-slug>-kg"` to `enabledMcpjsonServers` in `.claude/settings.json` (same shared,
+committed file as Phase 3) so the server is pre-approved. This server is **read-only stdio — no OAuth
+flow** — there is no authenticate/complete_authentication step like Phase 5.
+
+### Step K.4 — Bind
+
+Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonical format in
+`docs/kg-binding.md`. Merge into any existing block rather than overwriting it — preserve values the
+user has already customized and only fill in what Steps K.1–K.3 newly established.
+
+> Bind **before** building: the next step invokes `bd-kg-refresh`, whose first action is to read this
+> very block from `CLAUDE.md` — on a fresh project it would stop with "no KG bound" if the binding
+> didn't exist yet.
+
+### Step K.5 — Build
+
+Invoke the **`bd-kg-refresh`** skill so the graph and its embeddings exist (or are brought current).
+Setup does not duplicate ingest logic — `bd-kg-refresh` owns the venv-provisioning and ingest run.
+
+### Step K.6 — Restart note
+
+Tell the operator: a Claude Code restart is required before the `<project-slug>-kg` MCP server serves
+the graph — MCP servers load once at session start, so a newly-wired server (or a graph rebuilt by
+`bd-kg-refresh`) isn't picked up by an already-running session until it restarts.
 
 ---
 
