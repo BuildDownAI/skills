@@ -163,9 +163,7 @@ bd-mega-build-up's grilling and detailed-plan phases apply most strongly to **Mo
 
 ### KG recon (if a KG is bound)
 
-Before drafting the plan, consult the project's knowledge graph for prior learnings, decisions, and issues about this objective. Follow `docs/kg-recon.md`: derive queries from **the objective in the user's words + its key nouns**, call **only** `kg.search_tool` (hybrid-search), and note KG staleness. If the project has no KG bound, skip silently.
-
----
+Before drafting the plan, consult the project's knowledge graph for prior learnings, decisions, and issues about this objective. Follow `docs/kg-recon.md`: derive queries from **the objective in the user's words + its key nouns**, call **only** `kg.search_tool` (hybrid-search), and note KG staleness. Advisory and non-blocking. If the project has no KG bound, skip silently.
 
 Understand current state before drafting anything.
 
