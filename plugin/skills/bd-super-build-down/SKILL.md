@@ -101,6 +101,8 @@ PR # | Issue | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
 
 The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the session summary.
 
+**KG recon (advisory if a KG is bound):** For each PR, run one quiet `kg.search_tool` query on the issue key + title per `docs/kg-recon.md`; silently skip if no KG is bound.
+
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 
 For 5+ open PRs, run bd-summit-push Mode 2 automatically (not optional). Its risk report feeds Phase 2 classification directly. Don't ask permission — it's a read-only scan.
