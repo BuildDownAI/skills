@@ -452,8 +452,8 @@ user has already customized and only fill in what Steps K.1–K.4 newly establis
 ### Step K.6 — Restart note
 
 Tell the operator: a Claude Code restart is required before the `<project-slug>-kg` MCP server serves
-the graph — MCP servers load once at session start, the same caveat as the tracker servers wired in
-Phases 0–5.
+the graph — MCP servers load once at session start, so a newly-wired server (or a graph rebuilt by
+`bd-kg-refresh`) isn't picked up by an already-running session until it restarts.
 
 ---
 

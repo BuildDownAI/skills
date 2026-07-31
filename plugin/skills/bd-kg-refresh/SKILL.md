@@ -16,9 +16,11 @@ Refresh a project's knowledge graph so semantic/hybrid search stays current with
    - Stop.
 
 2. **Ensure the venv.** Check if `<kg.path>/.venv` exists. If not:
-   - `cd <kg.path> && python3.10 -m venv .venv`
+   - `cd <kg.path>`
+   - Prefer `python3.10` on PATH; if it isn't found, fall back to `python3` — e.g. `PY=python3.10; command -v "$PY" >/dev/null 2>&1 || PY=python3`.
+   - `"$PY" -m venv .venv`
    - `./.venv/bin/pip install -r requirements.txt`
-   - (Python 3.10+ is required for `mcp` and `fastembed` dependencies.)
+   - (Python 3.10+ is required for `mcp` and `fastembed` dependencies — verify the resolved interpreter meets that floor even after falling back to `python3`.)
 
 3. **Run the ingest** from `<kg.path>`:
    - `./.venv/bin/python -m kg_ingest.cli --repo <code_repo.path from that repo's sources.yml> --tracker --secondary`
@@ -38,4 +40,4 @@ Refresh a project's knowledge graph so semantic/hybrid search stays current with
 
 - The binding format is canonical across all KG-aware skills (see `docs/kg-binding.md`).
 - The ingest command is unified: it runs on both fresh clones and existing graphs, always rebuilding the index.
-- A project without `kg.present: true` is a graceful no-op — no error, silent skip.
+- A project without `kg.present: true` degrades gracefully, but not silently: this skill is invoked directly for the KG, so per `docs/kg-binding.md` it prints the "no KG bound" message in Step 1 and stops rather than skipping quietly. (The silent-no-op case applies only to KG-aware steps incidentally embedded inside other skills.)

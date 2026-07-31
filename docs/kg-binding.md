@@ -12,7 +12,10 @@ Canonical CLAUDE.md block format for integrating a project's knowledge graph wit
 
 ## Semantics
 
-When `kg.present: false` or the entire `## Knowledge graph` block is absent from CLAUDE.md, every KG-aware skill step is a silent no-op — no error, no warning, just graceful degradation. This ensures that projects without a knowledge graph can still run skills without modification.
+When `kg.present: false` or the entire `## Knowledge graph` block is absent from CLAUDE.md, KG-aware behavior degrades gracefully, but the shape of that degradation depends on how the step is invoked:
+
+- **Incidental KG-aware steps** — a KG-aware step embedded inside another skill's flow (e.g. a future recon step that consults the graph as one input among several) is a **silent no-op**: no error, no warning, the rest of the skill proceeds unaffected. This keeps projects without a knowledge graph running unmodified through skills that only *optionally* touch the KG.
+- **Skills invoked directly for the KG** — a skill the user runs specifically to work with the graph (`bd-kg-search`, `bd-kg-refresh`) instead responds with a clear, non-silent message — e.g. "This project has no KG bound — run bd-project-setup to add one." — and stops. Failing silently here would leave the user wondering why a KG-specific command did nothing.
 
 ## Tool usage
 
@@ -21,4 +24,4 @@ Skills **only** call `kg.search_tool` (hybrid-search) to query the knowledge gra
 ## Setup and maintenance
 
 - `bd-project-setup` writes this block into a project's CLAUDE.md during onboarding.
-- `bd-kg-refresh` keeps the local knowledge graph current by pulling from the configured repo.
+- `bd-kg-refresh` keeps the local knowledge graph current by re-running the ingest — re-reading the source project's git history, tracker, and docs into the graph (it does not `git pull`; the ingest is what refreshes the content).
