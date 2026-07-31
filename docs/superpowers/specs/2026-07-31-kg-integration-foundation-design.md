@@ -4,9 +4,10 @@
 
 This is **spec #1 of 2** for wiring the BuildDown skills to a per-project knowledge
 graph (KG), **hybrid-search only**. Spec #1 is the *foundation*: the CLAUDE.md
-binding contract, a KG phase in `bd-project-setup`, and a new `bd-kg-refresh`
-skill. **Spec #2** (separate) adds the advisory recon step + staleness-delta to
-the four session-owning skills — out of scope here.
+binding contract, a KG phase in `bd-project-setup`, a new `bd-kg-refresh` skill,
+and a new `bd-kg-search` skill (a direct hybrid-search on-ramp). **Spec #2**
+(separate) adds the advisory recon step + staleness-delta to the four
+session-owning skills — out of scope here.
 
 Everything degrades gracefully: a project with no KG is fully supported and
 untouched.
@@ -137,6 +138,31 @@ Absolute paths (resolved from `kg.path`). Pre-approved via
 `enabledMcpjsonServers`. Read-only: exposes `kg_hybrid_search` (and the other
 read tools) — no write tools, no auth.
 
+## Component 5 — new `bd-kg-search` skill (direct hybrid-search on-ramp)
+
+A deliberately tiny `bd-*` skill (`plugin/skills/bd-kg-search/SKILL.md`) that lets
+a user query the KG **directly**, without running a full session-owning skill.
+Its purpose is adoption: an easy way to build the habit of asking the KG before
+the recon step (spec #2) makes it automatic.
+
+**Trigger phrases:** "bd-kg-search", "kg search", "search the KG for …", "ask the
+knowledge graph". Any trailing text is the query.
+
+**Behavior:**
+1. Read the `## Knowledge graph` block from CLAUDE.md. If `kg.present` is
+   false/absent → reply that this project has no KG bound and point at
+   `bd-project-setup` to add one. Graceful, no error.
+2. Otherwise call **`kg.search_tool`** (hybrid-search) with the user's query.
+3. Present results readably: per hit, the title, `type`, `score`, `matched_by`,
+   a short snippet, and the `iri`. Ranked by score; note `degraded: true` if the
+   vector index wasn't loaded (suggest `bd-kg-refresh` + restart).
+
+**Constraints / non-goals:** hybrid-search **only** (no graph mutation; deeper
+walks like neighbors/provenance are out of scope — mention they exist but don't
+call them). No venv/ingest — pure query passthrough. No staleness-delta (spec #2).
+If the user just refreshed, remind that a Claude Code restart is needed before new
+results appear (load-once).
+
 ## Discovery convention
 
 KG origin defaults to `<project-owner>/knowledge-graph-<project-slug>` (e.g.
@@ -159,13 +185,16 @@ No executable code ships (markdown skills + JSON). Validation is:
   exit 0 after Step K.3.
 - The written `<slug>-kg` server name is identical across the `.mcp.json` entry,
   `enabledMcpjsonServers`, `kg.mcp_server`, and `kg.search_tool`.
-- `bd-kg-refresh/SKILL.md` has valid frontmatter (name/description) and follows
-  the repo's skill structure.
+- `bd-kg-refresh/SKILL.md` and `bd-kg-search/SKILL.md` have valid frontmatter
+  (name/description) and follow the repo's skill structure.
 - **Dry-run acceptance:** on a project with no KG, running `bd-project-setup`'s KG
   phase writes exactly `kg.present: false` and changes nothing else. On a project
   whose KG repo exists remotely but isn't cloned, the phase clones it, writes +
   pre-approves the server, runs `bd-kg-refresh` to a conforming graph, and binds
   the block — then instructs a restart.
+- **`bd-kg-search` acceptance:** with no KG bound → returns the graceful
+  "no KG for this project" message and makes no tool call. With a KG bound → calls
+  `kg.search_tool` and renders the ranked hits (title/type/score/snippet/iri).
 
 ## Non-goals (explicit)
 
