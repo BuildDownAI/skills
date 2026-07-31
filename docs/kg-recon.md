@@ -4,13 +4,13 @@ Shared recon procedure for the four session-owning skills (`bd-build-up`, `bd-me
 
 ## Guard
 
-Read the project's CLAUDE.md for a `## Knowledge graph` block. If `kg.present` is false or the block is absent, **skip silently — no output, no warning**. (This is an incidental step, one input among many; projects without a graph proceed unaffected.)
+Read the project's CLAUDE.md for a `## Knowledge graph` block (format: `docs/kg-binding.md`). If `kg.present` is false or the block is absent, **skip silently — no output, no warning**. (This is an incidental step, one input among many; projects without a graph proceed unaffected.)
 
 When the block is present and `kg.present: true`, continue to the query step.
 
 ## Query
 
-Derive **1–3 short queries** from the work at hand — the issue being decomposed or implemented, the gap being closed, the tests being verified. These queries are brief and direct (2–4 words), surfacing the core concept(s) the operator needs orientation on.
+Derive **1–3 short queries** from the work at hand — e.g. the objective's key nouns, or an issue key + title + gap topics from its gap analysis. These queries are brief and direct (2–4 words), surfacing the core concept(s) the operator needs orientation on.
 
 Call **`kg.search_tool`** (and only `kg.search_tool` — hybrid-search only) with `{query, limit: 8}`. Repeat for each derived query if multiple are needed.
 
@@ -29,12 +29,14 @@ stat -f %m "<kg.path>/out/graph.trig"  # macOS
 stat -c %Y "<kg.path>/out/graph.trig"  # Linux
 ```
 
+Both `stat` forms yield epoch seconds; convert to an ISO timestamp for the queries below with `date -u -r <epoch> +%Y-%m-%dT%H:%M:%SZ` (macOS) or `date -u -d @<epoch> +%Y-%m-%dT%H:%M:%SZ` (Linux).
+
 Compare to now and **always note the age in one line** — e.g., "KG last built 4 hours ago" or "KG is fresh (2 hours old)".
 
-**If the KG is older than 24 hours**, list what the KG is blind to at its standard ingest points:
+**If the KG is older than 24 hours**, list what the KG is blind to at its standard ingest points. The threshold is hour-granular, so use an ISO timestamp, not a bare date, in both queries:
 
-- Tracker issues **updated** since the build time — query the project's bound tracker MCP (Linear "updated after `<YYYY-MM-DD>`", Jira likewise) and report the count.
-- PRs **merged** since — `gh pr list --state merged --search "merged:>=<YYYY-MM-DD>" --limit 20` — and report the count.
+- Tracker issues **updated** since the build time — query the project's bound tracker MCP (Linear "updated after `<ISO timestamp>`", Jira likewise) and report the count.
+- PRs **merged** since — `gh pr list --state merged --search "merged:>=<YYYY-MM-DDTHH:MM:SSZ>" --limit 20` — and report the count.
 
 Present the gap explicitly ("KG last built `<age>` ago; since then `N` issues changed, `M` PRs merged — treat results as missing these") and nudge the operator to run `bd-kg-refresh` for fresh results.
 

@@ -101,7 +101,7 @@ PR # | Issue | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
 
 The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the session summary.
 
-**KG recon (advisory if a KG is bound):** For each PR, run one quiet `kg.search_tool` query on the issue key + title per `docs/kg-recon.md`; silently skip if no KG is bound.
+**KG recon (advisory if a KG is bound):** For each PR, run one quiet `kg.search_tool` query on the issue key + title per `docs/kg-recon.md`, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
 
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 

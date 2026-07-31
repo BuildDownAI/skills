@@ -131,11 +131,13 @@ Flag any PR >5 days old — it's likely stale and needs a context check before n
 ### KG recon (if a KG is bound)
 
 Before triaging gaps, consult the project's knowledge graph for prior learnings
-and decisions about this PR's work. Follow `docs/kg-recon.md`: derive 1–3 queries
-from **the PR's linked issue key + title + the gap topics from its gap-analysis**,
-call **only** `kg.search_tool` (hybrid-search), surface the top relevant hits and
-cite any that change a gap decision, and note KG staleness. Advisory and
-non-blocking. If the project has no KG bound, skip this step silently.
+and decisions about the work — derive queries per PR being triaged (or for the
+session's PR set), not just a single PR. Follow `docs/kg-recon.md`: derive 1–3
+queries per PR from **its linked issue key + title + the gap topics from its
+gap-analysis**, call **only** `kg.search_tool` (hybrid-search), surface the top
+relevant hits and cite any that change a gap decision, and note KG staleness.
+Advisory and non-blocking. If the project has no KG bound, skip this step
+silently.
 
 ---
 
