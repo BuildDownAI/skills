@@ -34,6 +34,8 @@ Refresh a project's knowledge graph so semantic/hybrid search stays current with
 
 5. **Restart reminder.** Print: "The running KG MCP server loaded the graph at startup, so hybrid-search won't reflect this refresh until a Claude Code restart."
 
+6. **Close — learnings loop (required check, usually a no-op).** Follow `docs/kg-learnings-loop.md`: if this refresh surfaced a base-relevant pattern (ingest failure class, classifier miss, portability gap, perf issue), file the sanitized learning PR into `BuildDownAI/bd-knowledge-graph-base` `testing`. An uneventful refresh files nothing. Advisory — never blocks.
+
 ---
 
 ## Notes

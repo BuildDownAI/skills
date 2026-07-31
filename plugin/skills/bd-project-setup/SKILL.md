@@ -408,6 +408,9 @@ gh repo view <project-owner>/knowledge-graph-<project-slug>
 Present the finding (repo exists / not found) to the operator and ask them to:
 - **Confirm** the probed owner/slug, or
 - **Override** the slug (a different `knowledge-graph-<slug>` name or owner), or
+- **Create one** (when no KG repo exists yet) → invoke the **`bd-kg-create`** skill, which builds a
+  new KG repo from the `BuildDownAI/bd-knowledge-graph-base` template and returns here (its own
+  hand-off runs the build and re-enters this phase to bind), or
 - **Declare "no KG"** → write `kg.present: false` into the `## Knowledge graph` block (Step K.4's format)
   and **end this phase** here — do not proceed to K.3.
 
