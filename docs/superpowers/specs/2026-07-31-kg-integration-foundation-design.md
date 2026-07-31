@@ -76,12 +76,15 @@ requirement):
    and pre-approve it (add `<slug>-kg` to `enabledMcpjsonServers` in
    `.claude/settings.json`). No OAuth flow.
 
-**Step K.4 — Build.** Invoke **`bd-kg-refresh`** (Component 3) so the graph and
+**Step K.4 — Bind.** Write/merge the `## Knowledge graph` block (Component 1)
+into `CLAUDE.md`, merging (not clobbering) any existing values. Bind **before**
+building: `bd-kg-refresh`'s first action reads this block, so on a fresh project
+a build-first order would stop with "no KG bound". (Ordering defect found in
+Phase K's first live run.)
+
+**Step K.5 — Build.** Invoke **`bd-kg-refresh`** (Component 3) so the graph and
 embeddings exist and the server can actually answer. Setup does not duplicate
 ingest logic.
-
-**Step K.5 — Bind.** Write/merge the `## Knowledge graph` block (Component 1)
-into `CLAUDE.md`, merging (not clobbering) any existing values.
 
 **Step K.6 — Note the restart.** Tell the operator: the MCP server loads the
 graph once at startup, so a **Claude Code restart** is needed before

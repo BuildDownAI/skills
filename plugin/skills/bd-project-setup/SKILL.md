@@ -408,7 +408,7 @@ gh repo view <project-owner>/knowledge-graph-<project-slug>
 Present the finding (repo exists / not found) to the operator and ask them to:
 - **Confirm** the probed owner/slug, or
 - **Override** the slug (a different `knowledge-graph-<slug>` name or owner), or
-- **Declare "no KG"** → write `kg.present: false` into the `## Knowledge graph` block (Step K.5's format)
+- **Declare "no KG"** → write `kg.present: false` into the `## Knowledge graph` block (Step K.4's format)
   and **end this phase** here — do not proceed to K.3.
 
 ### Step K.3 — Bootstrap missing pieces
@@ -438,16 +438,20 @@ Then add `"<project-slug>-kg"` to `enabledMcpjsonServers` in `.claude/settings.j
 committed file as Phase 3) so the server is pre-approved. This server is **read-only stdio — no OAuth
 flow** — there is no authenticate/complete_authentication step like Phase 5.
 
-### Step K.4 — Build
-
-Invoke the **`bd-kg-refresh`** skill so the graph and its embeddings exist (or are brought current).
-Setup does not duplicate ingest logic — `bd-kg-refresh` owns the venv-provisioning and ingest run.
-
-### Step K.5 — Bind
+### Step K.4 — Bind
 
 Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonical format in
 `docs/kg-binding.md`. Merge into any existing block rather than overwriting it — preserve values the
-user has already customized and only fill in what Steps K.1–K.4 newly established.
+user has already customized and only fill in what Steps K.1–K.3 newly established.
+
+> Bind **before** building: the next step invokes `bd-kg-refresh`, whose first action is to read this
+> very block from `CLAUDE.md` — on a fresh project it would stop with "no KG bound" if the binding
+> didn't exist yet.
+
+### Step K.5 — Build
+
+Invoke the **`bd-kg-refresh`** skill so the graph and its embeddings exist (or are brought current).
+Setup does not duplicate ingest logic — `bd-kg-refresh` owns the venv-provisioning and ingest run.
 
 ### Step K.6 — Restart note
 
