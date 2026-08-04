@@ -242,7 +242,7 @@ sequencing beyond serialization is bd-summit-push's job (BDS-16).
 
 **Backend before frontend.** Schema migrations and API endpoints are separate issues that ship before UI issues that consume them. Prevents the bd-build-down footgun where a frontend PR merges but its migration hasn't been applied.
 
-**Feature-node trees (both trackers).** When you decompose into a parent + children, the *designated* parent becomes a *feature node*: children PR into its feature branch `ai-implement/feature/<key>` (not the Default Branch), and the parent's own closing work is `Blocked by:` all its children (it runs last). **Designate the parent LAST** — build the whole tree (children + parent relationships + every `blocks`/`Blocks` relation) first, then designate children, then the parent. The race guard only covers "parent designated, *no* child designated yet"; it does **not** cover "children designated, relations not yet set," and designating the parent into that window makes the orchestrator pick it up in parallel with its children (observed failure). Designation is the `{{IMPLEMENT_LABEL}}` label on Linear and a non-empty `AI-Implement-Status` + matching Repo field on Jira. See `docs/feature-branch-grouping.md`.
+**Feature-node trees (both trackers).** When you decompose into a parent + children, the *designated* parent becomes a *feature node*: children PR into its feature branch `ai-implement/feature/<key>` (not the Default Branch), and the parent's own closing work is `Blocked by:` all its children (it runs last). **Build the whole tree first, then designate the parent BEFORE the children** — create children + parent relationships + every `blocks`/`Blocks` relation first, then designate the parent, then the children. Two races force this order: a designated parent with *no children yet* is classified as a leaf and dispatched standalone (so the complete tree must exist first), and a child designated while its parent is *undesignated* resolves an empty ancestor chain and cuts its PR from the repo base branch, silently bypassing grouping (so the parent must be designated first — the race guard makes that safe: a designated parent whose children carry no designation just waits). Designation is the `{{IMPLEMENT_LABEL}}` label on Linear and a non-empty `AI-Implement-Status` + matching Repo field on Jira. See `docs/feature-branch-grouping.md`.
 
 **Multi-issue grouping (a mode of the above).** To group *otherwise-unrelated* issues that should still land as one reviewable unit, make the parent a **multi-issue** group by putting a marked, **fenced** block in its **description** (an unfenced marker is ignored — the parent stays in feature mode):
 
@@ -329,7 +329,7 @@ bd-build-up's job is to launch work, not park it. Get the agents going. File iss
 - **Wave 1** (issues with no dependencies) → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Pipeline picks up within minutes.
 - **Wave 2+** (issues with unmet dependencies) → `state: Backlog`. Promote to Todo during bd-build-down as blockers merge.
 - **Architect-routed issues** (schema, security, infra) → `state: Todo`, assigned to the architect, no `{{IMPLEMENT_LABEL}}`. The architect decides their own sequencing.
-- **Feature-node trees (both trackers)** → file the parent and children un-designated, set the parent relationships and every `blocks`/`Blocks` relation, then designate **children first and the parent last** — never the parent before its children's designation and relations exist (the race guard doesn't cover that window; the orchestrator would pick the parent up in parallel with its children). The children PR into the feature branch `ai-implement/feature/<key>` (not the Default Branch); the parent's own closing work waits until every child lands. Don't expect the parent to merge to the Default Branch before its children. Designation is the `{{IMPLEMENT_LABEL}}` label on Linear and a non-empty `AI-Implement-Status` + matching Repo field on Jira. See `docs/feature-branch-grouping.md`.
+- **Feature-node trees (both trackers)** → file the parent and children un-designated, set the parent relationships and every `blocks`/`Blocks` relation, then designate **the parent first, then the children** — never a child before its parent (an undesignated parent gives the child an empty ancestor chain, so it PRs against the Default Branch and silently bypasses grouping), and never the parent before its children exist (a childless designated parent is dispatched as a leaf; a designated parent whose children exist but aren't designated yet safely waits). The children PR into the feature branch `ai-implement/feature/<key>` (not the Default Branch); the parent's own closing work waits until every child lands. Don't expect the parent to merge to the Default Branch before its children. Designation is the `{{IMPLEMENT_LABEL}}` label on Linear and a non-empty `AI-Implement-Status` + matching Repo field on Jira. See `docs/feature-branch-grouping.md`.
 
 This is the point of a bd-build-up. A well-staged bd-build-up has Wave 1 running by the time the session ends.
 
@@ -368,6 +368,13 @@ Design reference: code-prototype at `/app/path`
 OR
 Design reference: design project "{name}" — screen "{screen}"
 
+## Files
+
+- Create: `exact/path/to/new-file.ts`
+- Modify: `exact/path/to/existing.ts`
+- Test: `tests/exact/path/test.ts`
+- Delete: `exact/path/to/dead-file.ts`
+
 ## Acceptance Criteria
 
 - [ ] Checkbox-style, independently verifiable
@@ -381,6 +388,15 @@ Blocked by: {ISSUE-ID} (brief reason)
 
 Edge cases, known gotchas, decisions made during planning.
 ```
+
+**The `## Files` section is machine-read — keep the exact bullet format.** The orchestrator's
+dispatch guard parses `- Create|Modify|Test|Delete: ` bullets with a backticked path (a
+`:line-range` suffix inside the backticks is fine) to detect when two dispatchable sibling issues
+declare the same file — declared overlap gets the later sibling **deferred until the first one's PR
+merges**, turning a guaranteed merge conflict into clean serialization. An issue with no parseable
+Files section fails open: it dispatches in parallel regardless of overlap and relies on conflict
+auto-recovery instead. Every file the task will touch belongs in this list; prose mentions inside
+`## Task` are not parsed.
 
 ### Labels and metadata per issue
 
@@ -531,7 +547,7 @@ Present a concise status summary. If there are PRs ready, say "there are N PRs r
 - Issue creation: `create_issue` with `projectKey` + `issueType`; updates via `update_issue` with `issueKey`
 - Pipeline pickup: `AI-Implement-Status = Ready` custom field (not a label); Wave 1 → set field, Wave 2+ → leave unset
 - Labels exist in Jira but the pickup gate is the status field — setting only a label is a silent no-op
-- Feature-node grouping: a *designated* Story (non-empty `AI-Implement-Status` + matching Repo) with designated sub-task children owns `ai-implement/feature/<key>`; sub-tasks PR into it; the tracking Epic stays un-designated. Hierarchy = native parent ?? Epic Link. Designate children first, the Story last.
+- Feature-node grouping: a *designated* Story (non-empty `AI-Implement-Status` + matching Repo) with designated sub-task children owns `ai-implement/feature/<key>`; sub-tasks PR into it; the tracking Epic stays un-designated. Hierarchy = native parent ?? Epic Link. Build the tree first, then designate the Story before its sub-tasks.
 
 **Prototype tool routing (when both kinds are available):**
 - Code-first tool → Mode 3a brief, later Mode 1 convergence. Good for: code-heavy prototypes, fast iteration on full-stack patterns, when the output needs to look like real code.
