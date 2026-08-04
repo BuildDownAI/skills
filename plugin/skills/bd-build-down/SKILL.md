@@ -469,6 +469,24 @@ The filing context determines whether the issue is pickup-ready or parked — se
 
 Default toward pickup-ready when the work is scoped and deterministic. Parked is for planning, not parking.
 
+### The local fix loop (work done outside the pipeline)
+
+When a fix is implemented locally in-session instead of through the coding-agent pipeline
+(operator direction, pipeline unavailable, or a fix to the pipeline itself — the pattern the
+AII-277/278/279 round validated):
+
+1. **File the issue first anyway** — a child under the driven parent where one exists,
+   **without** `{{IMPLEMENT_LABEL}}` (nothing should dispatch), with the finding/learning
+   inline in the body.
+2. Implement locally (TDD; push to the PR branch under review where applicable — never to a
+   pipeline-owned agent branch).
+3. Close with a **completion comment naming the commits**, mark Done, and update the parent's
+   canonical `# ai-implement-build-down-learnings` comment **in place**
+   (`docs/learnings-comments.md`).
+
+The tracker record must be indistinguishable in quality from pipeline-driven work — the KG
+ingests both the same way.
+
 ### What not to file
 
 - Transient infra timeouts (retry instead)
