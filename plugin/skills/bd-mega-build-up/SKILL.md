@@ -404,7 +404,20 @@ After writing the plan, check it against the Phase 2 design doc with fresh eyes:
 1. **Decision coverage.** Every decision in the design doc is implemented by at least one task. Gaps?
 2. **Placeholder scan.** Search for the failure patterns above. Fix them.
 3. **Type/name consistency.** A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug. Same for column names, route paths, component names.
-4. **Parallelization audit.** Which tasks claim `Parallel-safe with:` X — do they really not touch the same files? Re-check.
+4. **Parallelization audit — mandatory output for grouped siblings (BDS-33).** Which tasks claim
+   `Parallel-safe with:` X — do they really not touch the same files? For every grouped tree,
+   produce the **cross-sibling file-intersection result explicitly** (never silence):
+   - **Parse each sibling's declared files with the dispatch guard's own contract** — the
+     `- Create/Modify/Test/Delete:` bullet lines under a `## Files` heading. **A sibling that
+     parses to 0 files FAILS the audit** until its body carries the canonical `## Files` block
+     (the orchestrator's fail-open guard is blind to it otherwise — proven on AII-264's own
+     tree, where prose-declared files parsed to zero and the guard would have silently
+     fail-opened).
+   - **Any pairwise intersection ⇒ chain the overlapping siblings with `Blocked by:`**
+     (serialize the hotspot) or re-split task boundaries. State the verdict per pair
+     (`A ∩ B = ∅` or the shared paths).
+   Sequencing beyond serialization belongs to bd-summit-push (BDS-16) — reference it, don't
+   duplicate it.
 
 Fix issues inline. No need to re-review — just fix and move on.
 
@@ -511,10 +524,12 @@ Then in bd-build-down, after the pilot's PR lands:
 **Approval gate 3:** Present the issue manifest before filing — don't file then ask. Issue manifest format:
 
 ```
-| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Routing |
+| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing |
 ```
 
-Confirm wave assignments and routing. After explicit approval, file per the active adapter's **Required create fields** section.
+**Files overlap** carries the Phase 3 intersection verdict per issue (`∅`, or `sibling-key: paths`
+with the `Blocked by:` that resolves it; `UNPARSEABLE` = the audit failed — fix the `## Files`
+block before filing). Confirm wave assignments and routing. After explicit approval, file per the active adapter's **Required create fields** section.
 
 ### Step 5: Post-filing manifest
 

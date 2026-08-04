@@ -218,6 +218,14 @@ If any of those fail, split the issue.
 
 **Silent `max_turns` failure mode.** When the runner hits the turn cap mid-edit, it pushes *nothing* — no partial PR, no branch. The issue appears to have never been picked up. To diagnose: check the implement run's result field directly (`result=max_turns` means the run was killed mid-edit, not still queued). Don't interpret a missing PR as "not yet started."
 
+**Grouped-sibling file-intersection check (BDS-33).** When issues form a grouped tree
+(feature-node parent/children), intersect the siblings' declared `## Files` bullet lists before
+filing: any overlap ⇒ chain those siblings with `Blocked by:` or re-split. Declare files in the
+canonical bullet form (`- Modify: \`path\``) — the orchestrator's dispatch guard parses exactly
+that and **fail-opens on anything else**, so prose-declared files get no overlap protection.
+Full audit discipline (parse counts, pairwise verdicts) lives in bd-mega-build-up's Phase 3;
+sequencing beyond serialization is bd-summit-push's job (BDS-16).
+
 **Reshaping an existing detailed issue.** The sizing test above is designed for authoring issues from scratch. When bd-build-up reshapes an existing, already-detailed tracker issue (condensing it to hit the size target), there is a distinct risk: **right-sizing can silently drop a substantive acceptance item** that the original issue spelled out. Before finishing a reshape:
 1. **Diff the reshaped version against the original.** Identify every substantive acceptance item in the original. Confirm each is preserved in the reshaped version or explicitly split out.
 2. **Split, don't drop.** If right-sizing forces a cut, move the dropped requirement into a sibling issue — never omit it silently.
