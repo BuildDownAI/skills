@@ -112,6 +112,14 @@ Before running tests, check if a bd-smoke-jumper report already exists on the PR
 
 Before testing, understand what this PR actually does.
 
+### 2a-pre. KG recon (if a KG is bound)
+
+Before reading the gap analysis, run 1–2 `kg_hybrid_search` queries on the PR's linked issue
+key + title (procedure: `docs/kg-recon.md` — advisory, hybrid-search only, silent skip when no
+KG). Prior learnings sharpen what to smoke-test (known-fragile surfaces, past failure classes);
+when a test failure confirms or contradicts a KG prior, say so in the report and in any issue
+filed from the failure. Non-blocking.
+
 ### 2a. Read the gap analysis
 
 Find the AI coding agent's comment. Extract:

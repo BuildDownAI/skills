@@ -161,10 +161,12 @@ needs team-managed native Story→Story parenting; classic Jira can't parent Sto
 instances use multiple independent single-level feature-node Stories under one tracking Epic. Both are fine
 — the orchestrator caps chains at depth 5 regardless.
 
-**Designate children first, parent last.** Set every child's `AI-Implement-Status` + Repo, wire every
-`parent` link and every `Blocks` link, then designate the **parent last**. Designate the parent early and it
-momentarily looks like a childless leaf and dispatches its closing work onto base ahead of its children
-(the Jira translation of Linear's "label the parent last").
+**Build the whole tree first, then designate the parent BEFORE the children.** Create every child and wire
+every `parent` link and every `Blocks` link first — a designated parent with no children yet looks like a
+childless leaf and dispatches its closing work onto base. Then designate the **parent**, then the children:
+a child designated while its parent is undesignated resolves an empty ancestor chain and PRs against the
+repo base branch, silently bypassing grouping. A designated parent whose children exist but are not yet
+designated is a *waiting parent* and is skipped (the Jira translation of Linear's parent-first rule).
 
 **Roll-ups (shared):** an internal roll-up (parent is itself a feature node) is a direct `git merge`, **no
 PR**, with an identifier-free commit so GitHub-for-Jira / Smart Commits don't auto-close the parent early. A

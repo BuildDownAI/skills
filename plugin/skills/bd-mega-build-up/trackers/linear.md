@@ -119,10 +119,12 @@ branch path segment. The selector lives in the description, not a label; write e
 
 **Designation = the `AI-Implement` label.** Terminal = the issue is Done or Cancelled.
 
-**Designate (label) the parent LAST.** Build the whole tree first — create children + parent, set every
-`parent` relationship and every `Blocked by:` relation — then label children, then the parent last of all.
-The orchestrator's race guard only skips a parent while *no* child is labelled yet; it does **not** cover
-the "children labelled, relations not yet set" window. Label the parent into that window and the
-orchestrator classifies it as dispatchable and picks it up in parallel with its children (observed failure).
+**Build the whole tree first, then label the parent BEFORE the children.** Create children + parent, set
+every `parent` relationship and every `Blocked by:` relation — then label the parent, then the children.
+A labelled parent with *no children yet* is classified as a leaf and dispatched standalone (observed
+failure), so the complete tree must exist before any label goes on. And a child labelled while its parent
+is *unlabelled* resolves an empty ancestor chain and cuts its PR from the repo base branch, silently
+bypassing grouping — so the parent is labelled first. The race guard makes that safe: a labelled parent
+whose children carry no label yet is a *waiting parent* and is skipped until its children release.
 
 Full model: `docs/feature-branch-grouping.md`.

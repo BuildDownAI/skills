@@ -394,7 +394,7 @@ The AI-Implement pipeline runs unblocked `AI-Implement` issues concurrently. The
 - **Mark each task with `Blocked by:`** when serialization is required (schema migration before the API that uses it; API endpoint before the UI that calls it).
 - **Backend before frontend.** Always. Never combine schema/API and UI in one task.
 - **One file conflict = one merge conflict.** If two tasks both modify the same file in non-trivial ways, they're not parallel-safe — make one block the other or merge them into a single task.
-- **Feature-node trees (both trackers).** Children of a feature node each PR into the *same* feature branch on isolated child branches, so they don't collide on base — they're **more** parallel-safe, not less (normal file-overlap rules still apply *within* the feature branch). Mark the parent's closing-work task `Blocked by:` every child. **Designate the parent LAST — build the whole tree (children + parent relationships + every `blocks`/`Blocks` relation) before any designation goes on, then designate children first and the parent last of all.** The orchestrator's race guard only covers "parent designated, *no* child designated yet"; it does **not** cover "children designated, relations not yet established" — designate the parent into that window and the orchestrator classifies it as dispatchable and picks it up in parallel with its children (observed failure). "Designate" is tracker-specific (Linear label vs Jira `AI-Implement-Status` + Repo) — see the active adapter's **Feature-node grouping** section and `docs/feature-branch-grouping.md`.
+- **Feature-node trees (both trackers).** Children of a feature node each PR into the *same* feature branch on isolated child branches, so they don't collide on base — they're **more** parallel-safe, not less (normal file-overlap rules still apply *within* the feature branch). Mark the parent's closing-work task `Blocked by:` every child. **Build the whole tree before any designation goes on, then designate the parent BEFORE the children** — a designated parent with no children yet is classified as a leaf and dispatched standalone (observed failure), so the complete tree (children + parent relationships + every `blocks`/`Blocks` relation) must exist first; and a child designated while its parent is undesignated resolves an empty ancestor chain and cuts its PR from the repo base branch, silently bypassing grouping — so parent first, then children. The race guard makes parent-first safe: a designated parent whose children exist but carry no designation is a *waiting parent* and is skipped until its children release. "Designate" is tracker-specific (Linear label vs Jira `AI-Implement-Status` + Repo) — see the active adapter's **Feature-node grouping** section and `docs/feature-branch-grouping.md`.
 - **Multi-issue mode.** To group *otherwise-unrelated* issues as one reviewable unit, add a **fenced** `# ai-implement.yml` block (`feature_branch.mode: "multi-issue"`; unfenced = ignored) to the **parent's description** → its branch becomes `ai-implement/multi-issue/<key>` instead of `ai-implement/feature/<key>`, **identical in every other respect**. Default (label / no block) is feature-node. Write examples as `# ai-implement.yml (example)` — a bare marker line is stripped from the issue's own spec. See `docs/feature-branch-grouping.md`.
 
 ### Self-review
@@ -404,7 +404,20 @@ After writing the plan, check it against the Phase 2 design doc with fresh eyes:
 1. **Decision coverage.** Every decision in the design doc is implemented by at least one task. Gaps?
 2. **Placeholder scan.** Search for the failure patterns above. Fix them.
 3. **Type/name consistency.** A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug. Same for column names, route paths, component names.
-4. **Parallelization audit.** Which tasks claim `Parallel-safe with:` X — do they really not touch the same files? Re-check.
+4. **Parallelization audit — mandatory output for grouped siblings (BDS-33).** Which tasks claim
+   `Parallel-safe with:` X — do they really not touch the same files? For every grouped tree,
+   produce the **cross-sibling file-intersection result explicitly** (never silence):
+   - **Parse each sibling's declared files with the dispatch guard's own contract** — the
+     `- Create/Modify/Test/Delete:` bullet lines under a `## Files` heading. **A sibling that
+     parses to 0 files FAILS the audit** until its body carries the canonical `## Files` block
+     (the orchestrator's fail-open guard is blind to it otherwise — proven on AII-264's own
+     tree, where prose-declared files parsed to zero and the guard would have silently
+     fail-opened).
+   - **Any pairwise intersection ⇒ chain the overlapping siblings with `Blocked by:`**
+     (serialize the hotspot) or re-split task boundaries. State the verdict per pair
+     (`A ∩ B = ∅` or the shared paths).
+   Sequencing beyond serialization belongs to bd-summit-push (BDS-16) — reference it, don't
+   duplicate it.
 
 Fix issues inline. No need to re-review — just fix and move on.
 
@@ -511,10 +524,12 @@ Then in bd-build-down, after the pilot's PR lands:
 **Approval gate 3:** Present the issue manifest before filing — don't file then ask. Issue manifest format:
 
 ```
-| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Routing |
+| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing |
 ```
 
-Confirm wave assignments and routing. After explicit approval, file per the active adapter's **Required create fields** section.
+**Files overlap** carries the Phase 3 intersection verdict per issue (`∅`, or `sibling-key: paths`
+with the `Blocked by:` that resolves it; `UNPARSEABLE` = the audit failed — fix the `## Files`
+block before filing). Confirm wave assignments and routing. After explicit approval, file per the active adapter's **Required create fields** section.
 
 ### Step 5: Post-filing manifest
 
@@ -593,7 +608,7 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 - **New-file path specified only by description** (e.g., *"create a pagination test file"* with no exact sibling path cited). → Pattern-anchor violation. Three agents will produce three different paths; one of them will likely collide with an existing module. Cite an exact sibling file by full path.
 - **≥ 3 same-pattern sibling issues filed all with `AI-Implement` at once.** → You're betting the spec is complete enough that three cold agents converge. They usually don't, and the failure mode is N parallel PRs all making the same omission (MCP sync, file-path convention, peripheral consumer) at once. Demote all but one to no-label, run the pilot, learn from its PR, then re-label the rest. (See Phase 4 → Pilot-first sequencing.)
 - **Migration or backfill is bundled with code that consumes it.** → Hard rule violation. Migration/backfill becomes its own task; consumer becomes a downstream task with `Blocked by:`.
-- **Feature-node parent designated before its children and their `blocks`/`Blocks` relations exist.** → Designation race: the orchestrator's guard only skips a parent when *no* child is designated yet, so designating the parent into the "children designated, relations not yet set" window makes it dispatch in parallel with its children (observed). Build the whole tree first; designate children, then the parent last (Phase 3 → parallel-execution awareness). Designation = Linear label / Jira `AI-Implement-Status` + Repo (active adapter's **Feature-node grouping** section).
+- **Feature-node tree designated out of order.** → Two designation races, both observed: a parent designated before its children *exist* is classified as a leaf and dispatches standalone; a child designated before its *parent* resolves an empty ancestor chain and PRs against the repo base branch, bypassing grouping. Build the whole tree first (children + every relation), then designate the parent, then the children (Phase 3 → parallel-execution awareness). Designation = Linear label / Jira `AI-Implement-Status` + Repo (active adapter's **Feature-node grouping** section).
 - **Schema-tightening plan with no writer census.** → Hard Rule 9 violation. The cleanup PR will detonate against unmigrated writers (REST endpoints, background jobs, importers, test fixtures, factories, seed scripts) and surface only as CI failures on the destructive PR. Run the writer census in Phase 2 — across whatever ORM / query builder / raw SQL / fixture conventions the stack uses — and embed each writer as an explicit task (or task line item) in the additive PR's plan. Cleanup-phase preflight is "census is empty + CI on a throwaway-with-constraint branch is green," not "`SELECT COUNT(*) WHERE col IS NULL` returned zero."
 - **Atlas (or other declarative-schema) project, and the task is "rename column X to Y".** → Refuse to file as AI-Implement. Recommend manual scripted cutover (add → backfill → cut over reads → cut over writes → drop). Override only if user confirms a single-phase task.
 - **Phase 1 produced no Overlap Inventory.** → Backlog scan was skipped or too narrow. Re-run with broader keywords. Mature backlogs always have hits.

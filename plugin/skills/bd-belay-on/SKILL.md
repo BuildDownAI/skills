@@ -57,6 +57,12 @@ Triggered when:
 4. **Save and present the prompt.** Write to `/mnt/user-data/outputs/recon-{target}-{topic}.md` and use `present_files` so the user can download or copy.
 5. **Mark the session as paused.** Post the pause marker (format below). State what we're waiting on and where to resume.
 
+**KG recon feeds the prompt (if a KG is bound).** Before writing the recon prompt, run 1–2
+`kg_hybrid_search` queries on the perspective gap (procedure: `docs/kg-recon.md` — advisory,
+hybrid-search only, silent skip when no KG is bound) and put the relevant hits in the prompt's
+**What We Know Already** section — the target tool should inherit the graph's memory, not
+rediscover it. If a KG hit fully answers the question, say so and skip the dispatch entirely.
+
 ### Mode 2: Integrate ("results are back")
 
 Triggered when:
@@ -70,7 +76,16 @@ Triggered when:
 1. **Parse the incoming results against the original recon questions.** Match answers to numbered questions — if something is missing, say so before proceeding.
 2. **Update the session's understanding.** Fill the gaps that triggered the dispatch.
 3. **Revise any assessments that were uncertain.** Confidence scores, merge recommendations, issue body drafts — all get updated against the new facts.
-4. **Resume the interrupted workflow.** Host skill continues from its recorded resume point.
+4. **Check results against KG priors (if a KG is bound).** Where recon results contradict a
+   prior learning/decision surfaced in the dispatch (or by a fresh `kg_hybrid_search`), name the
+   contradiction explicitly — a disproven prior is itself a learning and must not be silently
+   overwritten. Advisory; silent skip when no KG.
+5. **Close the loop on conclusive handoffs.** If the integrate step *concludes* a driven work
+   item (a fix validated, a decision made, an approach killed), update that issue's canonical
+   `# ai-implement-build-up-learnings` / `# ai-implement-build-down-learnings` comment **in
+   place** per `docs/learnings-comments.md` — the handoff's outcome is exactly the durable
+   "why" those comments exist to capture. Skip when the handoff was purely informational.
+6. **Resume the interrupted workflow.** Host skill continues from its recorded resume point.
 
 ---
 
@@ -85,7 +100,7 @@ Triggered when:
 {What session is running, what we're doing, why we paused. 2-3 sentences.}
 
 ## What We Know Already
-{Findings so far — don't make the target tool redo work. Include file paths, issue IDs, PR numbers, whatever's relevant.}
+{Findings so far — don't make the target tool redo work. Include file paths, issue IDs, PR numbers, whatever's relevant. If a KG is bound, include the relevant `kg_hybrid_search` hits (title + issue key + one-line takeaway) so the target inherits prior learnings instead of rediscovering them.}
 
 ## What I Need You To Investigate
 

@@ -346,6 +346,44 @@ changes only where the change lands, not the standard it must meet.
   completion checkpoint, and capstone above — but for the autonomous driving loop, invoke
   `bd-super-build-down` rather than recreating it here.
 
+**Staging a tree for dispatch — label the parent BEFORE the children.** Grouping is
+ordering-sensitive and the failure is silent: a child resolves its PR base by walking up to the
+nearest ancestor that *currently carries* `{{IMPLEMENT_LABEL}}`; if no ancestor is labeled when the
+child dispatches, it cuts its PR **directly from the repo base branch**, bypassing grouping with no
+error. Always stage in this exact order:
+
+1. **Create the parent UNLABELED** — a labeled issue with zero children is indistinguishable from a
+   leaf and dispatches standalone (seconds are enough to lose this race).
+2. **Create all children** as sub-issues, with every `blockedBy` relation.
+3. **Label the PARENT.** A labeled parent whose children exist but carry no label is a *waiting
+   parent* — the pipeline skips it until labeled children reach terminal states.
+4. **Then label the children.** Each now resolves its base to the parent's feature branch.
+
+If you find child PRs already based on the repo base branch, tear them down (close PR + delete
+branch), fix labels in the order above, and re-release — retargeting after the fact is error-prone.
+
+**Cascade operational knowledge (from live grouped-tree campaigns):**
+
+- **Auto-merge is a separate opt-in.** Auto-merging child PRs into the feature branch is a
+  per-project flag (often defaulting off) and only ever merges PRs whose base is a grouping branch —
+  never the repo base (top-of-tree stays human-reviewed). Verify it's on before promising a
+  hands-off run.
+- **DIRTY sibling PRs self-heal — don't jump on them.** When parallel siblings overlap, the
+  second-merging child goes conflicting; the orchestrator dispatches a synthetic conflict-resolution
+  run (capped, typically 2 attempts) and the PR then auto-merges. `resolution in flight` in logs is
+  normal working state. Escalate only on explicit cap exhaustion ("leaving for a human"). Issues
+  whose bodies declare a machine-readable `## Files` section get *serialized at dispatch* on overlap
+  (`file-overlap` deferral) and rarely need recovery at all.
+- **Merge or close roll-up PRs promptly.** Current orchestrators hold a parent whose top-of-tree PR
+  is open; older versions re-dispatch it into no-op churn. Either way an open roll-up parks the tree.
+- **Re-dispatching a torn-down issue needs the orchestrator's dispatch-dedup cleared too.** The
+  dedup record (keyed by issue ID) survives tracker-side teardown, so a re-labeled issue is counted
+  as "needing planning" every poll but silently never dispatches. Fix: clear the dedup entry via the
+  orchestrator admin surface (e.g. `DELETE /api/dedup/<issue-id>`), or replace the issue with a
+  fresh one (new ID = no dedup history) — repoint `blockedBy` onto the new issue *before* canceling
+  the old so dependents are never transiently unblocked. Symptom: `Found N needing planning`
+  repeating across polls with no run starting.
+
 (Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
 
 ---
@@ -468,6 +506,24 @@ The filing context determines whether the issue is pickup-ready or parked — se
 - **Architectural finding:** parked, assign to the architect, no `{{IMPLEMENT_LABEL}}`.
 
 Default toward pickup-ready when the work is scoped and deterministic. Parked is for planning, not parking.
+
+### The local fix loop (work done outside the pipeline)
+
+When a fix is implemented locally in-session instead of through the coding-agent pipeline
+(operator direction, pipeline unavailable, or a fix to the pipeline itself — the pattern the
+AII-277/278/279 round validated):
+
+1. **File the issue first anyway** — a child under the driven parent where one exists,
+   **without** `{{IMPLEMENT_LABEL}}` (nothing should dispatch), with the finding/learning
+   inline in the body.
+2. Implement locally (TDD; push to the PR branch under review where applicable — never to a
+   pipeline-owned agent branch).
+3. Close with a **completion comment naming the commits**, mark Done, and update the parent's
+   canonical `# ai-implement-build-down-learnings` comment **in place**
+   (`docs/learnings-comments.md`).
+
+The tracker record must be indistinguishable in quality from pipeline-driven work — the KG
+ingests both the same way.
 
 ### What not to file
 
