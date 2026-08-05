@@ -1,6 +1,6 @@
 ---
 name: bd-mega-build-up
-description: "Plan a milestone in depth, grill the user adversarially on the design, then file a tracker project/epic with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'bd-mega-build-up', 'mega bd-build-up', 'deep bd-build-up', 'thorough bd-build-up', 'grill me on this bd-build-up', or describes an objective and wants the design pressure-tested before any issues get filed. bd-mega-build-up is bd-build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and design + plan documents attached to the project/epic so they travel with the work."
+description: "Plan a milestone in depth, grill the user adversarially on the design, then file a tracker project/epic with attached design + implementation-plan documents and a sequenced set of parallel-execution-ready issues. Trigger when the user says 'bd-mega-build-up', 'mega bd-build-up', 'deep bd-build-up', 'thorough bd-build-up', 'grill me on this bd-build-up', asks to run mega on a step of a bd-high-plan planning parent, or describes an objective and wants the design pressure-tested before any issues get filed. bd-mega-build-up is bd-build-up's heavier cousin: same AI-Implement pipeline awareness and issue-shape discipline, but with an adversarial design-review phase, a detailed implementation plan with exact file paths, and design + plan documents attached to the project/epic so they travel with the work."
 metadata:
   suite: builddown
 ---
@@ -154,6 +154,7 @@ Same modes as `bd-build-up`. Infer from framing; ask only on conflicting signals
 - **Mode 2: New Design** — objective → issues. Default when no prototype is mentioned. *Handoff-bundle variant:* user provides a design tool's export.
 - **Mode 3a: Code-Prototype Brief** — objective → markdown spec for a code-first prototype tool. Skip filing.
 - **Mode 3b: Design Brief** — objective → markdown brief for a design-first tool. Skip filing.
+- **Mode 4: High-Plan Extraction** — one step of a bd-high-plan planning parent → deep design + issues. Activates **only** when the user points at a planning parent (most mega-build-ups have no high plan; never go looking for one). Follow bd-build-up's Mode 4 rules: scope is the one step, the parent's Settled design decisions are binding input, output issues are children of (or related/linked to) the parent, and an accounting-transfer comment goes on the parent after filing. One mega-specific difference: the Grill phase **may challenge a decision the parent records** — but a surviving challenge is presented to the user as an explicit proposed revision of the parent's recorded decision, and if accepted, noted on the parent issue. Never silently override a high-plan decision.
 
 bd-mega-build-up's grilling and detailed-plan phases apply most strongly to **Mode 2** (and Mode 1 when convergence scope is large). For Mode 3 briefs, grilling still applies — it sharpens the brief — but the plan-document phase is replaced by the brief itself.
 
