@@ -52,8 +52,11 @@ bd-smoke-jumper is chat-primary — browser MCP is load-bearing. State at sessio
 - If browser MCP is unavailable, bd-smoke-jumper cannot run. Report back to the host skill "smoke-testing unavailable" and let the host downgrade its classification accordingly.
 
 **Code-execution:**
-- Rarely used for smoke-jumping — no browser.
-- Used only if the test requires running the build command or a local script that browser MCP can't invoke.
+- **Primary for Backend/Service PRs** (see the Backend/Service profile): endpoints, daemons,
+  CLIs, and orchestrator/pipeline code have no preview deploy and no browser surface — the whole
+  smoke runs in code-execution (checkout, unit gauntlet, local boot, protocol-level contract,
+  real client handshake). Browser MCP being unavailable does NOT block these PRs.
+- For browser-surface PRs: used only if the test requires running the build command or a local script that browser MCP can't invoke.
 
 **Opening declaration:** State the environment, target PRs, and invocation context (standalone / invoked from bd-build-down / invoked from bd-super-build-down — this determines the autonomy posture).
 
@@ -114,13 +117,25 @@ Before testing, understand what this PR actually does.
 
 ### 2a-pre. KG recon (if a KG is bound)
 
-Before reading the gap analysis, run 1–2 `kg_hybrid_search` queries on the PR's linked issue
-key + title (procedure: `docs/kg-recon.md` — advisory, hybrid-search only, silent skip when no
-KG). Prior learnings sharpen what to smoke-test (known-fragile surfaces, past failure classes);
-when a test failure confirms or contradicts a KG prior, say so in the report and in any issue
-filed from the failure. Non-blocking.
+Before reading the gap analysis, run 2–3 `kg_hybrid_search` queries (procedure:
+`docs/kg-recon.md` — advisory, hybrid-search only, silent skip when no KG), in two classes:
 
-### 2a. Read the gap analysis
+1. **Surface priors** — the PR's linked issue key + title: known-fragile surfaces, past
+   failure classes, prior intent for the files touched.
+2. **Operational priors for the chosen profile** — how to *run* this test class here: for
+   Backend/Service, past boot-failure learnings (port collisions, DB-path fallbacks, env
+   extraction gotchas); for browser profiles, past preview/auth quirks. These priors shape the
+   test recipe itself, not just what to look at.
+
+The report's **KG priors** section states which priors were applied and whether results
+confirmed or contradicted them; the same goes in any issue filed from a failure. Non-blocking.
+
+### 2a. Read the gap analysis — and the review's open questions
+
+Also read the PR's automated review comments. **Any open blocking question that a live test can
+answer becomes a test item** (e.g. "the PR self-reports failing tests — please run the suite
+before merging"), and the report must answer it explicitly. A smoke test that ignores a
+review's unresolved question wastes the cheapest chance to close it.
 
 Find the AI coding agent's comment. Extract:
 
@@ -145,6 +160,7 @@ Based on files changed:
 - **Full stack** (both) → Flow profile
 - **Migration only** → Boot test + verify affected tables via internal API MCP if available
 - **Config/infra only** → Boot profile sufficient
+- **Service/endpoint/CLI code with no preview surface** (orchestrator routes, daemons, pipeline components) → Backend/Service profile — code-execution primary, browser MCP not required
 
 ### 2d. Determine test profile
 
@@ -156,6 +172,7 @@ Every PR gets **Boot + one or two specific profiles**. The Workstream Profile Ta
 | **API Shape** | API route changes | Key endpoints return expected HTTP status and response structure |
 | **UI Render** | Frontend changes | Target pages render, key components visible, no console errors |
 | **Flow** | Full-stack features | Complete user workflow end-to-end |
+| **Backend/Service** | Endpoints, daemons, CLIs, orchestrator/pipeline code — no preview surface | Unit gauntlet + isolated local boot + protocol contract + real client handshake (see 4f) |
 
 **Workstream-specific profiles (project-specific — populate per project):**
 
@@ -269,6 +286,31 @@ For full-stack features:
 
 Run these per the Workstream Profile Table in Phase 2d. They're project-specific — define them based on the surfaces the project has and the failure modes those surfaces are prone to.
 
+### 4f. Backend/Service Profile
+
+For PRs whose surface is a service, endpoint, CLI, or pipeline component with no preview
+deploy. Runs entirely in code-execution; "Boot" here means the service boots locally on the PR
+branch. Order matters — each stage gates the next:
+
+1. **Clean checkout** — `git worktree` of the PR branch + a clean install (`npm ci` or
+   equivalent) so the lockfile the PR shipped is what's tested. Never reuse the main
+   checkout's dependency tree.
+2. **Unit gauntlet** — the full test suite + typecheck on that checkout. This also settles any
+   review question about test status (2a).
+3. **Isolated boot** — boot the service with state and side-effects isolated: scratch
+   DB/data paths (explicitly exported — a missing path env silently falls back), a fresh
+   port, background/polling loops idled (long intervals or empty config), and secrets
+   extracted per the project's rules (grep from env files, never `source`). A process that
+   must outlive the shell needs `nohup … & disown`. Boot failure = STOP, verdict 🔴.
+4. **Contract tests** — exercise the endpoint's documented contract directly (`curl` or the
+   project's client): every auth/error mode (uniform failure bodies where the spec demands
+   them), then the happy-path protocol round-trip.
+5. **Real client handshake** — when the surface speaks a standard client protocol, finish
+   with the actual client, not just raw requests (e.g. MCP: `claude mcp add --transport http …`
+   then `claude mcp list` → ✔ Connected). Acceptance criteria phrased as "client X connects"
+   are only satisfied by client X.
+6. **Teardown** — kill the service, remove the worktree and any client registrations.
+
 ---
 
 ## Phase 5: Results Reporting
@@ -291,9 +333,9 @@ Post via GitHub MCP (`add_issue_comment`). Post autonomously — this is an info
 ```
 ## 🔥 Smoke-Jumper Report — PR #{number}
 
-**Preview URL:** {preview URL}
+**Surface tested:** {preview URL | local boot of the PR branch (port, state isolation) for Backend/Service}
 **Tested:** {timestamp}
-**Auth:** {active session / human-assisted / skipped-auth-required}
+**Auth:** {active session / human-assisted / skipped-auth-required / n-a — endpoint's own auth contract under test}
 **Invocation:** {standalone / from bd-build-down / from bd-super-build-down}
 
 ### Boot

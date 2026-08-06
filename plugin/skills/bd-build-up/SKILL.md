@@ -1,6 +1,6 @@
 ---
 name: bd-build-up
-description: "Plan and file a milestone's worth of tracker issues. Trigger this skill when the user says 'bd-build-up', 'let's do a bd-build-up', 'plan the issues', 'break this down into issues', 'convergence plan', 'design brief', 'build from this design', or describes a product objective and wants it decomposed into sequenced, dependency-aware tracker issues ready for an AI coding agent or a design prototyping tool. Also trigger when the user hands over a design handoff bundle and wants it turned into issues, or asks to status-check an existing bd-build-up. A bd-build-up is the creative counterpart to bd-build-down — it turns a product objective (or a prototype handoff) into a concrete issue plan, reviews it, then files it."
+description: "Plan and file a milestone's worth of tracker issues. Trigger this skill when the user says 'bd-build-up', 'let's do a bd-build-up', 'plan the issues', 'break this down into issues', 'convergence plan', 'design brief', 'build from this design', or describes a product objective and wants it decomposed into sequenced, dependency-aware tracker issues ready for an AI coding agent or a design prototyping tool. Also trigger when the user hands over a design handoff bundle and wants it turned into issues, asks to extract or break out a step of a bd-high-plan planning parent into its own issue, or asks to status-check an existing bd-build-up. A bd-build-up is the creative counterpart to bd-build-down — it turns a product objective (or a prototype handoff) into a concrete issue plan, reviews it, then files it."
 metadata:
   suite: builddown
 ---
@@ -66,10 +66,11 @@ State the environment at session start and adapt.
 
 ## Mode Detection
 
-Every bd-build-up runs in one of three modes. Infer the mode from the user's framing before asking.
+Every bd-build-up runs in one of four modes. Infer the mode from the user's framing before asking.
 
 **Default inference rules:**
 
+- If the user points at a bd-high-plan planning parent (or says "extract step N", "break out this step") → **Mode 4: High-Plan Extraction**
 - If the user references a code-prototype repo, prototype path, or says "converge" → **Mode 1: Convergence**
 - If the user hands over a design handoff bundle, prototype link, or says "build from this design" → **Mode 2: New Design** (handoff-bundle variant)
 - If the user describes an objective without mentioning a prototype tool → **Mode 2: New Design**
@@ -110,6 +111,30 @@ Output is a markdown file the user pastes or attaches into a design-system tool.
 Mode 3b briefs are lighter than Mode 3a briefs. Design-system tools iterate conversationally, so the brief opens the iteration rather than closes it. Reference existing components by name if known.
 
 A Mode 3b output does NOT feed Mode 1 later. When the design prototype is ready to ship, its handoff bundle feeds Mode 2 (handoff-bundle variant) directly.
+
+### Mode 4: High-Plan Extraction (Planning Parent → Child Issue)
+
+**Most bd-build-ups have nothing to do with a high plan.** This mode activates only when the
+user points at a bd-high-plan planning parent; no other mode should go looking for one, and a
+bd-build-up with no high-plan reference proceeds exactly as before this mode existed.
+
+The input is one **step** of a bd-high-plan planning parent issue. Job: turn that single step
+into one implementable issue — not the whole parent at once.
+
+- **Scope is the step, verbatim.** The parent's step line ("N. {step} — test: {…}") is the
+  objective; the parent's Settled design decisions section is binding context. Do not re-open
+  decisions the parent records — the high-plan dialogue already settled them.
+- **Output shape:** a **child issue** of the parent by default. When the work outgrows child
+  shape (its own multi-issue tree, a different repo, or a bd-mega-build-up candidate), file it
+  as a **standalone issue related/linked to the parent** instead — same content rules.
+- **Accounting transfer (required):** after filing, comment on the parent: which step, which
+  new issue, and that the step's accounting (status, discussion, learnings) now lives there.
+  The parent tracks only breakdown and overall completion.
+- Designation for pipeline pickup follows the normal staging rules — and only when the child
+  is actually ready to run. The planning parent itself is **never** designated.
+
+All other phases apply normally (orient scoped to the step, plan-first review, issue body
+format, learnings comment).
 
 ---
 
@@ -194,6 +219,18 @@ Two flavors — pure objective and handoff-bundle.
 1. **Understand the objective** — same as Mode 2 pure objective.
 2. **Skip codebase deep-dive.** The design tool already knows the design system from onboarding. Only research the codebase if the feature touches specific existing components you want the brief to reference by name.
 3. **Check past briefs** — same as Mode 3a, but design briefs are lighter and conversational, so matching past Mode 3a formats would produce an over-specified brief.
+
+### Mode 4: High-Plan Extraction orient
+
+1. **Read the planning parent in full** — objective, settled decisions, the step being
+   extracted, and any accounting-transfer comments from earlier extractions (don't re-extract
+   a step that already has its issue).
+2. **KG recon scoped to the step**, not the whole parent — the parent's plan was already
+   KG-grounded at high altitude; this recon is about the step's implementation surface.
+3. **Research the codebase for the step only.** The parent deliberately contains no file
+   paths; this orient is where they enter.
+4. Clarifying questions still capped at 2 — and never ones the parent's decisions already
+   answer.
 
 ---
 
