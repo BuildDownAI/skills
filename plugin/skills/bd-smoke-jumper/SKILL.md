@@ -305,6 +305,13 @@ branch. Order matters — each stage gates the next:
 4. **Contract tests** — exercise the endpoint's documented contract directly (`curl` or the
    project's client): every auth/error mode (uniform failure bodies where the spec demands
    them), then the happy-path protocol round-trip.
+   **When the PR's claim is about VCS/git semantics** (clone shapes, fetch refspecs, merge
+   capability, shallow/single-branch behavior), a live throwaway-repo fixture that replays the
+   shipped commands is REQUIRED, not optional — mocked unit tests assert the *commands issued*
+   and are structurally blind to what git actually does with them. Observed live: a PR whose
+   2,219 mocked tests were green shipped a base-branch fetch that never created the remote ref
+   in a real `--depth 1 --branch` (implied `--single-branch`) clone; a five-line fixture caught
+   it and verified the fix in the same sitting.
 5. **Real client handshake** — when the surface speaks a standard client protocol, finish
    with the actual client, not just raw requests (e.g. MCP: `claude mcp add --transport http …`
    then `claude mcp list` → ✔ Connected). Acceptance criteria phrased as "client X connects"
@@ -445,6 +452,7 @@ Single-PR invocations don't need a session summary — the PR comment is suffici
 | "Not found" on linked-detail pages | Mock data IDs don't exist in DB | 🟡 data-caveat — not a code defect. |
 | Feature not showing | Depends on unmerged PR | 🟡 data-caveat with dependency note. Don't block merge. |
 | Console errors on page load | Could be either — check severity | Investigate; if related to acceptance criteria → 🔴, else → 🟡 functional-caveat. |
+| VCS-behavior PR: unit suite green, but the claim untested against real git | Mocked tests assert issued commands, not git semantics | Backend/Service 4f: run the live throwaway-repo fixture before any verdict; a green suite alone never clears a VCS-semantics claim. |
 
 ---
 
