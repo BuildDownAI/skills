@@ -332,7 +332,12 @@ branch. Order matters — each stage gates the next:
    "ready", and answered `tools/list` — but returned zero search results because the graph data
    (`out/graph.trig`) was gitignored and the clone never got it; the fix was a materialize step,
    and only inspecting the built image's data dir + running a real query caught it. The
-   preceding boot/connect checks would all have passed.
+   preceding boot/connect checks would all have passed. An even subtler variant on the *same*
+   deploy: the graph was present and loaded (10k triples), raw standard-vocabulary queries
+   worked, `tools/list` worked — but every domain query returned empty because one config file
+   (pinning the IRI namespace) wasn't copied into the image, so the code queried the wrong
+   namespace. Data present + service up + tools listed, still zero results. A real query with a
+   **non-empty assertion** is the only check that fails here.
 6. **Teardown** — kill the service, remove the worktree and any client registrations.
 
 ---
