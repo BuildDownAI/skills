@@ -119,19 +119,22 @@ discussion, learnings) moves to that issue; this parent tracks only the breakdow
 and overall completion.
 ```
 
-**Never designate the parent for pipeline pickup.** The parent is a planning artifact; a
-designated planning parent would be dispatched as work (see Tracker notes for what
-"designate" means per tracker).
+**Never designate the parent for pipeline pickup during planning.** The parent is a planning
+artifact; a designated planning parent would be dispatched as work (see Tracker notes for what
+"designate" means per tracker). After extraction, the tree is filed feature-set capable
+(bd-build-up Mode 4), and the user MAY later designate the parent as the feature-set go-lever
+— that is a deliberate post-planning opt-in, never something bd-high-plan does.
 
 After filing, **stop**. Point the user at the issue and wait for their review. The filed parent
 is a checkpoint, not a waypoint.
 
 ### Phase 6 — Hand off to bd-build-up
 
-Breakdown happens step-by-step, later, via **bd-build-up's High-Plan Extraction mode**: one step
-of the parent goes in, one child issue (or standalone related issue) comes out, and the parent
-gets a comment noting where that step's accounting now lives. bd-high-plan's job ends at the
-reviewed parent; it never writes child issues itself.
+Breakdown happens later via **bd-build-up's High-Plan Extraction mode** — one step at a time,
+or the whole parent in one pass (Mode 4's full-set variant): children file as native sub-issues
+with `Blocked by:` relations, shaped so the set can optionally run as a feature set from the
+parent, and each extraction leaves a comment on the parent noting where that step's accounting
+now lives. bd-high-plan's job ends at the reviewed parent; it never writes child issues itself.
 
 ## Tracker Notes
 
@@ -139,8 +142,10 @@ The parent must be visible to the pipeline's tracker but invisible to its pickup
 
 - **Linear:** file the parent with **no `AI-Implement` label**. Children created later by
   extraction are native sub-issues of the parent; they get the label only when actually ready
-  for the pipeline (and note the grouping rule: a labelled parent + labelled children becomes a
-  feature node — do not label the planning parent to "group" its children).
+  for the pipeline. The grouping rule (a labelled parent + labelled children becomes a feature
+  node) is the *later opt-in*, not a planning-time action: never label the planning parent to
+  "group" its children during planning — labelling it later, parent-first, is exactly how the
+  user turns the extracted set into a feature-set run (bd-build-up Mode 4).
 - **Jira:** file the parent with **`AI-Implement-Status` unset** (the field, not the label, is
   the trigger). Children are sub-tasks or linked issues under the tracking Epic per the
   bd-build-up Jira conventions; they get a Status value only when ready.
