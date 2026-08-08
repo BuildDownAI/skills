@@ -316,6 +316,28 @@ branch. Order matters — each stage gates the next:
    with the actual client, not just raw requests (e.g. MCP: `claude mcp add --transport http …`
    then `claude mcp list` → ✔ Connected). Acceptance criteria phrased as "client X connects"
    are only satisfied by client X.
+   **When the deliverable IS an artifact** (a Docker image, a bundled binary, a published
+   package — anything with its own dependency-resolution or packaging step), build and run the
+   *actual artifact*, not just the source tree. A green source suite says nothing about what a
+   fresh `docker build` / `pip install` / `npm install` resolves at package time. Observed
+   live: a sidecar image whose source tests all passed shipped an unbounded `mcp>=1.2` pin that
+   resolved to a new major on any fresh install — the module the code imported no longer
+   existed, so every future image build would have failed. Only a real `docker build` + `docker
+   run` surfaced it (and confirmed the fix). Populate the artifact per the PR's own operator
+   procedure and verify its documented degraded/failure modes actually degrade.
+   **Boots ≠ works — assert the artifact actually SERVES, not just that it starts.** A
+   data-serving artifact can boot healthy, pass a connect/health check, and even list its
+   tools — while serving an *empty* dataset. Run a real query and assert a **non-empty, correct
+   result**, not just HTTP 200 / "connected". Observed live: a KG sidecar image booted, was
+   "ready", and answered `tools/list` — but returned zero search results because the graph data
+   (`out/graph.trig`) was gitignored and the clone never got it; the fix was a materialize step,
+   and only inspecting the built image's data dir + running a real query caught it. The
+   preceding boot/connect checks would all have passed. An even subtler variant on the *same*
+   deploy: the graph was present and loaded (10k triples), raw standard-vocabulary queries
+   worked, `tools/list` worked — but every domain query returned empty because one config file
+   (pinning the IRI namespace) wasn't copied into the image, so the code queried the wrong
+   namespace. Data present + service up + tools listed, still zero results. A real query with a
+   **non-empty assertion** is the only check that fails here.
 6. **Teardown** — kill the service, remove the worktree and any client registrations.
 
 ---
@@ -453,6 +475,8 @@ Single-PR invocations don't need a session summary — the PR comment is suffici
 | Feature not showing | Depends on unmerged PR | 🟡 data-caveat with dependency note. Don't block merge. |
 | Console errors on page load | Could be either — check severity | Investigate; if related to acceptance criteria → 🔴, else → 🟡 functional-caveat. |
 | VCS-behavior PR: unit suite green, but the claim untested against real git | Mocked tests assert issued commands, not git semantics | Backend/Service 4f: run the live throwaway-repo fixture before any verdict; a green suite alone never clears a VCS-semantics claim. |
+| Artifact PR (Docker image, package): source tests green | Source suite never exercises package-time dependency resolution | Backend/Service 4f: `docker build`/`pip install`/etc the real artifact and run it; an unbounded version pin can resolve to a breaking major that no source test sees. |
+| Service boots + connects + lists tools, but a query returns nothing | Boots ≠ serves — the data/asset the service reads may be absent (gitignored, unbaked, wrong path) | Backend/Service 4f: assert a real query returns a **non-empty, correct** result, not just health 200 / "connected". |
 
 ---
 
