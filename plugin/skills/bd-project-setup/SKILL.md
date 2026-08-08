@@ -89,7 +89,7 @@ bullet keys, or inline text):
 | Tracker team | team short-code (e.g. `BDS`) |
 | `{{IMPLEMENT_LABEL}}` | label the coding-agent pickup trigger |
 | `enabledMcpjsonServers` / server-approval state | whether servers are pre-approved in `.claude/settings.json` |
-| `## Knowledge graph` block | `kg.present`, `kg.repo`, `kg.path`, `kg.branch`, `kg.mcp_server`, `kg.search_tool` (see Phase K) |
+| `## Knowledge graph` block | `kg.present`, `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`, `kg.source_repo` (see Phase K; legacy blocks may still carry retired `kg.repo`/`kg.path`/`kg.branch`) |
 
 If `CLAUDE.md` is absent or contains none of these, record: *no CLAUDE.md bindings found*.
 
@@ -376,91 +376,97 @@ user to an MCP panel:
 
 ## Phase K — Knowledge graph (optional)
 
-Wires an **optional** per-project knowledge graph (KG) that KG-aware skills (e.g. `bd-kg-search`) query
-via hybrid search. This phase never runs automatically as part of Phases 0–5 above — it is a distinct,
-opt-in pass over the same detect → classify → confirm discipline as Phase 0. Skipping this phase entirely
-leaves KG-aware skills as silent no-ops (`docs/kg-binding.md` — *Semantics*), so a project that never runs
-Phase K is not "misconfigured," just KG-less.
+Wires an **optional** project knowledge graph (KG) that KG-aware skills (e.g. `bd-kg-search`) query
+via hybrid search. The KG is served by an **orchestrator's `/mcp` endpoint** (OAuth-protected,
+streamable-HTTP) — the single source of truth for every machine and teammate (AII-324). There is no
+local KG checkout, venv, or stdio server to provision; binding a project = one remote server entry +
+one `CLAUDE.md` block. This phase never runs automatically as part of Phases 0–5 above — it is a
+distinct, opt-in pass over the same detect → classify → confirm discipline as Phase 0. Skipping this
+phase entirely leaves KG-aware skills as silent no-ops (`docs/kg-binding.md` — *Semantics*), so a
+project that never runs Phase K is not "misconfigured," just KG-less.
 
 ### Step K.1 — Detect
 
-Read the project `CLAUDE.md` for an existing `## Knowledge graph` block, and `.mcp.json` for a
-`<project-slug>-kg` server entry. Classify the result — never clobber:
+Read the project `CLAUDE.md` for an existing `## Knowledge graph` block, and `.mcp.json` for an
+`orch-<app-slug>` remote server entry. Classify the result — never clobber:
 
 | State | Condition |
 |---|---|
-| **Bound & present** | `## Knowledge graph` block exists with `kg.present: true` **AND** the `<slug>-kg` server is in `.mcp.json` |
+| **Bound & present** | `## Knowledge graph` block exists with `kg.present: true` **AND** the `orch-<app-slug>` server is in `.mcp.json` |
 | **Partially wired** | One of the block or the server entry exists, but not both |
-| **Not wired** | Neither the block nor the server entry exists |
+| **Legacy local binding** | A `<project-slug>-kg` **stdio** server (command/args/cwd shape) is in `.mcp.json` — the retired pre-AII-324 local binding |
+| **Not wired** | Neither the block nor any KG server entry exists |
 | **Deliberately absent** | `## Knowledge graph` block exists with `kg.present: false` |
 
 Report the classification to the user before doing anything else. If **Bound & present** or
 **Deliberately absent**, confirm with the user before making any change — both are valid end states.
+A **Legacy local binding** migrates: replace the stdio entry with the remote entry (K.3) and rebind
+(K.4) — with the operator's confirmation, since this deletes a server entry.
 
 ### Step K.2 — Decide
 
-Probe the discovery convention `<project-owner>/knowledge-graph-<project-slug>` read-only:
+Ask the operator for the **orchestrator app URL** (e.g. `https://<app>.fly.dev`) and probe its MCP
+endpoint read-only:
 
 ```bash
-gh repo view <project-owner>/knowledge-graph-<project-slug>
+curl -s -o /dev/null -w "%{http_code}" -X POST https://<app>.fly.dev/mcp -d '{}'
 ```
 
-Present the finding (repo exists / not found) to the operator and ask them to:
-- **Confirm** the probed owner/slug, or
-- **Override** the slug (a different `knowledge-graph-<slug>` name or owner), or
-- **Create one** (when no KG repo exists yet) → invoke the **`bd-kg-create`** skill, which builds a
-  new KG repo from the `BuildDownAI/bd-knowledge-graph-base` template and returns here (its own
-  hand-off runs the build and re-enters this phase to bind), or
+`401` = alive and OAuth-gated (the expected healthy answer). `503` = the orchestrator runs but has no
+KG sidecar (deploy one before binding — see the AI-Implement CLAUDE.md "KG sidecar" section). Present
+the finding and ask the operator to:
+- **Confirm** the orchestrator URL, or
+- **Override** (a different orchestrator app), or
+- **Create one** (when no KG exists yet) → invoke the **`bd-kg-create`** skill, which builds a new KG
+  source repo from the `BuildDownAI/bd-knowledge-graph-base` template and deploys it as the
+  orchestrator's sidecar, then returns here to bind, or
 - **Declare "no KG"** → write `kg.present: false` into the `## Knowledge graph` block (Step K.4's format)
   and **end this phase** here — do not proceed to K.3.
 
-### Step K.3 — Bootstrap missing pieces
+### Step K.3 — Write the remote server entry
 
-Only for the pieces Step K.1 found missing:
-
-**(a) Clone, if not already checked out at `kg.path`:**
-
-```bash
-git clone <kg.repo origin> <kg.path>
-git -C <kg.path> checkout <kg.branch>   # default: knowledge-graph
-```
-
-**(b) Write the MCP server entry, if no `<project-slug>-kg` server exists in `.mcp.json`** (all paths
-absolute, derived from `kg.path`). Server name is `<project-slug>-kg` — e.g. for slug `acme`:
+If no `orch-<app-slug>` server exists in `.mcp.json`, add one. The name is **per-orchestrator**, derived
+from the app slug — Claude Code ties a server's OAuth token to the server *name* (BDS-22), so distinct
+orchestrators must get distinct names, and a generic shared name (`kg`, `orchestrator`) would silently
+share tokens across projects. E.g. for `ai-implement-testing-orchestrator.fly.dev`:
 
 ```json
-"acme-kg": {
-  "command": "/abs/path/to/kg.path/.venv/bin/python",
-  "args": ["-m", "kg_query.server"],
-  "cwd": "/abs/path/to/kg.path",
-  "env": { "KG_BACKEND": "rdflib", "PYTHONPATH": "/abs/path/to/kg.path" }
+"orch-ai-implement-testing": {
+  "type": "http",
+  "url": "https://ai-implement-testing-orchestrator.fly.dev/mcp"
 }
 ```
 
-Then add `"<project-slug>-kg"` to `enabledMcpjsonServers` in `.claude/settings.json` (same shared,
-committed file as Phase 3) so the server is pre-approved. This server is **read-only stdio — no OAuth
-flow** — there is no authenticate/complete_authentication step like Phase 5.
+Then add the server name to `enabledMcpjsonServers` in `.claude/settings.json` (same shared, committed
+file as Phase 3). If K.1 found a **Legacy local binding**, remove the old stdio entry and its
+pre-approval in the same edit.
 
 ### Step K.4 — Bind
 
 Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonical format in
-`docs/kg-binding.md`. Merge into any existing block rather than overwriting it — preserve values the
-user has already customized and only fill in what Steps K.1–K.3 newly established.
+`docs/kg-binding.md` (orchestrator fields: `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`,
+`kg.source_repo`). Merge into any existing block rather than overwriting it — preserve values the user
+has already customized, and drop the retired local fields (`kg.path`, `kg.branch`) when migrating a
+legacy block.
 
-> Bind **before** building: the next step invokes `bd-kg-refresh`, whose first action is to read this
-> very block from `CLAUDE.md` — on a fresh project it would stop with "no KG bound" if the binding
-> didn't exist yet.
+### Step K.5 — Authenticate
 
-### Step K.5 — Build
+The `/mcp` endpoint is OAuth-protected: on first use, Claude Code runs the discovery + browser-SSO flow
+(like Phase 5's tracker auth — the in-browser approval is the one manual step). Auth realities to tell
+the operator: sign-in is per user via the orchestrator's SSO providers, the identity must pass the
+orchestrator's allowlist (`OAUTH_ALLOWED_DOMAINS` / `OAUTH_ALLOWED_EMAILS`, fail-closed), and Bearer
+tokens last **1 hour** — an expired token means a quick re-auth, not a broken binding.
 
-Invoke the **`bd-kg-refresh`** skill so the graph and its embeddings exist (or are brought current).
-Setup does not duplicate ingest logic — `bd-kg-refresh` owns the venv-provisioning and ingest run.
+### Step K.6 — Restart + verify
 
-### Step K.6 — Restart note
+A Claude Code restart is required before a newly-wired server is available (MCP servers load once at
+session start). Then **verify with a real query, not just a connection**: call the bound
+`kg.search_tool` with a domain term and confirm non-empty results — a sidecar can be up, authed, and
+listing tools while serving an empty or wrong-namespace graph (boots ≠ serves).
 
-Tell the operator: a Claude Code restart is required before the `<project-slug>-kg` MCP server serves
-the graph — MCP servers load once at session start, so a newly-wired server (or a graph rebuilt by
-`bd-kg-refresh`) isn't picked up by an already-running session until it restarts.
+> Refreshing the graph's *content* is not part of setup: the orchestrator KG refreshes by
+> **ingest → commit snapshot → redeploy** in the KG source repo (`kg.source_repo`) — that is
+> `bd-kg-refresh`'s job, run when the graph is stale, not when a project binds.
 
 ---
 

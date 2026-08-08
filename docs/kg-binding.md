@@ -2,13 +2,18 @@
 
 Canonical CLAUDE.md block format for integrating a project's knowledge graph with BuildDown skills.
 
+The KG is served by an **orchestrator's OAuth-protected `/mcp` endpoint** — the single source of
+truth for every machine (AII-324). Skills never bind a local KG query server.
+
 ## Knowledge graph (optional)
-- kg.present:     true
-- kg.repo:        <owner>/knowledge-graph-<project-slug>   # origin (owner/name)
-- kg.path:        ../knowledge-graph-<project-slug>        # local checkout, relative to project root
-- kg.branch:      knowledge-graph                          # branch to keep checked out
-- kg.mcp_server:  <project-slug>-kg                        # MCP server name in .mcp.json
-- kg.search_tool: mcp__<project-slug>-kg__kg_hybrid_search # the ONLY tool skills call
+- kg.present:      true
+- kg.orchestrator: https://<app>.fly.dev                       # orchestrator serving /mcp
+- kg.mcp_server:   orch-<app-slug>                             # remote server name in .mcp.json — per-orchestrator (OAuth token ties to the name, BDS-22)
+- kg.search_tool:  mcp__orch-<app-slug>__kg_hybrid_search      # the ONLY tool skills call
+- kg.source_repo:  <owner>/knowledge-graph-<project-slug>      # ingest source; refresh = ingest → commit snapshot → redeploy
+
+**Retired fields** (pre-AII-324 local bindings — migrate on sight via bd-project-setup Phase K):
+`kg.repo`, `kg.path`, `kg.branch`, and stdio `<project-slug>-kg` server entries.
 
 ## Semantics
 
@@ -23,5 +28,10 @@ Skills **only** call `kg.search_tool` (hybrid-search) to query the knowledge gra
 
 ## Setup and maintenance
 
-- `bd-project-setup` writes this block into a project's CLAUDE.md during onboarding.
-- `bd-kg-refresh` keeps the local knowledge graph current by re-running the ingest — re-reading the source project's git history, tracker, and docs into the graph (it does not `git pull`; the ingest is what refreshes the content).
+- `bd-project-setup` (Phase K) writes this block into a project's CLAUDE.md during onboarding and
+  wires the remote MCP server entry.
+- `bd-kg-refresh` keeps the **orchestrator's** graph current: re-run the ingest in `kg.source_repo`,
+  commit the snapshot parts, redeploy the orchestrator (the image build re-materializes graph +
+  embeddings). There is no live reload — the redeploy *is* the refresh.
+- The graph stamps its own age at ingest (`dcterms:modified` on the spine IRI) — recon states
+  "graph as of {date}" and flags staleness worth a refresh.
