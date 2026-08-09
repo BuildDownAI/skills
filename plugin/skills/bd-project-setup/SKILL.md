@@ -465,12 +465,22 @@ CID=$(curl -s -X POST $BASE/mcp/register -H "Content-Type: application/json" \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['client_id'])")
 # 2. Follow /mcp/authorize to the provider redirect (the exact live path a user hits)
 LOC=$(curl -s -o /dev/null -w '%{redirect_url}' "$BASE/mcp/authorize?client_id=$CID&redirect_uri=http%3A%2F%2Flocalhost%3A33418%2Fcallback&response_type=code&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=preflight")
-# 3. Fetch the provider page headlessly and classify
-BODY=$(curl -s "$LOC")
-echo "$BODY" | grep -qE "redirect_uri_mismatch|AADSTS50011" \
-  && echo "❌ UNREGISTERED — register this URI verbatim: $(python3 -c "import urllib.parse as u,sys; print(u.parse_qs(u.urlparse('$LOC').query)['redirect_uri'][0])")" \
-  || echo "✅ registered — proceed to K.5b"
+# 3. Fetch the provider page headlessly and classify.
+#    -L is LOAD-BEARING: Google serves the mismatch page behind two redirects
+#    (accounts.google.com/signin/oauth/error?authError=<base64>) — a non-following
+#    fetch greps a clean interstitial and FALSE-PASSES. Check final URL + body.
+FINAL=$(curl -s -L -o /tmp/preflight.html -w '%{url_effective}' "$LOC")
+if echo "$FINAL" | grep -q "oauth/error" || grep -qE "redirect_uri_mismatch|AADSTS50011" /tmp/preflight.html; then
+  echo "❌ UNREGISTERED — register this URI verbatim: $(python3 -c "import urllib.parse as u; print(u.parse_qs(u.urlparse('$LOC').query)['redirect_uri'][0])")"
+else
+  echo "✅ registered — proceed to K.5b"
+fi
 ```
+
+Registration gotchas when the operator swears they added it: wrong OAuth client (consoles often hold
+several — match the `client_id` the preflight prints), "Authorized JavaScript origins" instead of
+"Authorized **redirect** URIs", a trailing slash, or plain propagation lag (Google: 5 minutes to a
+few hours — re-run the preflight rather than re-editing).
 
 On ❌, hand the operator the printed URI plus the console path — Google: Cloud Console → APIs &
 Services → Credentials → the orchestrator's OAuth client → Authorized redirect URIs → Add; Microsoft:
