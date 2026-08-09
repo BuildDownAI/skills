@@ -449,21 +449,44 @@ Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonica
 has already customized, and drop the retired local fields (`kg.path`, `kg.branch`) when migrating a
 legacy block.
 
-### Step K.5 — Authenticate
+### Step K.5a — Provider redirect-URI preflight (automated — run BEFORE asking anyone to sign in)
 
-The `/mcp` endpoint is OAuth-protected: on first use, Claude Code runs the discovery + browser-SSO flow
-(like Phase 5's tracker auth — the in-browser approval is the one manual step). Auth realities to tell
-the operator: sign-in is per user via the orchestrator's SSO providers, the identity must pass the
-orchestrator's allowlist (`OAUTH_ALLOWED_DOMAINS` / `OAUTH_ALLOWED_EMAILS`, fail-closed), and Bearer
-tokens last **1 hour** — an expired token means a quick re-auth, not a broken binding.
+The MCP flow uses its OWN callback URLs — `{orchestrator}/mcp/callback/{provider}` — which must be
+registered in the OIDC provider console *in addition to* the admin-UI ones. Admin SSO working proves
+nothing about the MCP URIs; a missing registration hard-blocks sign-in with a provider error page
+(`Error 400: redirect_uri_mismatch` on Google, `AADSTS50011` on Entra). **Run this preflight
+mechanically — no browser, no sign-in — and only proceed to K.5b when it passes:**
 
-**One-time provider prerequisite (per orchestrator app):** the MCP flow uses its OWN callback URLs —
-`{orchestrator}/mcp/callback/google` (and `/mcp/callback/microsoft`) — which must be registered as
-authorized redirect URIs in the OIDC provider console *in addition to* the admin-UI ones. The
-symptom of a missing registration is the provider hard-blocking sign-in with
-`Error 400: redirect_uri_mismatch` (admin SSO working proves nothing about the MCP URIs). Diagnose by
-extracting the exact `redirect_uri` from `/mcp/authorize`'s redirect Location and register that
-string verbatim.
+```bash
+BASE=https://<app>.fly.dev
+# 1. Register a throwaway client (RFC 7591, same as the real client will)
+CID=$(curl -s -X POST $BASE/mcp/register -H "Content-Type: application/json" \
+  -d '{"client_name":"preflight","redirect_uris":["http://localhost:33418/callback"]}' \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['client_id'])")
+# 2. Follow /mcp/authorize to the provider redirect (the exact live path a user hits)
+LOC=$(curl -s -o /dev/null -w '%{redirect_url}' "$BASE/mcp/authorize?client_id=$CID&redirect_uri=http%3A%2F%2Flocalhost%3A33418%2Fcallback&response_type=code&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=preflight")
+# 3. Fetch the provider page headlessly and classify
+BODY=$(curl -s "$LOC")
+echo "$BODY" | grep -qE "redirect_uri_mismatch|AADSTS50011" \
+  && echo "❌ UNREGISTERED — register this URI verbatim: $(python3 -c "import urllib.parse as u,sys; print(u.parse_qs(u.urlparse('$LOC').query)['redirect_uri'][0])")" \
+  || echo "✅ registered — proceed to K.5b"
+```
+
+On ❌, hand the operator the printed URI plus the console path — Google: Cloud Console → APIs &
+Services → Credentials → the orchestrator's OAuth client → Authorized redirect URIs → Add; Microsoft:
+Entra → App registrations → the app → Authentication → Redirect URIs → Add — then re-run the
+preflight until ✅. (This is the one step that cannot be automated: Google exposes no API for a
+standard OAuth client's redirect URIs. Registration is per orchestrator app, once, for all users.)
+The orchestrator delegates to its **first configured provider**, so the preflight always probes the
+path real sign-ins will take; when both providers are configured, register both providers' URIs.
+
+### Step K.5b — Authenticate
+
+On first use, Claude Code runs the discovery + browser-SSO flow (like Phase 5's tracker auth — the
+in-browser approval is the one manual step). Auth realities to tell the operator: sign-in is per user
+via the orchestrator's SSO providers, the identity must pass the orchestrator's allowlist
+(`OAUTH_ALLOWED_DOMAINS` / `OAUTH_ALLOWED_EMAILS`, fail-closed), and Bearer tokens last **1 hour** —
+an expired token means a quick re-auth, not a broken binding.
 
 ### Step K.6 — Restart + verify
 
