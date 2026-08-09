@@ -457,6 +457,14 @@ the operator: sign-in is per user via the orchestrator's SSO providers, the iden
 orchestrator's allowlist (`OAUTH_ALLOWED_DOMAINS` / `OAUTH_ALLOWED_EMAILS`, fail-closed), and Bearer
 tokens last **1 hour** — an expired token means a quick re-auth, not a broken binding.
 
+**One-time provider prerequisite (per orchestrator app):** the MCP flow uses its OWN callback URLs —
+`{orchestrator}/mcp/callback/google` (and `/mcp/callback/microsoft`) — which must be registered as
+authorized redirect URIs in the OIDC provider console *in addition to* the admin-UI ones. The
+symptom of a missing registration is the provider hard-blocking sign-in with
+`Error 400: redirect_uri_mismatch` (admin SSO working proves nothing about the MCP URIs). Diagnose by
+extracting the exact `redirect_uri` from `/mcp/authorize`'s redirect Location and register that
+string verbatim.
+
 ### Step K.6 — Restart + verify
 
 A Claude Code restart is required before a newly-wired server is available (MCP servers load once at
