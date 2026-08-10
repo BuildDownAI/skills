@@ -51,15 +51,24 @@ After this skill, the project has a working, queryable KG.
      so base design knowledge is searchable from this KG
    Commit and push the configuration.
 
-4. **First build.** Invoke the **`bd-kg-refresh`** skill (venv + ingest +
-   embeddings). This skill never duplicates ingest logic.
+4. **Wire the orchestrator's sidecar build.** The KG serves from an orchestrator's
+   `/mcp` (AII-324) — the orchestrator's image build must clone THIS repo as its
+   sidecar source (see the orchestrator's `Dockerfile` KG clone step and its
+   CLAUDE.md "KG sidecar" section; the build secret needs read access to the new
+   repo). Without this leg the KG exists but nothing serves it.
 
-5. **Bind.** Run **`bd-project-setup`'s Phase K** (detect will now find the repo):
-   registers the `<project-slug>-kg` MCP server, pre-approves it, writes the
+5. **First build + deploy.** Invoke the **`bd-kg-refresh`** skill — its flow is
+   ingest → snapshot commit → **orchestrator redeploy** → live verify, so a
+   successful refresh ends with the graph queryable from `/mcp`. This skill never
+   duplicates ingest or deploy logic.
+
+6. **Bind.** Run **`bd-project-setup`'s Phase K**: registers the remote
+   `orch-<app-slug>` MCP server (OAuth), pre-approves it, writes the
    `## Knowledge graph` block into the project's `CLAUDE.md` (format:
-   `docs/kg-binding.md`), and notes the Claude Code restart requirement.
+   `docs/kg-binding.md`), runs the K.5a redirect-URI preflight, and verifies with
+   a real query.
 
-6. **Close — learnings loop (required check, usually a no-op).** Follow
+7. **Close — learnings loop (required check, usually a no-op).** Follow
    `docs/kg-learnings-loop.md`: if this create surfaced a base-relevant pattern
    (template gap, portability issue, ingest failure), file the sanitized learning
    PR into the base's `testing`. An uneventful create files nothing.
