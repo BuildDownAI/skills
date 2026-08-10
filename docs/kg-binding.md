@@ -24,7 +24,11 @@ When `kg.present: false` or the entire `## Knowledge graph` block is absent from
 
 ## Tool usage
 
-Skills **only** call `kg.search_tool` (hybrid-search) to query the knowledge graph. No other KG tools or internals are invoked by skill code. This keeps the contract minimal and the skill-to-KG coupling loose.
+Skills **only** call `kg.search_tool` (hybrid-search) to query the knowledge graph, with **one
+sanctioned exception**: recon's staleness check reads the graph's age stamp via `kg_neighbors`
+on the spine IRI (`docs/kg-recon.md` — that exact call, nothing more). No other KG tools or
+internals are invoked by skill code. This keeps the contract minimal and the skill-to-KG
+coupling loose.
 
 ## Setup and maintenance
 
