@@ -22,23 +22,28 @@ Surface the top relevant learnings, decisions, and prior issues from the graph h
 
 ## Staleness-delta
 
-Get the KG's last-build time from the graph file:
+The deployed graph **stamps its own age at ingest** (`dcterms:modified` on the spine IRI) — ask
+the graph, not the filesystem (there is no local graph; the orchestrator serves the single
+source of truth). Read the stamp with `kg_neighbors` on the spine IRI:
 
-```bash
-stat -f %m "<kg.path>/out/graph.trig"  # macOS
-stat -c %Y "<kg.path>/out/graph.trig"  # Linux
+```
+kg_neighbors(iri: "<namespace>resource/graph/spine")   # namespace from the graph's IRIs,
+                                                       # e.g. https://kg.builddown.dev/
+→ the dcterms:modified edge is the ingest date (ISO, UTC)
 ```
 
-Both `stat` forms yield epoch seconds; convert to an ISO timestamp for the queries below with `date -u -r <epoch> +%Y-%m-%dT%H:%M:%SZ` (macOS) or `date -u -d @<epoch> +%Y-%m-%dT%H:%M:%SZ` (Linux).
+This is the **one sanctioned exception** to the hybrid-search-only rule (`docs/kg-binding.md`),
+scoped strictly to reading the staleness stamp.
 
-Compare to now and **always note the age in one line** — e.g., "KG last built 4 hours ago" or "KG is fresh (2 hours old)".
+Compare to now and **always note the age in one line** — e.g., "graph as of 2026-08-08 (2 days
+old)" or "KG is fresh (4 hours old)".
 
 **If the KG is older than 24 hours**, list what the KG is blind to at its standard ingest points. The threshold is hour-granular, so use an ISO timestamp, not a bare date, in both queries:
 
 - Tracker issues **updated** since the build time — query the project's bound tracker MCP (Linear "updated after `<ISO timestamp>`", Jira likewise) and report the count.
 - PRs **merged** since — `gh pr list --state merged --search "merged:>=<YYYY-MM-DDTHH:MM:SSZ>" --limit 20` — and report the count.
 
-Present the gap explicitly ("KG last built `<age>` ago; since then `N` issues changed, `M` PRs merged — treat results as missing these") and nudge the operator to run `bd-kg-refresh` for fresh results.
+Present the gap explicitly ("graph as of `<date>` (`<age>` ago); since then `N` issues changed, `M` PRs merged — treat results as missing these") and nudge the operator to run `bd-kg-refresh` (ingest → snapshot commit → orchestrator redeploy) for fresh results.
 
 **If the KG is fresher than 24 hours**, skip these delta queries — stay fast. A recent build is good enough; no need to dig into tracker history.
 
@@ -47,9 +52,10 @@ Present the gap explicitly ("KG last built `<age>` ago; since then `N` issues ch
 Any error — tool unavailable, degraded response, empty index, tracker or `gh` hiccup — generates **one-line note** and **proceeds**. Recon is advisory, never blocking.
 
 - Missing tool → "KG search unavailable (tool error); proceeding without orientation."
-- Degraded index → "KG vector index not loaded (results lexical-only); run `bd-kg-refresh` and restart Claude Code for full hybrid search."
+- Auth failure → "orchestrator MCP token expired (1h TTL) — re-auth via /mcp in an interactive session; proceeding without orientation."
+- Degraded index → "deployed sidecar is lexical-only (`degraded: true`); run `bd-kg-refresh` (its redeploy rebuilds embeddings)."
 - Empty index → "KG index empty; no prior learnings to draw on."
-- Stale graph file → "Could not stat graph.trig; KG staleness unknown."
+- No age stamp → "graph has no age stamp (pre-AII-326 snapshot); staleness unknown — a `bd-kg-refresh` adds it."
 - Tracker query fails → "Tracker unavailable; staleness gap unknown."
 
 The session continues unaffected.

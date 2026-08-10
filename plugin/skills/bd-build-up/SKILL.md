@@ -118,8 +118,11 @@ A Mode 3b output does NOT feed Mode 1 later. When the design prototype is ready 
 user points at a bd-high-plan planning parent; no other mode should go looking for one, and a
 bd-build-up with no high-plan reference proceeds exactly as before this mode existed.
 
-The input is one **step** of a bd-high-plan planning parent issue. Job: turn that single step
-into one implementable issue — not the whole parent at once.
+The input is one **step** of a bd-high-plan planning parent issue — or, in the **full-set
+variant**, the whole parent at once. Default job: turn a single step into one implementable
+issue. When the user asks to extract the entire parent ("build up {parent}", "extract all the
+steps"), extract **all steps in one pass**: one child per step, filed as **native sub-issues**
+of the planning parent, with `Blocked by:` relations mirroring the parent's step order.
 
 - **Scope is the step, verbatim.** The parent's step line ("N. {step} — test: {…}") is the
   objective; the parent's Settled design decisions section is binding context. Do not re-open
@@ -127,11 +130,25 @@ into one implementable issue — not the whole parent at once.
 - **Output shape:** a **child issue** of the parent by default. When the work outgrows child
   shape (its own multi-issue tree, a different repo, or a bd-mega-build-up candidate), file it
   as a **standalone issue related/linked to the parent** instead — same content rules.
-- **Accounting transfer (required):** after filing, comment on the parent: which step, which
-  new issue, and that the step's accounting (status, discussion, learnings) now lives there.
-  The parent tracks only breakdown and overall completion.
+- **Feature-set capable shape (always).** File the tree so the parent *can* later run as a
+  feature set: children as native sub-issues, every `Blocked by:` relation set, everything
+  **undesignated** at filing. The go-lever stays with the user — if they later decide to run
+  the set grouped, designation follows the normal feature-node order (parent first, then
+  children; see Phase 3). The planning parent is never designated **during planning**; it MAY
+  later be designated as the feature-set go-lever when the user opts in.
+- **Recursive breakdown.** An extracted child may itself outgrow single-issue shape later —
+  break it down into its own parent/child tree with the same rules applied recursively (the
+  child becomes a sub-parent: build its subtree and every relation first, designate the
+  sub-parent before its children). Grouping cascades handle nested trees natively.
+- **Cross-repo routing.** A child whose work lives outside the team's mapped repo cannot ride
+  the pipeline from this parent — mark it an **operator/local child** (completed by hand,
+  moved Done manually). Mixed trees are fine: the grouping parent waits for ALL children to
+  finish, however they finish. State the pipeline-able subset plainly in the plan.
+- **Accounting transfer (required):** after filing, comment on the parent: which step(s), which
+  new issue(s), and that each step's accounting (status, discussion, learnings) now lives
+  there. The parent tracks only breakdown and overall completion.
 - Designation for pipeline pickup follows the normal staging rules — and only when the child
-  is actually ready to run. The planning parent itself is **never** designated.
+  is actually ready to run.
 
 All other phases apply normally (orient scoped to the step, plan-first review, issue body
 format, learnings comment).
