@@ -35,7 +35,8 @@ After this skill, the project has a working, queryable KG.
    git -C ../<kg-name> remote add upstream https://github.com/BuildDownAI/bd-knowledge-graph-base.git
    ```
    The sibling path `../<kg-name>` (relative to the project root) is the
-   `kg.path` convention. The `upstream` remote is how base improvements arrive
+   source-repo checkout convention `bd-kg-refresh` expects (the `kg.source_repo`
+   binding names the origin). The `upstream` remote is how base improvements arrive
    later (`git fetch upstream && git merge upstream/main`) — template copies have
    no fork relationship, and forks of a public base would have to be public.
    Fallback when template access fails: clone the base directly, `git remote
