@@ -393,15 +393,19 @@ Read the project `CLAUDE.md` for an existing `## Knowledge graph` block, and `.m
 | State | Condition |
 |---|---|
 | **Bound & present** | `## Knowledge graph` block exists with `kg.present: true` **AND** the `orch-<app-slug>` server is in `.mcp.json` |
+| **Dual-bound (transition)** | Orchestrator binding present AND a local stdio server named by `kg.local_mcp_server` — the supported transition state (`docs/kg-binding.md` *Dual-target resolution*) |
 | **Partially wired** | One of the block or the server entry exists, but not both |
-| **Legacy local binding** | A `<project-slug>-kg` **stdio** server (command/args/cwd shape) is in `.mcp.json` — the retired pre-AII-324 local binding |
+| **Unrecorded local binding** | A `<project-slug>-kg` **stdio** server (command/args/cwd shape) exists but the block does not name it in `kg.local_mcp_server` |
 | **Not wired** | Neither the block nor any KG server entry exists |
 | **Deliberately absent** | `## Knowledge graph` block exists with `kg.present: false` |
 
-Report the classification to the user before doing anything else. If **Bound & present** or
-**Deliberately absent**, confirm with the user before making any change — both are valid end states.
-A **Legacy local binding** migrates: replace the stdio entry with the remote entry (K.3) and rebind
-(K.4) — with the operator's confirmation, since this deletes a server entry.
+Report the classification to the user before doing anything else. If **Bound & present**,
+**Dual-bound**, or **Deliberately absent**, confirm with the user before making any change — all
+are valid end states. An **Unrecorded local binding** gets a choice, not an auto-delete: ask the
+operator whether to (a) **keep it for the transition** — add the orchestrator binding alongside
+and record `kg.local_mcp_server` / `kg.local_search_tool` (+ `kg.prefer`, default
+`orchestrator`) in the block — or (b) **retire it** — replace the stdio entry with the remote
+entry (K.3) and rebind (K.4). Deleting a server entry always needs the operator's confirmation.
 
 ### Step K.2 — Decide
 
@@ -438,8 +442,9 @@ share tokens across projects. E.g. for `ai-implement-testing-orchestrator.fly.de
 ```
 
 Then add the server name to `enabledMcpjsonServers` in `.claude/settings.json` (same shared, committed
-file as Phase 3). If K.1 found a **Legacy local binding**, remove the old stdio entry and its
-pre-approval in the same edit.
+file as Phase 3). If K.1 found an **Unrecorded local binding** and the operator chose to retire it,
+remove the old stdio entry and its pre-approval in the same edit; if they chose to keep it for the
+transition, leave it and record the `kg.local_*` fields in K.4 instead.
 
 ### Step K.4 — Bind
 

@@ -70,6 +70,11 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
 
 ## Notes
 
+- **One refresh feeds both targets** (transition mode): Step 3's ingest rebuilds the LOCAL
+  graph (`out/graph.trig` + embeddings in the source-repo checkout) immediately — a bound
+  local stdio server serves it after a Claude Code restart. Steps 5–6 carry the same data to
+  the orchestrator. The refresh remains orchestrator-first: the deployed graph is the source
+  of truth, the local copy a development convenience.
 - The binding format is canonical across all KG-aware skills (see `docs/kg-binding.md`).
 - Deploy rights are required for Step 6 — an operator without them stops after Step 5 and
   hands the deploy to someone who has them (the committed snapshot makes the refresh
