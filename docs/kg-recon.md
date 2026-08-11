@@ -12,7 +12,11 @@ When the block is present and `kg.present: true`, continue to the query step.
 
 Derive **1–3 short queries** from the work at hand — e.g. the objective's key nouns, or an issue key + title + gap topics from its gap analysis. These queries are brief and direct (2–4 words), surfacing the core concept(s) the operator needs orientation on.
 
-Call **`kg.search_tool`** (and only `kg.search_tool` — hybrid-search only) with `{query, limit: 8}`. Repeat for each derived query if multiple are needed.
+Resolve the target per `docs/kg-binding.md` *Dual-target resolution* (try `kg.prefer` — default
+orchestrator — fall back to the other bound target on error), then call its hybrid-search tool
+(and only hybrid-search) with `{query, limit: 8}`. Repeat for each derived query. **Open the
+recon output with the one-line target announce** (`KG: orchestrator …` / `KG: LOCAL FALLBACK —
+…`) so the operator knows which graph oriented them.
 
 ## Use the results
 
@@ -22,9 +26,9 @@ Surface the top relevant learnings, decisions, and prior issues from the graph h
 
 ## Staleness-delta
 
-The deployed graph **stamps its own age at ingest** (`dcterms:modified` on the spine IRI) — ask
-the graph, not the filesystem (there is no local graph; the orchestrator serves the single
-source of truth). Read the stamp with `kg_neighbors` on the spine IRI:
+The graph **stamps its own age at ingest** (`dcterms:modified` on the spine IRI) — ask the
+graph, not the filesystem. Read the stamp from **whichever target served the recon queries**
+(both serve it identically) with `kg_neighbors` on the spine IRI:
 
 ```
 kg_neighbors(iri: "<namespace>resource/graph/spine")   # namespace from the graph's IRIs,
@@ -52,7 +56,8 @@ Present the gap explicitly ("graph as of `<date>` (`<age>` ago); since then `N` 
 Any error — tool unavailable, degraded response, empty index, tracker or `gh` hiccup — generates **one-line note** and **proceeds**. Recon is advisory, never blocking.
 
 - Missing tool → "KG search unavailable (tool error); proceeding without orientation."
-- Auth failure → "orchestrator MCP token expired (1h TTL) — re-auth via /mcp in an interactive session; proceeding without orientation."
+- Auth failure, local bound → fall back per the dual-target rule and announce `KG: LOCAL FALLBACK — …`.
+- Auth failure, no local bound → "orchestrator MCP token expired (1h TTL) — re-auth via /mcp in an interactive session; proceeding without orientation."
 - Degraded index → "deployed sidecar is lexical-only (`degraded: true`); run `bd-kg-refresh` (its redeploy rebuilds embeddings)."
 - Empty index → "KG index empty; no prior learnings to draw on."
 - No age stamp → "graph has no age stamp (pre-AII-326 snapshot); staleness unknown — a `bd-kg-refresh` adds it."
