@@ -4,7 +4,7 @@ Shared recon procedure for the four session-owning skills (`bd-build-up`, `bd-me
 
 ## Guard
 
-Read the project's CLAUDE.md for a `## Knowledge graph` block (format: `docs/kg-binding.md`). If `kg.present` is false or the block is absent, **skip silently — no output, no warning**. (This is an incidental step, one input among many; projects without a graph proceed unaffected.)
+Read the project's CLAUDE.md for a `## Knowledge graph` block (format: `./kg-binding.md`). If `kg.present` is false or the block is absent, **skip silently — no output, no warning**. (This is an incidental step, one input among many; projects without a graph proceed unaffected.)
 
 When the block is present and `kg.present: true`, continue to the query step.
 
@@ -12,7 +12,7 @@ When the block is present and `kg.present: true`, continue to the query step.
 
 Derive **1–3 short queries** from the work at hand — e.g. the objective's key nouns, or an issue key + title + gap topics from its gap analysis. These queries are brief and direct (2–4 words), surfacing the core concept(s) the operator needs orientation on.
 
-Resolve the target per `docs/kg-binding.md` *Dual-target resolution* (try `kg.prefer` — default
+Resolve the target per `./kg-binding.md` *Dual-target resolution* (try `kg.prefer` — default
 orchestrator — fall back to the other bound target on error), then call its hybrid-search tool
 (and only hybrid-search) with `{query, limit: 8}`. Repeat for each derived query. **Open the
 recon output with the one-line target announce** (`KG: orchestrator …` / `KG: LOCAL FALLBACK —
@@ -36,7 +36,7 @@ kg_neighbors(iri: "<namespace>resource/graph/spine")   # namespace from the grap
 → the dcterms:modified edge is the ingest date (ISO, UTC)
 ```
 
-This is the **one sanctioned exception** to the hybrid-search-only rule (`docs/kg-binding.md`),
+This is the **one sanctioned exception** to the hybrid-search-only rule (`./kg-binding.md`),
 scoped strictly to reading the staleness stamp.
 
 Compare to now and **always note the age in one line** — e.g., "graph as of 2026-08-08 (2 days

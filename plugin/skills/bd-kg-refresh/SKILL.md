@@ -19,7 +19,7 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
 ## Steps
 
 1. **Read the binding.** Open `CLAUDE.md` → `## Knowledge graph` block (format:
-   `docs/kg-binding.md`). Parse `kg.present`, `kg.source_repo`, `kg.orchestrator`,
+   `../bd-shared/kg-binding.md`). Parse `kg.present`, `kg.source_repo`, `kg.orchestrator`,
    `kg.search_tool`. If `kg.present` is `false` or the block is absent:
    - Print: "This project has no KG bound — run bd-project-setup to add one."
    - Stop.
@@ -56,12 +56,12 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
    confirm:
    - a domain query returns non-empty, `degraded: false` results, and
    - the graph's **age stamp equals Step 3's date** (recon reads it via `kg_neighbors` on the
-     spine IRI — `docs/kg-recon.md`). An unchanged stamp means the deploy served the OLD
+     spine IRI — `../bd-shared/kg-recon.md`). An unchanged stamp means the deploy served the OLD
      snapshot (push didn't land, or the build cloned before the push) — re-run Step 6.
    No client restart is needed — the server is remote; new results appear on the next query.
 
 8. **Close — learnings loop (required check, usually a no-op).** Follow
-   `docs/kg-learnings-loop.md`: if this refresh surfaced a base-relevant pattern (ingest
+   `../bd-shared/kg-learnings-loop.md`: if this refresh surfaced a base-relevant pattern (ingest
    failure class, classifier miss, portability gap, deploy-path gap), file the sanitized
    learning PR into `BuildDownAI/bd-knowledge-graph-base` `testing`. An uneventful refresh
    files nothing. Advisory — never blocks.
@@ -75,7 +75,7 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
   local stdio server serves it after a Claude Code restart. Steps 5–6 carry the same data to
   the orchestrator. The refresh remains orchestrator-first: the deployed graph is the source
   of truth, the local copy a development convenience.
-- The binding format is canonical across all KG-aware skills (see `docs/kg-binding.md`).
+- The binding format is canonical across all KG-aware skills (see `../bd-shared/kg-binding.md`).
 - Deploy rights are required for Step 6 — an operator without them stops after Step 5 and
   hands the deploy to someone who has them (the committed snapshot makes the refresh
   deterministic for whoever deploys).

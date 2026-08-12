@@ -240,7 +240,7 @@ start; the rest can be filled in later as the project needs them.
 | `{{PREVIEW_HOST}}` | "Where do preview deploys live?" | `https://pr-{n}.preview.app` |
 | `{{AUTH_PROVIDER}}` | "How do you log into previews?" | Google SSO |
 | `{{BUILD_CMD}}` | "Build/verify command?" | `npm run build && npm test` |
-| `{{PLAN_DIR}}` | "Where do plan drafts go?" | `docs/plans/` (default) |
+| `{{ADR_DIR}}` | "Where do architecture decision records go?" | `docs/adr/` (default) |
 | `{{ARCHITECT_NAME}}` | "Persona name for bd-mega-build-up review?" | — |
 
 ## Phase 2 — Write `.mcp.json` (one tracker server, by `tracker.kind`)
@@ -382,7 +382,7 @@ streamable-HTTP) — the single source of truth for every machine and teammate (
 local KG checkout, venv, or stdio server to provision; binding a project = one remote server entry +
 one `CLAUDE.md` block. This phase never runs automatically as part of Phases 0–5 above — it is a
 distinct, opt-in pass over the same detect → classify → confirm discipline as Phase 0. Skipping this
-phase entirely leaves KG-aware skills as silent no-ops (`docs/kg-binding.md` — *Semantics*), so a
+phase entirely leaves KG-aware skills as silent no-ops (`../bd-shared/kg-binding.md` — *Semantics*), so a
 project that never runs Phase K is not "misconfigured," just KG-less.
 
 ### Step K.1 — Detect
@@ -393,7 +393,7 @@ Read the project `CLAUDE.md` for an existing `## Knowledge graph` block, and `.m
 | State | Condition |
 |---|---|
 | **Bound & present** | `## Knowledge graph` block exists with `kg.present: true` **AND** the `orch-<app-slug>` server is in `.mcp.json` |
-| **Dual-bound (transition)** | Orchestrator binding present AND a local stdio server named by `kg.local_mcp_server` — the supported transition state (`docs/kg-binding.md` *Dual-target resolution*) |
+| **Dual-bound (transition)** | Orchestrator binding present AND a local stdio server named by `kg.local_mcp_server` — the supported transition state (`../bd-shared/kg-binding.md` *Dual-target resolution*) |
 | **Partially wired** | One of the block or the server entry exists, but not both |
 | **Unrecorded local binding** | A `<project-slug>-kg` **stdio** server (command/args/cwd shape) exists but the block does not name it in `kg.local_mcp_server` |
 | **Not wired** | Neither the block nor any KG server entry exists |
@@ -449,7 +449,7 @@ transition, leave it and record the `kg.local_*` fields in K.4 instead.
 ### Step K.4 — Bind
 
 Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonical format in
-`docs/kg-binding.md` (orchestrator fields: `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`,
+`../bd-shared/kg-binding.md` (orchestrator fields: `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`,
 `kg.source_repo`). Merge into any existing block rather than overwriting it — preserve values the user
 has already customized, and drop the retired local fields (`kg.path`, `kg.branch`) when migrating a
 legacy block.
@@ -530,4 +530,4 @@ listing tools while serving an empty or wrong-namespace graph (boots ≠ serves)
   *feature-branch grouping*, re-sync workflows so the target repo's `claude-implement.yml` accepts the
   `base_branch` input — un-synced repos 422 on grouped dispatch (the non-grouped path keeps working). This
   applies to **Linear and Jira** target repos alike; only designation differs (Linear label vs Jira
-  `AI-Implement-Status` + Repo field). Full model: `docs/feature-branch-grouping.md`.
+  `AI-Implement-Status` + Repo field). Full model: `../bd-shared/feature-branch-grouping.md`.

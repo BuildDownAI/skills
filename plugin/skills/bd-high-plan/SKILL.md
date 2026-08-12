@@ -40,7 +40,7 @@ designation is ever applied by this skill — see Filing.
 
 ### Phase 1 — KG recon (before any proposal)
 
-If a KG is bound, run recon per `docs/kg-recon.md` **before proposing anything**: 2–4
+If a KG is bound, run recon per `../bd-shared/kg-recon.md` **before proposing anything**: 2–4
 hybrid-search probes derived from the capability in the user's words, plus probes for adjacent
 prior art and reusable infrastructure (existing auth, existing services, prior decisions on the
 same surface). Open the response by stating what the recon found that shaped the plan — prior

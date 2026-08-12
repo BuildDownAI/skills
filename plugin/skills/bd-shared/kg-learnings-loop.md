@@ -3,7 +3,7 @@
 The shared procedure for contributing KG-operating learnings back to
 **`BuildDownAI/bd-knowledge-graph-base`** (the template every project KG is built
 from). Referenced by `bd-kg-create` and `bd-kg-refresh` — defined once here, the
-same pattern as `docs/kg-binding.md` and `docs/kg-recon.md`.
+same pattern as `./kg-binding.md` and `./kg-recon.md`.
 
 ## When to run this step
 

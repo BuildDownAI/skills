@@ -132,7 +132,7 @@ Flag any PR >5 days old — it's likely stale and needs a context check before n
 
 Before triaging gaps, consult the project's knowledge graph for prior learnings
 and decisions about the work — derive queries per PR being triaged (or for the
-session's PR set), not just a single PR. Follow `docs/kg-recon.md`: derive 1–3
+session's PR set), not just a single PR. Follow `../bd-shared/kg-recon.md`: derive 1–3
 queries per PR from **its linked issue key + title + the gap topics from its
 gap-analysis**, call **only** `kg.search_tool` (hybrid-search), surface the top
 relevant hits and cite any that change a gap decision, and note KG staleness.
@@ -282,7 +282,7 @@ Phase 2h's ordering rules override any default "oldest first" instinct.
 ### 2i. Feature-branch grouping (both trackers)
 
 When AI-Implement parent/child **feature-branch grouping** is in play, not every PR targets the repo base
-branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
+branch. See `../bd-shared/feature-branch-grouping.md` for the full model. What changes for triage:
 
 **Per-child rigor (process layer atop BDS-26's recognition layer).** A grouped tree — feature *or*
 multi-issue — is **N first-class PRs, not one unit.** Each child PR gets the same full build-down treatment
@@ -384,7 +384,7 @@ branch), fix labels in the order above, and re-release — retargeting after the
   the old so dependents are never transiently unblocked. Symptom: `Found N needing planning`
   repeating across polls with no run starting.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
@@ -520,7 +520,7 @@ AII-277/278/279 round validated):
    pipeline-owned agent branch).
 3. Close with a **completion comment naming the commits**, mark Done, and update the parent's
    canonical `# ai-implement-build-down-learnings` comment **in place**
-   (`docs/learnings-comments.md`).
+   (`../bd-shared/learnings-comments.md`).
 
 The tracker record must be indistinguishable in quality from pipeline-driven work — the KG
 ingests both the same way.
@@ -604,7 +604,7 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 
 ### Closing step — post/update the build-down learnings comment (required)
 
-An **autonomous write** — no approval gate, same as the session summary. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+An **autonomous write** — no approval gate, same as the session summary. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
 
 **Record the outcome of every PR this session drove or observed**, using this taxonomy:
 
@@ -656,7 +656,7 @@ Per PR this session drove or observed:
 
 6. **Reading is free; writing requires care.** Read PRs, diffs, comments liberally. Write operations (agent comments, merges, issue filings) are autonomous but logged. Escalations are the exception, not the default.
 
-7. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Required, not optional — the durable record of outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. A session that ends without it is not done. See `docs/learnings-comments.md`.
+7. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Required, not optional — the durable record of outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. A session that ends without it is not done. See `../bd-shared/learnings-comments.md`.
 
 ---
 

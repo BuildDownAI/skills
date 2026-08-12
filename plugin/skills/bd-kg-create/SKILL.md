@@ -66,11 +66,11 @@ After this skill, the project has a working, queryable KG.
 6. **Bind.** Run **`bd-project-setup`'s Phase K**: registers the remote
    `orch-<app-slug>` MCP server (OAuth), pre-approves it, writes the
    `## Knowledge graph` block into the project's `CLAUDE.md` (format:
-   `docs/kg-binding.md`), runs the K.5a redirect-URI preflight, and verifies with
+   `../bd-shared/kg-binding.md`), runs the K.5a redirect-URI preflight, and verifies with
    a real query.
 
 7. **Close — learnings loop (required check, usually a no-op).** Follow
-   `docs/kg-learnings-loop.md`: if this create surfaced a base-relevant pattern
+   `../bd-shared/kg-learnings-loop.md`: if this create surfaced a base-relevant pattern
    (template gap, portability issue, ingest failure), file the sanitized learning
    PR into the base's `testing`. An uneventful create files nothing.
 
@@ -79,5 +79,5 @@ After this skill, the project has a working, queryable KG.
 - One KG per project repo; the KG is a **sibling repo**, never a subdirectory.
 - Never put business data in the base or in learning PRs (sanitization rule in
   the base's `CONTRIBUTING.md`).
-- Related: `bd-kg-refresh` (rebuild), `bd-kg-search` (query), `docs/kg-recon.md`
+- Related: `bd-kg-refresh` (rebuild), `bd-kg-search` (query), `../bd-shared/kg-recon.md`
   (how session skills consult the KG).
