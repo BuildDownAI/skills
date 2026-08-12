@@ -7,6 +7,11 @@ set -euo pipefail
 # apart from anyone else's, independent of the bd- name prefix.
 SUITE_MARKER="builddown"
 
+# bd-shared is not a skill (no SKILL.md) — it holds shared reference docs the
+# skills point at via `../bd-shared/...`, so it installs and uninstalls
+# alongside them for those relative paths to resolve.
+SHARED_DIR="bd-shared"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 HOST="claude"
@@ -271,6 +276,7 @@ main() {
     run "mkdir -p \"${TARGET_DIR}\""
     prune_stale "$names"
     while IFS= read -r name; do install_one "$name"; done <<< "$names"
+    if [[ -d "${SCRIPT_DIR}/plugin/skills/${SHARED_DIR}" ]]; then install_one "$SHARED_DIR"; fi
     echo
     echo "Done. ${RESTART_MESSAGE}"
   else
@@ -278,6 +284,7 @@ main() {
     [[ $DRY_RUN -eq 1 ]] && echo "  dry-run: yes"
     echo
     while IFS= read -r name; do uninstall_one "$name"; done <<< "$names"
+    uninstall_one "$SHARED_DIR"
     echo
     echo "Done."
   fi

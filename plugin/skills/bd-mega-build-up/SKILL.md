@@ -210,6 +210,8 @@ This is the senior-engineer review. Adversarial in tone, collaborative in intent
 
 **Provide your recommended answer with each question.** The user can accept it (fast) or push back (better answer). Recommendations should be opinionated, not safe-defaults.
 
+**Write every question in Simplified Technical English.** The question, the options, the trade-off, and the recommendation all follow the "Decision style" section of [`../bd-shared/ste.md`](../bd-shared/ste.md). This applies to every decision the user is asked to make in any phase — grill questions, overlap decisions, scope cuts, and the three approval gates. Users vary in technical depth and English fluency; STE keeps the decision visible instead of buried in hedging and jargon.
+
 **If a question can be answered by reading the codebase, read the codebase.** Don't ask the user what they could see for themselves. bd-belay-on to a code-reading agent if needed.
 
 **Walk the decision tree.** Resolve dependencies between decisions. Don't ask about column types before deciding whether the table exists.
@@ -231,16 +233,16 @@ Cover at least these branches before declaring the design decided:
 7. **Migration / rollout.** Feature flag? Behind auth? Backfill needed? How do we ship this without breaking existing users? **If the rollout ends in a tighter constraint (`NOT NULL`, `UNIQUE`, narrower type, new FK/CHECK): have we enumerated every writer to the affected table/column** — production code, test fixtures, factories, seed scripts, background jobs, importers, admin tooling — **and made each one satisfy the future constraint in the additive PR?** (See Hard Rule 9.) Force the writer census now; don't defer to "we'll find them when CI breaks."
 8. **Testing strategy.** Unit, integration, e2e? What's the minimum bar? Where are the load-bearing tests?
 9. **Observability.** What logs/metrics do we need to verify it's working in production?
-10. **Out-of-scope confirmations.** "We are NOT doing X, Y, Z in this bd-build-up. Confirm?"
-11. **Backlog overlap decisions.** For each hit in the Overlap Inventory, walk through the classification and confirm the action. "Issue ABC-123 is a Subset — fold ours in, or split theirs?" Don't let stale Backlog issues haunt the bd-build-up.
+10. **Out-of-scope confirmations.** "We will not do X, Y, or Z in this bd-build-up. Do you confirm?"
+11. **Backlog overlap decisions.** For each hit in the Overlap Inventory, walk through the classification and confirm the action. "Issue ABC-123 contains our work. Do we fold our work into it, or do we split ABC-123?" Don't let stale Backlog issues haunt the bd-build-up.
 
-You don't need all 10 every time. You do need to walk the tree and stop at "we have enough to write a plan that won't surprise us."
+You don't need all 11 every time. You do need to walk the tree and stop at "we have enough to write a plan that won't surprise us."
 
 ### Adversarial principles
 
-- **Be specific.** "How does this handle concurrent edits?" beats "Have you thought about edge cases?"
-- **Name the failure.** "If two users hit submit simultaneously, the current design double-charges. Are we OK with that, or do we need an idempotency key?"
-- **Refuse to be deflected.** "Good question, we'll handle it later" is not an answer to a load-bearing question. Push back: "It changes whether Issue 4 is one issue or three. Let's decide now."
+- **Be specific.** "What happens when two users edit the same record?" beats "Have you thought about edge cases?"
+- **Name the failure.** "If two users submit at the same time, the design charges the customer twice. Do we accept this, or do we add an idempotency key?"
+- **Refuse to be deflected.** "Good question, we'll handle it later" is not an answer to a load-bearing question. Push back: "This answer decides whether Issue 4 is one issue or three. We must decide it now."
 - **Acknowledge good answers.** When the user has clearly thought about something, log it and move on. Don't grill for grilling's sake.
 - **Be the senior engineer the user wants on the review, not the one they avoid.** Sharp, not exhausting.
 
@@ -442,11 +444,7 @@ Attach both docs per the active adapter's **Doc home** section.
 
 **One task = one issue.** This is the parallel-subagent-style decomposition.
 
-**Ticket writing style — two audiences, in this order:**
-
-1. **Title — ASD-STE100 Simplified Technical English.** Do not copy the plan's task name verbatim; rewrite it as one short STE statement of the work: active voice, a simple verb ("Add", "Remove", "Change", "Show", "Make"), each word with one meaning only, noun clusters of 3 words or fewer, roughly 10 words. Example: `Add pagination to the employees API` — not `Employees API pagination support implementation`.
-2. **Opening paragraph — also Simplified Technical English.** The body starts with 2–4 plain sentences, before any heading, that say what the ticket is and why it exists. STE rules: active voice, one idea per sentence, sentences of 20 words or fewer, no idioms, no unexplained abbreviations. A human skimming the board must understand the ticket from this paragraph alone.
-3. **Rest of the body — maximally legible to AI agents.** After the opening paragraph, optimize for the AI-Implement pipeline reading cold: exact file paths in backticks, complete code blocks instead of descriptions of code, explicit values instead of "appropriate" ones, the exact section headings below (they are parsed), and consistent names for every type/function/route across sections.
+**Ticket writing style:** follow the "Ticket style" section of [`../bd-shared/ste.md`](../bd-shared/ste.md) — the single source of truth: an STE title, an STE opening paragraph (2–4 plain sentences before any heading), then a body maximally legible to the AI-Implement pipeline reading cold. Mega-specific rule: do not copy the plan's task name verbatim as the title — rewrite it as one short STE statement of the work.
 
 For each task in the plan, build an issue body that the AI-Implement pipeline can run cold:
 
@@ -597,7 +595,7 @@ If the user asks "where's the design for X?" or "what was the plan for X?" — f
 ## Key Principles
 
 1. **Three approval gates: design, plan, issues.** Don't skip one to save time.
-2. **Grill one question at a time, with a recommended answer.** Walk the decision tree. Stop when the next question would be implementation detail.
+2. **Grill one question at a time, with a recommended answer — in Simplified Technical English (`../bd-shared/ste.md`).** Walk the decision tree. Stop when the next question would be implementation detail.
 3. **The plan is a document, not a comment thread.** It lives as a tracker container document so it survives the bd-build-up session.
 4. **One task = one issue.** Plan tasks are sized for parallel pipeline execution. Issue bodies are self-contained because the pipeline reads them cold.
 5. **Backend before frontend, always.** Schema → API → UI. Never combined.

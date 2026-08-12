@@ -163,9 +163,11 @@ Understand current state before planning. What exists? What's in flight? What ar
 
 Ask at most **2 clarifying questions** before drafting a plan. If critical information is still missing after 2 questions, draft with explicit stated assumptions and let the user correct. Users with a clear vision want translation, not debate.
 
+**Write every decision put to the user in Simplified Technical English** — see the "Decision style" section of [`../bd-shared/ste.md`](../bd-shared/ste.md). This covers all of bd-build-up's decision points: clarifying questions, scope-cut confirmations, the Todo-or-Backlog filing question, and the plan approval gate. Users vary in technical depth and English fluency; STE keeps the decision visible.
+
 Good clarifying questions (examples):
-- "Is this v1-MVP scope or are we building to production-complete?"
-- "Should this tie into the existing X table or is it a separate data model?"
+- "Do we build a v1 MVP, or do we build the complete production feature?"
+- "Does this feature use the existing X table, or does it get its own data model?"
 
 Weak clarifying questions to avoid:
 - "What do you want this to do?" (already said)
@@ -324,7 +326,7 @@ For single-operator setups: drop the architect routing rule. Risky-change issues
 
 Numbered sequence. For each issue:
 
-1. **Title** — written in ASD-STE100 Simplified Technical English (see "Ticket writing style" under Issue body format)
+1. **Title** — written in ASD-STE100 Simplified Technical English (see "Ticket writing style" in Phase 3)
 2. **Type** — Bug / Feature / Improvement
 3. **Labels** — e.g., `{{IMPLEMENT_LABEL}}`, `frontend`, `convergence`, `backend`
 4. **Priority** — High / Medium / Low
@@ -346,7 +348,7 @@ Group into phases or tracks when ≥ 8 issues or when parallel execution paths e
 
 ### Present and iterate
 
-Share the plan. Explicit approval is required before filing.
+Share the plan. Explicit approval is required before filing. Where the plan asks the user to choose — routing, scope cuts, sequencing — state each choice and its trade-off in STE (see [`../bd-shared/ste.md`](../bd-shared/ste.md), "Decision style").
 
 **"Approval" means:** an unambiguous affirmative signal like "looks good," "file it," "go," "proceed," or "let's do it." Questions ("what about X?"), observations ("interesting"), or partial feedback ("I'd change Y") are NOT approval signals — they're input for revision.
 
@@ -402,15 +404,7 @@ File in dependency order — issues with no dependencies first. This lets each s
 
 ### Ticket writing style
 
-Every ticket has two audiences, addressed in this order:
-
-1. **Title — ASD-STE100 Simplified Technical English.** One short statement of the work:
-   - Use the active voice and a simple verb ("Add", "Remove", "Change", "Show", "Make").
-   - Use each word with one meaning only. Prefer common words over jargon.
-   - Keep noun clusters to 3 words or fewer. Keep the title to roughly 10 words.
-   - Example: `Add pagination to the employees API` — not `Employees API pagination support implementation`.
-2. **Opening paragraph — also Simplified Technical English.** The body starts with 2–4 plain sentences, before any heading, that say what the ticket is and why it exists. STE rules: active voice, present tense where possible, one idea per sentence, sentences of 20 words or fewer, no idioms, no unexplained abbreviations. A human skimming the board must understand the ticket from this paragraph alone.
-3. **Rest of the body — maximally legible to AI agents.** After the opening paragraph, optimize for a coding agent reading cold: exact file paths in backticks, complete code blocks instead of descriptions of code, explicit values instead of "appropriate" ones, the exact section headings below (they are parsed), consistent names for every type/function/route across sections, and no information that exists only behind a link.
+Follow the "Ticket style" section of [`../bd-shared/ste.md`](../bd-shared/ste.md) — the single source of truth. Every ticket has two audiences, in this order: an STE title, an STE opening paragraph (2–4 plain sentences before any heading), then a body maximally legible to a coding agent reading cold.
 
 ### Issue body format
 
@@ -645,3 +639,4 @@ Present a concise status summary. If there are PRs ready, say "there are N PRs r
 6. **Suggest bd-build-down only when there's something to drive down.** PR open or issue in In Review.
 7. **bd-build-up is not bd-build-down.** This skill plans; the other drives. Don't mix their autonomy models — bd-build-up asks permission to file, bd-build-down acts and reports.
 8. **Every build-up ends with a `# ai-implement-build-up-learnings` comment on the parent.** The compounding trace — required, not optional. Distilled *why* + harness/model provenance. See `docs/learnings-comments.md`.
+9. **Every decision put to the user is written in Simplified Technical English.** Tickets too — STE title and opening paragraph. See `../bd-shared/ste.md`.
