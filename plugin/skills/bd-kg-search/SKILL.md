@@ -27,6 +27,10 @@ ALSO bind a local server, and this skill resolves between them per `../bd-shared
 3. **Run the search** with `{query, limit: 10}` on the resolved tool. Call **only** the
    hybrid-search tool — never other KG tools (the one exception, spine-stamp staleness via
    `kg_neighbors`, belongs to recon — `../bd-shared/kg-recon.md` — not this skill).
+   **Split multi-key queries.** The exact-ID boost matches one issue key per query — a query
+   with two keys ("AII-346 AII-340") surfaces neither. When the user's query contains more
+   than one issue key, run one search per key, plus one combined search for any remaining
+   prose, and merge the results per key in the render. Found live 2026-08-12.
 
 4. **Announce the target, then render results.** First line is the announce from the binding
    doc (e.g. `KG: orchestrator` / `KG: LOCAL FALLBACK — orchestrator unavailable (token
