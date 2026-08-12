@@ -324,7 +324,7 @@ For single-operator setups: drop the architect routing rule. Risky-change issues
 
 Numbered sequence. For each issue:
 
-1. **Title** — concise, matches existing tracker patterns
+1. **Title** — written in ASD-STE100 Simplified Technical English (see "Ticket writing style" under Issue body format)
 2. **Type** — Bug / Feature / Improvement
 3. **Labels** — e.g., `{{IMPLEMENT_LABEL}}`, `frontend`, `convergence`, `backend`
 4. **Priority** — High / Medium / Low
@@ -400,11 +400,25 @@ Mid-session discoveries in bd-build-down are a different skill's concern — tha
 
 File in dependency order — issues with no dependencies first. This lets each subsequent issue reference its dependencies by their real issue IDs instead of placeholders.
 
+### Ticket writing style
+
+Every ticket has two audiences, addressed in this order:
+
+1. **Title — ASD-STE100 Simplified Technical English.** One short statement of the work:
+   - Use the active voice and a simple verb ("Add", "Remove", "Change", "Show", "Make").
+   - Use each word with one meaning only. Prefer common words over jargon.
+   - Keep noun clusters to 3 words or fewer. Keep the title to roughly 10 words.
+   - Example: `Add pagination to the employees API` — not `Employees API pagination support implementation`.
+2. **Opening paragraph — also Simplified Technical English.** The body starts with 2–4 plain sentences, before any heading, that say what the ticket is and why it exists. STE rules: active voice, present tense where possible, one idea per sentence, sentences of 20 words or fewer, no idioms, no unexplained abbreviations. A human skimming the board must understand the ticket from this paragraph alone.
+3. **Rest of the body — maximally legible to AI agents.** After the opening paragraph, optimize for a coding agent reading cold: exact file paths in backticks, complete code blocks instead of descriptions of code, explicit values instead of "appropriate" ones, the exact section headings below (they are parsed), consistent names for every type/function/route across sections, and no information that exists only behind a link.
+
 ### Issue body format
 
 Write the full body at filing time, not in the plan.
 
 ```
+{Opening paragraph in Simplified Technical English — 2–4 sentences, no heading. What this ticket is, and why it exists.}
+
 ## Problem / Context
 
 Current state, why this issue exists, what it enables.

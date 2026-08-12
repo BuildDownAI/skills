@@ -442,9 +442,17 @@ Attach both docs per the active adapter's **Doc home** section.
 
 **One task = one issue.** This is the parallel-subagent-style decomposition.
 
+**Ticket writing style — two audiences, in this order:**
+
+1. **Title — ASD-STE100 Simplified Technical English.** Do not copy the plan's task name verbatim; rewrite it as one short STE statement of the work: active voice, a simple verb ("Add", "Remove", "Change", "Show", "Make"), each word with one meaning only, noun clusters of 3 words or fewer, roughly 10 words. Example: `Add pagination to the employees API` — not `Employees API pagination support implementation`.
+2. **Opening paragraph — also Simplified Technical English.** The body starts with 2–4 plain sentences, before any heading, that say what the ticket is and why it exists. STE rules: active voice, one idea per sentence, sentences of 20 words or fewer, no idioms, no unexplained abbreviations. A human skimming the board must understand the ticket from this paragraph alone.
+3. **Rest of the body — maximally legible to AI agents.** After the opening paragraph, optimize for the AI-Implement pipeline reading cold: exact file paths in backticks, complete code blocks instead of descriptions of code, explicit values instead of "appropriate" ones, the exact section headings below (they are parsed), and consistent names for every type/function/route across sections.
+
 For each task in the plan, build an issue body that the AI-Implement pipeline can run cold:
 
 ```
+{Opening paragraph in Simplified Technical English — 2–4 sentences, no heading. What this ticket is, and why it exists.}
+
 ## Problem / Context
 
 {Why this issue exists. Link to the container for full design context.}
