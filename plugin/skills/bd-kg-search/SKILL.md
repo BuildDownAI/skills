@@ -9,14 +9,14 @@ metadata:
 
 Search this project's knowledge graph directly via hybrid search. The **orchestrator MCP**
 (`/mcp`, OAuth) is the single source of truth (AII-324); during the transition a project may
-ALSO bind a local server, and this skill resolves between them per `docs/kg-binding.md`
+ALSO bind a local server, and this skill resolves between them per `../bd-shared/kg-binding.md`
 *Dual-target resolution* — always telling the user which graph answered.
 
 ## Steps
 
 1. **Read the binding.** Open `CLAUDE.md` and find the `## Knowledge graph` block. Parse
    `kg.present`, the orchestrator fields, and the optional `kg.local_*` + `kg.prefer` fields
-   (format: `docs/kg-binding.md`). If `kg.present` is `false` or the block is absent:
+   (format: `../bd-shared/kg-binding.md`). If `kg.present` is `false` or the block is absent:
    - Print: "This project has no KG bound — run bd-project-setup to add one."
    - Stop. No tool call.
 
@@ -26,7 +26,7 @@ ALSO bind a local server, and this skill resolves between them per `docs/kg-bind
 
 3. **Run the search** with `{query, limit: 10}` on the resolved tool. Call **only** the
    hybrid-search tool — never other KG tools (the one exception, spine-stamp staleness via
-   `kg_neighbors`, belongs to recon — `docs/kg-recon.md` — not this skill).
+   `kg_neighbors`, belongs to recon — `../bd-shared/kg-recon.md` — not this skill).
    **Split multi-key queries.** The exact-ID boost matches one issue key per query — a query
    with two keys ("AII-346 AII-340") surfaces neither. When the user's query contains more
    than one issue key, run one search per key, plus one combined search for any remaining
@@ -51,7 +51,7 @@ ALSO bind a local server, and this skill resolves between them per `docs/kg-bind
 
 ## Notes
 
-- The binding format is canonical across all KG-aware skills (see `docs/kg-binding.md`).
+- The binding format is canonical across all KG-aware skills (see `../bd-shared/kg-binding.md`).
 - A project without `kg.present: true` is a graceful no-op — no error, clear message.
 - A local stdio server named by `kg.local_mcp_server` is the supported transition binding.
   An UNNAMED legacy stdio binding should be recorded (or removed) via bd-project-setup

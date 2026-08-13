@@ -101,7 +101,7 @@ PR # | Issue | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
 
 The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the session summary.
 
-**KG recon (advisory if a KG is bound):** For each PR, run one quiet `kg.search_tool` query on the issue key + title per `docs/kg-recon.md`, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
+**KG recon (advisory if a KG is bound):** For each PR, run one quiet `kg.search_tool` query on the issue key + title per `../bd-shared/kg-recon.md`, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
 
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 
@@ -237,7 +237,7 @@ Present the full batch in Phase 5.
 
 ### 4f. Feature-branch grouping (both trackers)
 
-When the queue is a parent/child feature-node tree (`docs/feature-branch-grouping.md`): work **child PRs**
+When the queue is a parent/child feature-node tree (`../bd-shared/feature-branch-grouping.md`): work **child PRs**
 (base = a grouped branch `ai-implement/<mode>/<key>`, where `<mode>` is `feature` **or** `multi-issue` — same
 behavior, only the path segment differs; multi-issue is selected by a `# ai-implement.yml` block in the
 parent's description) in the usual tiers. **Internal roll-ups are
@@ -274,7 +274,7 @@ PR (`ai-implement/<mode>/<key> → base`) is open + green:
    top-of-tree PR for human review, and wait for explicit confirmation — in addition to the existing "never
    auto-merge" guardrail.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
@@ -407,7 +407,7 @@ Post as a tracker issue assigned to the architect (or to the user, single-operat
 
 ### Closing step — post/update the build-down learnings comment (required, autonomous)
 
-Same autonomy rule as the summary — no approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+Same autonomy rule as the summary — no approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
 
 **Record the outcome of every PR this session drove or observed:** `merged` | `closed-unmerged (failure)` (closed without merging — a failure; record the concrete reason; detect from `state=CLOSED` and not merged) | `open / never-landed` | `superseded`. Abandonment is a valid terminal outcome, not a gap.
 
@@ -525,4 +525,4 @@ bd-super-build-down comments include a trailing marker so the architect can filt
 5. **Silence is never the default.** Every gap is fixed, escalated, or filed.
 6. **Abort beats damage.** Session-abort triggers exist because unattended runs can cause harm. Honor them.
 7. **Pattern-break list is identical to bd-build-down.** This skill is bd-build-down at speed, not with different rules.
-8. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Autonomous write, required — outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. Not done without it. See `docs/learnings-comments.md`.
+8. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Autonomous write, required — outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. Not done without it. See `../bd-shared/learnings-comments.md`.

@@ -1,37 +1,50 @@
-# Mega-Build-Up — Linear Tracker Adapter
+# Build-Up — Linear Tracker Adapter
 
-The core (`../SKILL.md`) delegates every tracker-touching action to this file
-when `{{TRACKER}}` is Linear. Section names match the core's seam references
-exactly.
+**Shared by `bd-build-up` and `bd-mega-build-up`.** Both skills delegate every tracker-touching
+action to this file when `{{TRACKER}}` is `linear`. Section names match the seam references in
+each skill exactly.
+
+Sections marked **(mega only)** describe artifacts plain `bd-build-up` does not produce.
+Everything else applies to both.
 
 ## MCP & discovery
 
 - **Chat (web/mobile):** Linear MCP, GitHub MCP, conversation memory. Lacks local FS / bash. bd-belay-on to a code-reading agent for codebase reads.
-- **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads, plan file drafting, then hand back to chat for filing.
-- **Pair pattern:** Draft the plan locally as a markdown file in `{{PLAN_DIR}}`, then attach it to Linear from chat as a Project Document.
+- **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads and — in bd-mega-build-up — for writing ADRs and glossary entries into the repo, then hand back to chat for filing.
+- **Pair pattern (mega only):** Write the ADRs to `{{ADR_DIR}}` in the repo during the grill, then link them into Linear from chat as a Project Document.
 
-**Opening declaration:** State environment, primary tools, and which mode you'll be running. Example: *"Running in chat. Linear MCP for filing, will draft the plan to `docs/plans/` and attach as a project document. Mode 2 (New Design)."*
+**Opening declaration:** State environment, primary tools, and which mode you'll be running. Example: *"Running in chat. Linear MCP for filing. Mode 2 (New Design)."*
 
 ## Container
 
-- **New project:** Default name = bd-build-up name from Phase 2. Confirm with user.
+- **New project:** Default name = the build-up name. Confirm with the user.
 - **Existing project:** Use `list_projects` to match. If multiple candidates, present them.
 - Create the project via the Linear MCP if new. Capture the project ID and URL.
 
-## Doc home
+Every issue in the build-up attaches to the same project, so the body of work stays queryable
+as a unit.
 
-Linear supports project Documents. Attach both:
+## Doc home (mega only)
 
-1. **Design Decisions** → upload `{{PLAN_DIR}}/{date}-{slug}-design.md` as a project document titled `Design Decisions`.
-2. **Implementation Plan** → upload `{{PLAN_DIR}}/{date}-{slug}-plan.md` as a project document titled `Implementation Plan`.
+The **repo** is the home for the grill's decisions — ADRs in `docs/adr/`, terminology in
+`CONTEXT.md` (see `../decision-docs.md`). Linear carries a pointer to them, not a
+second copy.
 
-Use the Linear MCP's document creation tool (`create_document` or equivalent). If the MCP version available doesn't support documents, fall back to: paste the markdown into the project description, and link the local files in the first issue's body.
+Create one project document titled `Design Decisions` holding a short index: one line per ADR
+written for this build-up, each with its repo path, its one-line decision statement, and a
+permalink to the file on the default branch. Add any glossary terms this build-up introduced.
 
-The documents travel with the project. Anyone who picks up an issue can find them via the project link.
+Use the Linear MCP's document creation tool (`create_document` or equivalent). If the available
+MCP version has no document support, put the index in the project description instead.
+
+The index travels with the project, so anyone who picks up an issue can reach the design from
+the project link. The ADRs themselves stay in the repo, where a coding agent working in that
+code will find them without a tracker lookup.
 
 ## Overlap scan
 
-Search the Linear backlog for existing work that intersects with this bd-build-up. The goal is to surface every overlap and force a decision before any new issue gets filed.
+Run the shared Backlog Overlap Scan (`../overlap-scan.md`) with these Linear searches. The
+goal is to surface every overlap and force a decision before any new issue gets filed.
 
 **Search strategy:**
 
@@ -51,7 +64,7 @@ Search the Linear backlog for existing work that intersects with this bd-build-u
 
 ## Wave staging
 
-Same wave model as `bd-build-up`:
+The shared wave model (`../pipeline.md`), in Linear terms:
 
 - **Wave 1** (no `Blocked by`) → `state: Todo` + label `AI-Implement`. Pipeline picks up within minutes.
 - **Wave 2+** (has `Blocked by`) → `state: Backlog`. Promote to `Todo` during bd-build-down as blockers merge.
@@ -71,7 +84,7 @@ File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
 ## Required create fields
 
-The issue body itself follows the core's Phase 4 Step 3 template.
+The issue body itself follows the shared template in `../issue-body.md`.
 
 **Linear MCP patterns:**
 - `save_issue` handles create + update (pass `id` to update).
@@ -97,9 +110,12 @@ The "reference design context" link is for humans reviewing the PR, not for the 
 
 ## Status check
 
-Same as `bd-build-up` status check. Match the user's reference to a Linear project, list issues grouped by state, surface blockers, identify bd-build-down readiness (issues in In Review or with open PRs).
+Match the user's reference to a Linear project via `list_projects`, list its issues via
+`list_issues` grouped by state, surface blockers, and identify bd-build-down readiness (issues
+in In Review or with open PRs).
 
-If the user asks "where's the design for X?" or "what was the plan for X?" — fetch the project documents and surface them, don't reconstruct from issue bodies.
+If the user asks "where's the design for X?" — fetch the project's `Design Decisions` document
+and follow it to the ADRs. Don't reconstruct the design from issue bodies.
 
 ## Feature-node grouping
 
@@ -127,4 +143,4 @@ is *unlabelled* resolves an empty ancestor chain and cuts its PR from the repo b
 bypassing grouping — so the parent is labelled first. The race guard makes that safe: a labelled parent
 whose children carry no label yet is a *waiting parent* and is skipped until its children release.
 
-Full model: `docs/feature-branch-grouping.md`.
+Full model: `../feature-branch-grouping.md`.

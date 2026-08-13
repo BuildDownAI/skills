@@ -58,7 +58,7 @@ Triggered when:
 5. **Mark the session as paused.** Post the pause marker (format below). State what we're waiting on and where to resume.
 
 **KG recon feeds the prompt (if a KG is bound).** Before writing the recon prompt, run 1–2
-`kg_hybrid_search` queries on the perspective gap (procedure: `docs/kg-recon.md` — advisory,
+`kg_hybrid_search` queries on the perspective gap (procedure: `../bd-shared/kg-recon.md` — advisory,
 hybrid-search only, silent skip when no KG is bound) and put the relevant hits in the prompt's
 **What We Know Already** section — the target tool should inherit the graph's memory, not
 rediscover it. If a KG hit fully answers the question, say so and skip the dispatch entirely.
@@ -83,7 +83,7 @@ Triggered when:
 5. **Close the loop on conclusive handoffs.** If the integrate step *concludes* a driven work
    item (a fix validated, a decision made, an approach killed), update that issue's canonical
    `# ai-implement-build-up-learnings` / `# ai-implement-build-down-learnings` comment **in
-   place** per `docs/learnings-comments.md` — the handoff's outcome is exactly the durable
+   place** per `../bd-shared/learnings-comments.md` — the handoff's outcome is exactly the durable
    "why" those comments exist to capture. Skip when the handoff was purely informational.
 6. **Resume the interrupted workflow.** Host skill continues from its recorded resume point.
 

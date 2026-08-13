@@ -118,7 +118,7 @@ Before testing, understand what this PR actually does.
 ### 2a-pre. KG recon (if a KG is bound)
 
 Before reading the gap analysis, run 2–3 `kg_hybrid_search` queries (procedure:
-`docs/kg-recon.md` — advisory, hybrid-search only, silent skip when no KG), in two classes:
+`../bd-shared/kg-recon.md` — advisory, hybrid-search only, silent skip when no KG), in two classes:
 
 1. **Surface priors** — the PR's linked issue key + title: known-fragile surfaces, past
    failure classes, prior intent for the files touched.
@@ -189,7 +189,7 @@ Examples of what workstream profiles look like (replace with project-specific en
 
 ### 2e. Feature-branch grouping (both trackers)
 
-Under AI-Implement parent/child **feature-branch grouping** (`docs/feature-branch-grouping.md`), a child PR
+Under AI-Implement parent/child **feature-branch grouping** (`../bd-shared/feature-branch-grouping.md`), a child PR
 targets a feature branch, not the repo base. Two implications for what you're actually testing:
 
 - A **child PR's** preview reflects *this slice on top of the feature branch* (the feature-in-progress),
@@ -198,7 +198,7 @@ targets a feature branch, not the repo base. Two implications for what you're ac
   for review`) is the highest-value smoke target: smoke-test the **whole integrated feature branch** before
   a human merges it. bd-super-build-down dispatches exactly this before surfacing that PR for human merge.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
