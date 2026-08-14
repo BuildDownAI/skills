@@ -19,6 +19,15 @@ truth for every machine (AII-324). Skills never bind a local KG query server.
 named by `kg.local_mcp_server` — that is the supported **transition binding** (below). An
 *unnamed* stdio entry is legacy; bd-project-setup Phase K records or removes it.
 
+## Scope contract (orchestrator-driven)
+
+The orchestrator's **project list is the KG's intended scope**: every repo the orchestrator
+manages should be ingested, and every project's tracker team should be in the tracker config.
+`sources.yml` in the KG source repo is the *materialized* scope — bd-kg-refresh's reconcile
+step (2b) converges it to the project list on every run, cloning missing repos and asking the
+operator for each new project's `docs_url`. The Python ingest itself never calls the MCP:
+config lives in git, MCP access lives in the session.
+
 ## Dual-target resolution (transition mode)
 
 During the local→orchestrator transition a project may bind BOTH targets. Every KG-aware step

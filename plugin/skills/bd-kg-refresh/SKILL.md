@@ -30,6 +30,23 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
    (`PY=python3.10; command -v "$PY" >/dev/null 2>&1 || PY=python3`), then
    `"$PY" -m venv .venv && ./.venv/bin/pip install -r requirements.txt` if `.venv` is missing.
 
+2b. **Reconcile scope with the orchestrator (BDS-36).** The orchestrator's project list is
+   the KG's scope authority; `sources.yml` is the materialized copy. Before the ingest:
+   - Call `list_projects` on the bound orchestrator MCP server (the same server as
+     `kg.search_tool` — the diagnostics tools ride it).
+   - **Diff repos:** every project repo must appear in `sources.yml` (as `code_repo` or a
+     `secondary_repos` entry). For each missing repo: clone it as a sibling directory, add
+     the entry, and **ask the operator for its docs URL** ("What is the published docs root
+     for <repo>? Skip if none."). Record the answer as `docs_url:`; a skip leaves the key
+     absent, and later refreshes ask again while it stays absent.
+   - **Diff teams:** every project `teamKey` must appear under `trackers:`. Add missing
+     teams at `tier: secondary`.
+   - Commit the reconciled `sources.yml` before ingesting, and **announce the delta**
+     plainly: "orchestrator manages N projects; sources covered M; added <repos/teams>".
+     No delta → one line: "scope in sync (N projects)".
+   - Failure-tolerant: MCP unreachable or unauthenticated → announce it and proceed with
+     the existing config; the reconcile is a convergence step, not a gate.
+
 3. **Run the ingest** from the source-repo checkout:
    - `./.venv/bin/python -m kg_ingest.cli --repo <code_repo.path from sources.yml> --tracker --secondary`
    - Rebuilds `out/graph.trig` + embeddings locally and — the part that matters for the
