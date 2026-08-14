@@ -75,6 +75,29 @@ Two carve-outs, where a code block beats prose:
 - **A snippet that encodes a decision more precisely than prose** — a state machine, a
   reducer, a schema, a type shape. Inline the decision-rich part, not a working demo.
 
+## Every constraint carries the failure it prevents
+
+A bare constraint is an instruction. A constraint plus its failure mode is a *reason*, and a
+reason survives contact with an implementer who finds the constraint inconvenient.
+
+State the constraint, then the concrete thing that breaks without it:
+
+| Instead of | Write |
+|---|---|
+| "`opts` is required." | "`opts` is required **because** a call site that omits the entity must fail to compile rather than silently return unfiltered rows." |
+| "Resolve the IDs once." | "Resolve the IDs once — this endpoint already issues many queries per request, and a second resolve per predicate makes a known slow path worse." |
+| "Do not use an embedded `!inner` join." | "Do not use an embedded `!inner` join — an entity in two selected projects returns twice, and every count downstream is wrong." |
+
+**Why this matters more than it looks.** An implementer weighing "required vs optional" with no
+stated consequence will reasonably pick the one that compiles against today's callers — and
+optional-with-a-fallback compiles. The spec was followed in letter, the constraint evaporated,
+and nothing failed loudly enough to notice. Observed: a `required` argument shipped as
+`opts?: { entity?: T }` with `if (!opts?.entity) return query`, which turned "filter by project"
+into "return everything" for any caller that forgot it.
+
+This applies with most force to constraints whose violation is **silent** — a dropped filter, a
+truncated result, a widened scope. Where the violation is loud, prose is enough.
+
 ## `## Files` is machine-read
 
 Keep the exact bullet form. The orchestrator's dispatch guard parses
@@ -85,6 +108,27 @@ until the first merges.
 **An issue with no parseable `## Files` section fails open.** It dispatches in parallel
 regardless of overlap and falls back on conflict auto-recovery. Every file the work touches
 belongs in this list. Prose mentions inside `## Task` are invisible to the guard.
+
+### Verify the list before filing
+
+Run [`tools/verify-issue-files.py`](./tools/verify-issue-files.py) against the drafted body and
+the repo. It is a few seconds, and it checks what review reliably does not:
+
+```sh
+verify-issue-files.py draft.md --repo /path/to/repo
+# or, on an already-filed issue:
+gh issue view 123 --json body --jq .body | verify-issue-files.py - --repo .
+```
+
+It fails on a `Modify`/`Delete` target that does not exist, a `Create` target that already
+does, a body with no parseable bullets at all, and any `"<n> lines"` claim that disagrees with
+the file. It also prints each file's real line count and first meaningful line.
+
+**Read that inventory, not just the exit code.** The exit code catches wrong paths; the
+inventory catches the more common error — a path that exists and is not the file you think it
+is. One issue described a page as "1367 lines" with a metadata block to extend; the inventory
+showed 40 lines, because the 1367-line file was a sibling one path segment away. Every
+existence check had passed.
 
 ## Labels, routing, and metadata
 

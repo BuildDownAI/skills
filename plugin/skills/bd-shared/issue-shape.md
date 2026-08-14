@@ -59,7 +59,16 @@ A violation splits the issue. No exceptions.
    human-driven sequence. Override only when the user confirms they want the agent to do one
    named phase as its own issue.
 9. **Schema tightening needs a writer census.** See the section below.
-10. **A feature-node parent defers its own work.** The parent's closing work is `Blocked by:`
+10. **Changing a shared value's shape needs a reader census.** See the section below.
+11. **Branching logic enumerates every state.** If the issue's behaviour depends on a
+    selection, an enum, a mode, or a combination of flags, the body carries a table with
+    **every** state and its expected outcome — not the states worth mentioning. Write the
+    table before the prose; it is a decomposition tool, not documentation. The failure it
+    prevents is silent and repeatable: a three-state model gets specified as its two obvious
+    states, the implementer builds exactly that, the reviewer confirms it matches, and the
+    third state fails in production. When a state is genuinely out of scope, list it with
+    "out of scope" as its outcome so the omission is a decision rather than an oversight.
+12. **A feature-node parent defers its own work.** The parent's closing work is `Blocked by:`
     every one of its designated children. It dispatches only after each child is terminal,
     onto the parent's own feature branch. Children PR **into the parent's branch**, never the
     reverse. A parent that must merge to the default branch *before* its children is a
@@ -101,6 +110,39 @@ the future constraint." A writer the plan cannot list is a writer the plan has n
 satisfy the constraint" with **(a)** no writer in the census omits the column, **and (b)** CI
 is green on a throwaway branch with the constraint pre-applied. `SELECT COUNT(*) WHERE col IS
 NULL` tells you about the past. It tells you nothing about the next write.
+
+## The reader census (hard rule 10)
+
+The writer census protects a **column** whose constraint is tightening. This is its mirror:
+any plan that changes the **shape or meaning of a value other code already reads** —
+a context field, a hook's return type, an API response body, an exported type, a query
+parameter's semantics — **enumerates every reader** before the change ships.
+
+**Search for the underlying state, not only the accessor.** This is the whole rule, and it is
+the step that gets skipped. A codebase that offers a tidy accessor (`useThingFilter()`) almost
+always also has consumers that reached past it to the raw state (`thing.activeId`) because the
+accessor did not exist yet, or did not fit. Those consumers are invisible to a search for the
+accessor, and they are the ones that break — silently, because they keep compiling and keep
+returning *something*.
+
+Walk both:
+
+- **The accessor** — the hook, selector, helper, or wrapper the change is expressed in.
+- **The underlying state** — the context field, store key, prop, or column the accessor reads.
+  Search for its name directly.
+- **Derived spellings** — a value copied into a local (`const id = ctx.activeThing?.id`), a
+  destructure, a prop drilled two levels down, a template literal that builds a query string.
+
+**A silent reader is worse than a broken one.** A reader that fails to compile is found by CI.
+A reader that keeps compiling and quietly returns the wrong scope — everything instead of a
+subset, the first item instead of the union — ships, and the screen looks plausible. Prefer a
+change shape that *breaks* stale readers: make the new argument required rather than optional,
+rename rather than widen, so the compiler produces the census you forgot to write.
+
+**Output:** the issue lists every reader found, one checkbox each. If the count is large enough
+to violate the shape rule, split it — a deep core change that alters the contract, plus a wide
+propagation issue `Blocked by:` it that updates the readers. Name the exact search terms used,
+so a reviewer can re-run them.
 
 ## Soft signals
 
