@@ -64,10 +64,18 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
    - Data-refresh commits go straight to the default branch — the snapshot is generated
      output, not reviewed code. The orchestrator's image build clones this branch.
 
-6. **Redeploy the orchestrator** — from the orchestrator repo's checkout, run its deploy
-   wrapper (AI-Implement: `./scripts/deploy-orchestrator.sh [app]`). Never a plain
-   `fly deploy` — it ships a sidecar-less image (`/mcp` → 503). The wrapper passes the build
-   secret + `--no-cache` and fails loudly if `/mcp` doesn't answer 401 after the deploy.
+6. **Redeploy the orchestrator.** Standard path (AI-Implement ≥ AII-357): trigger a
+   **self-deploy** — `POST <orchestrator>/api/deploy` with an admin session token; the
+   orchestrator builds its own next image, minting the KG build secret internally
+   (`202 {"deploying": <sha>}` = started; `409` = one already running). Fallback for an
+   image that predates self-deploy: the manual command in the orchestrator repo's
+   `docs/deployment.md` — `fly deploy --remote-only --no-cache --build-secret kg_token=…
+   --build-arg SOURCE_COMMIT/REPO/BRANCH … --app <app>` (all three stamps, or the resulting
+   image cannot self-deploy). Never a plain `fly deploy` — it ships a sidecar-less image
+   (`/mcp` → 503).
+   **Sequencing rule:** confirm the snapshot push LANDED (`git log origin/<default>`)
+   *before* triggering the deploy — chaining push and deploy in one command lets the remote
+   builder clone the pre-push tree, and Step 7's unchanged stamp is how you find out.
 
 7. **Verify live (boots ≠ serves).** Query the deployed graph through `kg.search_tool` and
    confirm:
