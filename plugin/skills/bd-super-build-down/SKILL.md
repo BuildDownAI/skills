@@ -198,6 +198,8 @@ Work PRs in tier order: Tier 1 first (fast wins), Tier 2 second (handle follow-u
 
 ### 4b. Tier 2 — act
 
+Before every agent comment, apply bd-build-down Phase 3's trigger readiness gate. Throughput never bypasses PR registration, active-cycle completion, or current-head readiness.
+
 For agent-fixable gaps:
 1. Post agent comment via GitHub MCP
 2. Log one line: `💬 Agent comment posted on PR #{N} for gap: {one-line}`
