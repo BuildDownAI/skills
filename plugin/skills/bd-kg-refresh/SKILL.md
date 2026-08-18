@@ -82,7 +82,13 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
    - a domain query returns non-empty, `degraded: false` results, and
    - the graph's **age stamp equals Step 3's date** (recon reads it via `kg_neighbors` on the
      spine IRI — `../bd-shared/kg-recon.md`). An unchanged stamp means the deploy served the OLD
-     snapshot (push didn't land, or the build cloned before the push) — re-run Step 6.
+     snapshot. Two known causes, both benign: the push hadn't landed when the build cloned
+     (Step 6's sequencing rule), or **remote-builder git-cache lag** — a `--depth 1` clone
+     issued moments after a push can be served from the builder's cache and miss it (seen
+     live 2026-08-18: self-deploy v111 built the old snapshot; v112, minutes later, was
+     correct). Either way: wait a few minutes, re-trigger Step 6, re-verify. Don't chase a
+     bug that isn't there. Note a self-deploy `409 deploy-in-progress` can outlast the
+     release by several minutes — poll, don't assume it's stuck.
    No client restart is needed — the server is remote; new results appear on the next query.
 
 8. **Close — learnings loop (required check, usually a no-op).** Follow
