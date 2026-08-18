@@ -32,7 +32,7 @@ Call `get_issue_dispatch_status(identifier: "X")`. Interpret, in order:
 | `dedupEntry` present | Dedup holds it | Dedup has NO time window — the entry clears only on failure, terminal reconcile, or manual delete. A completed prior run means the ticket already shipped |
 | Last dispatch `completed / success` + `prUrl` | It already ran | Give the PR link; the ticket likely needs a new issue, not a re-run |
 | Last dispatch failed | It failed | Give the conclusion; the orchestrator retries per its rules or the issue was parked |
-| `recentDispatches: []` | Never dispatched | Check the pickup preconditions: label present? state Todo? project paused? capacity full? Use question 4 for the project row |
+| `recentDispatches: []` | Never dispatched | Check the pickup preconditions: label present? state Todo? project paused? capacity full? Use question 4 for the project row. **All green and still nothing?** Check the orchestrator's tracker visibility: its Linear app actor must be a MEMBER of the issue's team — new teams don't include the app automatically, and the poll silently sees nothing there (found live 2026-08-14: KGB-1, all preconditions green, app not in the team). The orchestrator cannot diagnose its own blindness — verify by minting an app-actor token and listing teams |
 
 ### 2. "Is anything stuck? What's running right now?"
 

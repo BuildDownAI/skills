@@ -20,6 +20,8 @@ After this skill, the project has a working, queryable KG.
 | Org | the project repo's owner |
 | Namespace | `https://kg.<org>.dev/` (convention; confirm with the operator) |
 | Tracker | from the project's `CLAUDE.md` (`tracker.kind` + team), if bound |
+| Docs URL | ask: "What is the published docs root for this project? Skip if none." |
+| Orchestrator | the project's `kg.orchestrator` binding (the app whose projects define scope) |
 | Visibility | private |
 
 ## Steps
@@ -45,7 +47,10 @@ After this skill, the project has a working, queryable KG.
 3. **Fill `sources.yml`** in the new clone — this is the KG's identity; set it
    once, up front:
    - `namespace:` the confirmed value (changing it later rewrites every IRI)
-   - `code_repo:` the project's `slug` + relative `path` (e.g. `../<project>`)
+   - `code_repo:` the project's `slug` + relative `path` (e.g. `../<project>`) +
+     `docs_url:` (the collected docs root, when the project has one)
+   - `orchestrator:` the app URL — its project list defines this KG's intended
+     scope; bd-kg-refresh's reconcile step keeps `sources.yml` converged to it
    - `trackers:` the project's team(s), `tier: primary`
    - `self_ingest: true` (recommended: the KG should know its own internals)
    - optionally add `BuildDownAI/bd-knowledge-graph-base` under `secondary_repos`
