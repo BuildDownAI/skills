@@ -437,6 +437,22 @@ Before posting, resolve every `{ISSUE-ID}` placeholder to the real issue ID:
 
 If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a posted comment.
 
+### Trigger readiness gate (before every coding-agent comment)
+
+Treat an agent comment as a dispatch, not passive prose. Before posting, capture the PR's current head SHA and the configured agent or pipeline state, then apply this gate:
+
+1. **Wait for PR registration.** For AI-Implement, do not post `/ai-implement` while the implementation run exists but the PR association or final gap-analysis/ready signal is not yet visible.
+2. **Wait for the active cycle to finish.** Do not post while implementation, post-push review, review-fix, or gap analysis for that PR is queued or running.
+3. **Require current-head terminal evidence.** Confirm that no agent run or relevant check is active and that the configured pipeline reports review/gap analysis complete or ready for follow-up on the captured head SHA.
+4. **Restart on head changes.** If the PR head SHA changes while waiting, discard the prior observation and repeat the gate for the new head.
+5. **Post once and record it.** Post the resolved instruction once, then record the PR number, head SHA, and posting time in the session log.
+
+For agents other than AI-Implement, map the same gate to that agent's ready and terminal signals. If the state is not observable, wait for an explicit ready-for-triage or completed gap-analysis signal instead of guessing.
+
+If AI-Implement replies that it has no record of the PR (or an equivalent registration error), classify the response as a registration race: retain the original instruction, wait through this gate on the current head, and repost the same instruction once. Do not file a replacement implementation issue and do not drop the requested fix.
+
+The trigger is accepted only when the configured agent acknowledges or queues it for the current head without an immediate registration error.
+
 ### Posting rules
 
 - **Never wrap the agent mention in backticks** — markdown rendering can prevent the agent from recognizing it
@@ -448,6 +464,7 @@ If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a
 
 ### After posting
 
+- Verify that the configured agent accepted or queued the trigger for the recorded head (for example, a reaction, status comment, job, or check). If it reports that the PR is unknown, execute the registration-race recovery in the trigger readiness gate.
 - Note in session log: "Agent comment posted on PR #N for gap: {one-line summary}"
 - Do not merge the PR yet — wait for the agent to resolve, then the PR re-enters triage when CI goes green
 
@@ -668,6 +685,7 @@ Per PR this session drove or observed:
 | "Not found" errors on linked-detail pages | Mock data IDs don't exist in DB | Not a code defect; check acceptance criteria |
 | Preview deploy timeout | Transient infra | Re-run deploy job |
 | GitHub still shows conflicts after agent ran | Agent forward-ported instead of merging | Post new agent comment instructing `git merge <base branch>` |
+| `/ai-implement` says it has no record of the PR, or a follow-up overlaps an active review cycle | Agent trigger was posted before the PR reached current-head terminal readiness | Retain the instruction, wait through the Phase 3 trigger readiness gate, then post or repost once |
 | Merged a migration/auth child PR because it targeted a feature branch | Treated the sandbox as a review exemption | It isn't — the change rolls up to real DB/users. Escalate migrations/auth on every PR class (§2i, §2d/§2e) |
 | Gap analysis flags columns that exist | Agent didn't check current schema | Cross-reference the schema source of truth |
 | Merging breaks a prod page | Code deployed before migration applied | The Phase 2e escalation exists to prevent this — the most common footgun |
