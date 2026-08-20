@@ -20,7 +20,7 @@ After this skill, the project has a working, queryable KG.
 | Org | the project repo's owner |
 | Namespace | `https://kg.<org>.dev/` (convention; confirm with the operator) |
 | Tracker | from the project's `CLAUDE.md` (`tracker.kind` + team), if bound |
-| Docs URL | ask: "What is the published docs root for this project? Skip if none." |
+| Docs URL | two-part ask (BDS-38): (a) "What is the published docs root for this project? Skip if none." (b) for a versioned site (stable/latest areas): "Which docs version/area documents the branch this KG ingests?" — the answer selects the crawl root and is recorded as `documents_branch:` |
 | Orchestrator | the project's `kg.orchestrator` binding (the app whose projects define scope) |
 | Visibility | private |
 
@@ -49,6 +49,11 @@ After this skill, the project has a working, queryable KG.
    - `namespace:` the confirmed value (changing it later rewrites every IRI)
    - `code_repo:` the project's `slug` + relative `path` (e.g. `../<project>`) +
      `docs_url:` (the collected docs root, when the project has one)
+   - `docs_sites:` (when a docs root was given) one entry per site — `url:` (the
+     version-area root from the two-part ask), `repo:` (the project slug),
+     `documents_branch:` (when versioned) — this is what makes the first refresh
+     **crawl** the docs into DocSite/DocPage/DocSection section cards, not just
+     stamp a pointer (base how-to: the base repo's `docs/design/docs-sites.md`)
    - `orchestrator:` the app URL — its project list defines this KG's intended
      scope; bd-kg-refresh's reconcile step keeps `sources.yml` converged to it
    - `trackers:` the project's team(s), `tier: primary`

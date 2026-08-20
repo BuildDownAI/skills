@@ -321,11 +321,14 @@ reference point for later status checks and bd-build-down sessions.
 
 ### Closing step — the learnings comment (required)
 
-A build-up that files issues without a learnings comment is not done. On the parent or
-umbrella issue — the decision node; narrow per-task learnings may go on a child — post an
-`# ai-implement-build-up-learnings` comment: one canonical comment per issue, edited in place,
-distilled to the load-bearing *why* a future reader would find surprising. Not a second copy
-of the plan. Full convention: `../bd-shared/learnings-comments.md`.
+A build-up that files issues without a learnings comment is not done. **Exactly ONE comment,
+on the parent or umbrella issue** — the decision node; children get none of their own (their
+merge-time learnings arrive later via build-down, per the placement rule in
+`../bd-shared/learnings-comments.md`). Post an `# ai-implement-build-up-learnings` comment:
+one canonical comment per issue, edited in place, distilled to the load-bearing *why* a
+future reader would find surprising. Not a second copy of the plan. **Name the children the
+comment covers** (issue keys), so a reader landing on a child knows where the rationale
+lives. Full convention: `../bd-shared/learnings-comments.md`.
 
 The marker is an exact-match first line. Never reuse `# ai-implement.yml` — opposite semantics,
 and it gets stripped from the spec.

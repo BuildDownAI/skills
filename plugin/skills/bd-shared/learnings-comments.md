@@ -24,10 +24,24 @@ trace that future planning — and a future knowledge-graph ingester — can rea
 
 - **One canonical comment per marker per issue, edited in place.** Not append-only, not multiple. Edit
   history preserves the timeline.
-- **On the parent / umbrella issue** — the decision node. Narrow per-task learnings may go on a child.
 - **Distilled, not exhaustive.** Capture the load-bearing decisions a future reader would be
   *surprised* by — not a second copy of the plan. Link out to a fuller artifact (an in-repo plan doc)
   if depth is wanted; the comment is the durable index.
+
+### Where each marker lands (the placement rule — BDS-39)
+
+| Event | Comment | Where |
+|---|---|---|
+| Build-up finishes (design decided, issues filed) | ONE build-up comment | The **parent / umbrella issue** — and it **names the children it covers**, so a reader landing on a child knows where the rationale lives. Children get no build-up comment of their own. |
+| An issue's PR **merges** | A build-down comment | **That issue** — the merge-time findings: smoke fixes, review-iteration causes, what the landing surfaced. Marker on line 1, same as always. |
+| A chain / tree **completes** (or a session closes) | The build-down **capstone** | The **parent / umbrella issue** — cross-issue patterns and the outcome table, naming the children covered. The per-issue comments carry the detail; the capstone carries the arc. |
+
+**Why per-issue, not parent-only (the PR-invisibility rationale):** the KG spine ingests a PR's
+title, body, and state — **never its comment threads**. A smoke report or review finding posted
+only on the PR is invisible to the graph forever. The PR comment remains the review-facing copy;
+**mirror every learnings-worthy finding into the issue's build-down comment**, because the issue
+comment is the copy the KG can see. Observed live 2026-08-19 on the KGB-2 chain: four issues'
+merge-time findings existed only as GitHub PR comments, and the graph showed "learnings missing".
 
 ## Absence is signal
 
@@ -85,7 +99,9 @@ the absence signal above. Do not go reconcile historical closed PRs unless expli
 
 `bd-summit-push` (sequencing) and `bd-smoke-jumper` (testing) run **within** a build-down and fold their
 findings **into** the build-down comment — they do not post their own marker. This preserves
-one-canonical-comment-per-marker-per-issue.
+one-canonical-comment-per-marker-per-issue. Per the placement rule above, a smoke finding worth
+keeping folds into the **issue's** build-down comment (the KG-visible copy), not only the PR's
+smoke-report comment.
 
 ## Cross-tracker
 

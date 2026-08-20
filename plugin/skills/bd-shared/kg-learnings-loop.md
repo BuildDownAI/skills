@@ -5,6 +5,13 @@ The shared procedure for contributing KG-operating learnings back to
 from). Referenced by `bd-kg-create` and `bd-kg-refresh` — defined once here, the
 same pattern as `./kg-binding.md` and `./kg-recon.md`.
 
+> **Two learnings loops, two documents.** This doc is the **base-repo** loop:
+> sanitized pattern files (`learnings/YYYY/MM/…`) PR'd into the public template.
+> The **tracker** loop — build-up/build-down learnings *comments* on issues, and
+> where each one lands — is `./learnings-comments.md`. A tracker learning about
+> KG operations may feed both: the issue comment records the instance, the base
+> PR records the sanitized pattern.
+
 ## When to run this step
 
 At the **close** of a `bd-kg-create` or `bd-kg-refresh` run, ask: *did this run

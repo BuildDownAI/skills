@@ -36,9 +36,18 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
      `kg.search_tool` — the diagnostics tools ride it).
    - **Diff repos:** every project repo must appear in `sources.yml` (as `code_repo` or a
      `secondary_repos` entry). For each missing repo: clone it as a sibling directory, add
-     the entry, and **ask the operator for its docs URL** ("What is the published docs root
-     for <repo>? Skip if none."). Record the answer as `docs_url:`; a skip leaves the key
-     absent, and later refreshes ask again while it stays absent.
+     the entry, and **ask the docs question — two parts** (BDS-38):
+     - (a) "What is the published docs root for <repo>? Skip if none."
+     - (b) **For a versioned docs site only** (stable/latest areas): "Which docs
+       version/area documents the branch this KG ingests?" — a versioned site deploys
+       every version from one branch, so the URL alone does not disambiguate. The answer
+       selects the crawl root (e.g. `/latest/` for a testing-branch KG, `/stable/` for
+       main). A single-version site skips (b).
+     Record the answers **twice**: `docs_url:` on the repo entry (spine stamps
+     `kg:docsUrl`), and a `docs_sites:` entry — `url:` (the version-area root), `repo:`
+     (the slug), `documents_branch:` (the (b) answer, when versioned) — so the next
+     ingest **crawls** the site into DocSite/DocPage/DocSection cards. A skip leaves both
+     keys absent, and later refreshes ask again while they stay absent.
    - **Diff teams:** every project `teamKey` must appear under `trackers:`. Add missing
      teams at `tier: secondary`.
    - Commit the reconciled `sources.yml` before ingesting, and **announce the delta**
@@ -57,7 +66,10 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
 
 4. **Report the ingest**: quad count, issue/vector counts, `SHACL conforms`, and the
    `graph age stamp` line (this run's date — the value the live verify checks for in Step 7).
-   Surface an `embeddings SKIPPED` warning if fastembed wasn't available.
+   When `docs_sites:` entries exist, include the crawl line — "docs: N sites, M pages,
+   K changed" (the ingest prints `pages: M fetched, K changed` per site; `K < M` on a warm
+   refresh means the incremental path skipped re-chunking unchanged pages — expected, not
+   an error). Surface an `embeddings SKIPPED` warning if fastembed wasn't available.
 
 5. **Commit + push the snapshot** to the source repo's default branch:
    - `git add snapshot/ && git commit -m "kg-refresh: snapshot @ <date> (<N> quads)" && git push`

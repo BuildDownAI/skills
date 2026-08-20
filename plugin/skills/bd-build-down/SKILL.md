@@ -488,6 +488,12 @@ Merge via GitHub MCP using squash merge as the default method. After merging:
 
 - Verify the PR status shows merged
 - Complete the linked issue per the active adapter's **Post-merge completion** section.
+- **Post the issue's build-down learnings comment** (placement rule,
+  `../bd-shared/learnings-comments.md`): a `# ai-implement-build-down-learnings` comment ON
+  THE MERGED ISSUE with the merge-time findings — smoke fixes, review-iteration causes, what
+  landing surfaced. Mirror any learnings-worthy smoke/review finding from the PR thread into
+  it: the KG ingests issue comments but **never PR comment threads**, so the PR copy alone is
+  invisible to the graph. An uneventful merge gets one short outcome line, not silence.
 - Release any issues the merge unblocks, per the active adapter's **Unblock dependents** section.
 
 ### Post-merge sweep
