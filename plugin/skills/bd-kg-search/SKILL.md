@@ -35,7 +35,12 @@ ALSO bind a local server, and this skill resolves between them per `../bd-shared
 4. **Announce the target, then render results.** First line is the announce from the binding
    doc (e.g. `KG: orchestrator` / `KG: LOCAL FALLBACK — orchestrator unavailable (token
    expired)`). Then hits ranked by `score`: `title`, `type`, `score`, `matched_by`, a short
-   `snippet`, the `iri`. If `degraded: true`, note lexical-only and the fix for the target
+   `snippet`, the `iri`. **`DocSection` hits render their anchor URL prominently** (BDS-38):
+   the IRI encodes `docpage/<url-encoded-page-url>#<anchor>` — decode the page URL, append
+   the `#anchor`, and print it as the hit's first line (e.g.
+   `https://docs.example.com/setup/sso#wire-the-orchestrator`) so the user can click
+   straight to the passage. `DocPage` hits likewise render their decoded page URL.
+   If `degraded: true`, note lexical-only and the fix for the target
    that served (orchestrator → `bd-kg-refresh` redeploy rebuilds embeddings; local → re-run
    the ingest/embed and restart Claude Code). If zero results, say so plainly.
 

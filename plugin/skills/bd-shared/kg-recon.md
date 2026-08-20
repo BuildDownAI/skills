@@ -22,6 +22,13 @@ recon output with the one-line target announce** (`KG: orchestrator …` / `KG: 
 
 Surface the top relevant learnings, decisions, and prior issues from the graph hits as **orientation context**. Where a hit changes a plan choice or closes a gap, cite it inline — e.g., "prior learning AII-259 says … so …" — to anchor the connection.
 
+**Docs-grounded claims cite the section URL** (BDS-38). A `DocSection` hit's IRI encodes
+`docpage/<url-encoded-page-url>#<anchor>` — decode it and cite the live anchor link (e.g.
+"the SSO docs say … — https://docs.example.com/setup/sso#wire-the-orchestrator"), never just
+the node title. Docs pages are crawled **at ingest**, so a docs citation is at most as fresh
+as the graph stamp; when the staleness-delta (below) flags an old graph, append "docs as of
+<stamp date>" to any docs-grounded citation so the reader knows the page may have moved on.
+
 **Advisory, not required.** If nothing in the hits is relevant to the work at hand, say so in one line and move on. Do not force citations when the KG has no signal.
 
 ## Staleness-delta
