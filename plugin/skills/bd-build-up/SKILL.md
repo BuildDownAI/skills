@@ -305,7 +305,10 @@ adapter's **Pickup trigger**, **Wave staging**, **Architect routing**, **Depende
 a real issue ID.
 
 **The pickup signal is tracker-specific.** Linear uses state plus a label; Jira uses the
-`AI-Implement-Status` field, where setting only a label is a silent no-op.
+`AI-Implement-Status` field, where setting only a label is a silent no-op. On Jira the only
+value ever set by hand is `Ready` (or the field stays unset for held issues) — `Planning`
+and `Implementing` are orchestrator-owned states that hide the issue from pickup and burn
+a concurrency slot if set manually.
 
 **Exceptions, and the user must signal them:** *"stage only, don't start"* files everything
 parked; *"brief only"* (Mode 3) files nothing. If the signal is ambiguous, ask one clear

@@ -81,6 +81,10 @@ children are all terminal is **feature-node-ready**, not "no children designated
 `AI-Implement-Status` **unset** (or the wrong Repo value) is **invisible to the group**: it neither gates
 its parent nor rolls up — it just quietly PRs to the Default Branch on its own.
 
+The broad read-side predicate is not license to *write* intermediate values: when designating by hand, set
+**`Ready`** and nothing else. `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting one
+hides the issue from dispatch and burns a pipeline concurrency slot (it counts as in-flight work).
+
 **Jira Epics stay un-designated.** A tracking Epic is a long-lived container, never a feature branch. The
 ancestor walk stops at the first un-designated ancestor, so an un-designated Epic halts the walk and the
 designated Story below it is the top of the tree. **Never set `AI-Implement-Status` on the container Epic** —
