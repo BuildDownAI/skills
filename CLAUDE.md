@@ -52,13 +52,34 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 
 - *(not applicable — this repo has no preview deployments; bd-smoke-jumper is not used here)*
 
-## Releasing — ⚠️ bump the plugin version on every skill change
+## Releasing
 
-> **Reminder:** the plugin **`version`** is the *only* signal that tells `/plugin update` (and the
-> marketplace) to pull new content. `marketplace.json` carries no version — it just sources `./plugin`.
+`testing` and `main` have different jobs, and every rule below belongs to one of them. Applying a rule on the wrong branch is how the channel model breaks.
+
+### On `testing` — where every change lands
 
 - **Any change to `plugin/skills/**` (or other shipped plugin content) must bump `version` in
-  [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** Skip it and
+  [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** The plugin
+  `version` is the *only* signal that tells `/plugin update` to pull new content — skip the bump and
   installs keep serving the stale skills.
 - **Minor** (`0.x.0`) for additive / backward-compatible changes; **patch** (`0.0.x`) for fixes and wording.
-- Current: **`1.4.0`**.
+- `.claude-plugin/marketplace.json` uses the relative source `./plugin`, so the dev channel follows this
+  branch. **It needs no edit, ever.**
+
+### On `main` — where releases live
+
+- Takes no direct commits. Everything arrives by merging `testing`, with exactly one exception: the catalog repoint.
+- `.claude-plugin/marketplace.json` pins the plugin source to the current release tag (`git-subdir` + `ref`).
+  That pin is what makes the stable channel stable.
+- Keep the URL an explicit `https://github.com/BuildDownAI/skills.git` — the `owner/repo` shorthand resolves
+  to SSH and fails for anyone without SSH keys configured.
+
+### Cutting a release
+
+1. Merge `testing` → `main` with a **merge commit**. The version is whatever `testing` already reads, so there is no bump commit.
+2. Tag the merge commit annotated (`git tag -a vX.Y.Z -m "BuildDown skills vX.Y.Z"`), push the tag, **then** publish the GitHub release against the now-existing tag.
+3. Repoint `main`'s catalog `ref` to the new tag, in a `main`-only PR after the tag exists.
+
+**Step 3 is what delivers the release.** Skip it and every stable-channel user stays on the previous version, silently — the catalog stays valid and simply keeps pointing at the old tag.
+
+**After any merge between the branches, check the catalog.** Only one branch has ever edited that file, so git merges it silently in either direction with no conflict: `testing` → `main` can strip the pin, and a back-merge can freeze the dev channel.
