@@ -128,6 +128,17 @@ PR # | Issue | Gap Count | Checks | Conflicts | Migration | Files | Age
 
 Flag any PR >5 days old — it's likely stale and needs a context check before normal triage.
 
+### KG recon (if a KG is bound)
+
+Before triaging gaps, consult the project's knowledge graph for prior learnings
+and decisions about the work — derive queries per PR being triaged (or for the
+session's PR set), not just a single PR. Follow `../bd-shared/kg-recon.md`: derive 1–3
+queries per PR from **its linked issue key + title + the gap topics from its
+gap-analysis**, call **only** `kg.search_tool` (hybrid-search), surface the top
+relevant hits and cite any that change a gap decision, and note KG staleness.
+Advisory and non-blocking. If the project has no KG bound, skip this step
+silently.
+
 ---
 
 ## Phase 2: Gap-Analysis-Driven Triage
@@ -271,7 +282,7 @@ Phase 2h's ordering rules override any default "oldest first" instinct.
 ### 2i. Feature-branch grouping (both trackers)
 
 When AI-Implement parent/child **feature-branch grouping** is in play, not every PR targets the repo base
-branch. See `docs/feature-branch-grouping.md` for the full model. What changes for triage:
+branch. See `../bd-shared/feature-branch-grouping.md` for the full model. What changes for triage:
 
 **Per-child rigor (process layer atop BDS-26's recognition layer).** A grouped tree — feature *or*
 multi-issue — is **N first-class PRs, not one unit.** Each child PR gets the same full build-down treatment
@@ -335,7 +346,45 @@ changes only where the change lands, not the standard it must meet.
   completion checkpoint, and capstone above — but for the autonomous driving loop, invoke
   `bd-super-build-down` rather than recreating it here.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
+**Staging a tree for dispatch — label the parent BEFORE the children.** Grouping is
+ordering-sensitive and the failure is silent: a child resolves its PR base by walking up to the
+nearest ancestor that *currently carries* `{{IMPLEMENT_LABEL}}`; if no ancestor is labeled when the
+child dispatches, it cuts its PR **directly from the repo base branch**, bypassing grouping with no
+error. Always stage in this exact order:
+
+1. **Create the parent UNLABELED** — a labeled issue with zero children is indistinguishable from a
+   leaf and dispatches standalone (seconds are enough to lose this race).
+2. **Create all children** as sub-issues, with every `blockedBy` relation.
+3. **Label the PARENT.** A labeled parent whose children exist but carry no label is a *waiting
+   parent* — the pipeline skips it until labeled children reach terminal states.
+4. **Then label the children.** Each now resolves its base to the parent's feature branch.
+
+If you find child PRs already based on the repo base branch, tear them down (close PR + delete
+branch), fix labels in the order above, and re-release — retargeting after the fact is error-prone.
+
+**Cascade operational knowledge (from live grouped-tree campaigns):**
+
+- **Auto-merge is a separate opt-in.** Auto-merging child PRs into the feature branch is a
+  per-project flag (often defaulting off) and only ever merges PRs whose base is a grouping branch —
+  never the repo base (top-of-tree stays human-reviewed). Verify it's on before promising a
+  hands-off run.
+- **DIRTY sibling PRs self-heal — don't jump on them.** When parallel siblings overlap, the
+  second-merging child goes conflicting; the orchestrator dispatches a synthetic conflict-resolution
+  run (capped, typically 2 attempts) and the PR then auto-merges. `resolution in flight` in logs is
+  normal working state. Escalate only on explicit cap exhaustion ("leaving for a human"). Issues
+  whose bodies declare a machine-readable `## Files` section get *serialized at dispatch* on overlap
+  (`file-overlap` deferral) and rarely need recovery at all.
+- **Merge or close roll-up PRs promptly.** Current orchestrators hold a parent whose top-of-tree PR
+  is open; older versions re-dispatch it into no-op churn. Either way an open roll-up parks the tree.
+- **Re-dispatching a torn-down issue needs the orchestrator's dispatch-dedup cleared too.** The
+  dedup record (keyed by issue ID) survives tracker-side teardown, so a re-labeled issue is counted
+  as "needing planning" every poll but silently never dispatches. Fix: clear the dedup entry via the
+  orchestrator admin surface (e.g. `DELETE /api/dedup/<issue-id>`), or replace the issue with a
+  fresh one (new ID = no dedup history) — repoint `blockedBy` onto the new issue *before* canceling
+  the old so dependents are never transiently unblocked. Symptom: `Found N needing planning`
+  repeating across polls with no run starting.
+
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
@@ -388,6 +437,22 @@ Before posting, resolve every `{ISSUE-ID}` placeholder to the real issue ID:
 
 If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a posted comment.
 
+### Trigger readiness gate (before every coding-agent comment)
+
+Treat an agent comment as a dispatch, not passive prose. Before posting, capture the PR's current head SHA and the configured agent or pipeline state, then apply this gate:
+
+1. **Wait for PR registration.** For AI-Implement, do not post `/ai-implement` while the implementation run exists but the PR association or final gap-analysis/ready signal is not yet visible.
+2. **Wait for the active cycle to finish.** Do not post while implementation, post-push review, review-fix, or gap analysis for that PR is queued or running.
+3. **Require current-head terminal evidence.** Confirm that no agent run or relevant check is active and that the configured pipeline reports review/gap analysis complete or ready for follow-up on the captured head SHA.
+4. **Restart on head changes.** If the PR head SHA changes while waiting, discard the prior observation and repeat the gate for the new head.
+5. **Post once and record it.** Post the resolved instruction once, then record the PR number, head SHA, and posting time in the session log.
+
+For agents other than AI-Implement, map the same gate to that agent's ready and terminal signals. If the state is not observable, wait for an explicit ready-for-triage or completed gap-analysis signal instead of guessing.
+
+If AI-Implement replies that it has no record of the PR (or an equivalent registration error), classify the response as a registration race: retain the original instruction, wait through this gate on the current head, and repost the same instruction once. Do not file a replacement implementation issue and do not drop the requested fix.
+
+The trigger is accepted only when the configured agent acknowledges or queues it for the current head without an immediate registration error.
+
 ### Posting rules
 
 - **Never wrap the agent mention in backticks** — markdown rendering can prevent the agent from recognizing it
@@ -399,6 +464,7 @@ If resolution is unclear, ask the user — don't leave literal `{ISSUE-ID}` in a
 
 ### After posting
 
+- Verify that the configured agent accepted or queued the trigger for the recorded head (for example, a reaction, status comment, job, or check). If it reports that the PR is unknown, execute the registration-race recovery in the trigger readiness gate.
 - Note in session log: "Agent comment posted on PR #N for gap: {one-line summary}"
 - Do not merge the PR yet — wait for the agent to resolve, then the PR re-enters triage when CI goes green
 
@@ -422,6 +488,12 @@ Merge via GitHub MCP using squash merge as the default method. After merging:
 
 - Verify the PR status shows merged
 - Complete the linked issue per the active adapter's **Post-merge completion** section.
+- **Post the issue's build-down learnings comment** (placement rule,
+  `../bd-shared/learnings-comments.md`): a `# ai-implement-build-down-learnings` comment ON
+  THE MERGED ISSUE with the merge-time findings — smoke fixes, review-iteration causes, what
+  landing surfaced. Mirror any learnings-worthy smoke/review finding from the PR thread into
+  it: the KG ingests issue comments but **never PR comment threads**, so the PR copy alone is
+  invisible to the graph. An uneventful merge gets one short outcome line, not silence.
 - Release any issues the merge unblocks, per the active adapter's **Unblock dependents** section.
 
 ### Post-merge sweep
@@ -457,6 +529,24 @@ The filing context determines whether the issue is pickup-ready or parked — se
 - **Architectural finding:** parked, assign to the architect, no `{{IMPLEMENT_LABEL}}`.
 
 Default toward pickup-ready when the work is scoped and deterministic. Parked is for planning, not parking.
+
+### The local fix loop (work done outside the pipeline)
+
+When a fix is implemented locally in-session instead of through the coding-agent pipeline
+(operator direction, pipeline unavailable, or a fix to the pipeline itself — the pattern the
+AII-277/278/279 round validated):
+
+1. **File the issue first anyway** — a child under the driven parent where one exists,
+   **without** `{{IMPLEMENT_LABEL}}` (nothing should dispatch), with the finding/learning
+   inline in the body.
+2. Implement locally (TDD; push to the PR branch under review where applicable — never to a
+   pipeline-owned agent branch).
+3. Close with a **completion comment naming the commits**, mark Done, and update the parent's
+   canonical `# ai-implement-build-down-learnings` comment **in place**
+   (`../bd-shared/learnings-comments.md`).
+
+The tracker record must be indistinguishable in quality from pipeline-driven work — the KG
+ingests both the same way.
 
 ### What not to file
 
@@ -537,7 +627,7 @@ Post the session summary as a new tracker issue assigned to the architect (or th
 
 ### Closing step — post/update the build-down learnings comment (required)
 
-An **autonomous write** — no approval gate, same as the session summary. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `docs/learnings-comments.md`.
+An **autonomous write** — no approval gate, same as the session summary. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
 
 **Record the outcome of every PR this session drove or observed**, using this taxonomy:
 
@@ -589,7 +679,7 @@ Per PR this session drove or observed:
 
 6. **Reading is free; writing requires care.** Read PRs, diffs, comments liberally. Write operations (agent comments, merges, issue filings) are autonomous but logged. Escalations are the exception, not the default.
 
-7. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Required, not optional — the durable record of outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. A session that ends without it is not done. See `docs/learnings-comments.md`.
+7. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Required, not optional — the durable record of outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. A session that ends without it is not done. See `../bd-shared/learnings-comments.md`.
 
 ---
 
@@ -601,6 +691,7 @@ Per PR this session drove or observed:
 | "Not found" errors on linked-detail pages | Mock data IDs don't exist in DB | Not a code defect; check acceptance criteria |
 | Preview deploy timeout | Transient infra | Re-run deploy job |
 | GitHub still shows conflicts after agent ran | Agent forward-ported instead of merging | Post new agent comment instructing `git merge <base branch>` |
+| `/ai-implement` says it has no record of the PR, or a follow-up overlaps an active review cycle | Agent trigger was posted before the PR reached current-head terminal readiness | Retain the instruction, wait through the Phase 3 trigger readiness gate, then post or repost once |
 | Merged a migration/auth child PR because it targeted a feature branch | Treated the sandbox as a review exemption | It isn't — the change rolls up to real DB/users. Escalate migrations/auth on every PR class (§2i, §2d/§2e) |
 | Gap analysis flags columns that exist | Agent didn't check current schema | Cross-reference the schema source of truth |
 | Merging breaks a prod page | Code deployed before migration applied | The Phase 2e escalation exists to prevent this — the most common footgun |

@@ -26,7 +26,7 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
   production AI-Implement backlog (team AI-Implement / AII-*).
 - **Feature-branch grouping behaviour** the skills must respect (parent/child feature nodes, child PRs into
   `ai-implement/feature/<key>`, internal roll-ups vs the top-of-tree human-gate PR): see
-  `docs/feature-branch-grouping.md`.
+  `plugin/skills/bd-shared/feature-branch-grouping.md`.
 
 ## GitHub repo — `{{REPO}}`
 
@@ -38,9 +38,11 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 - **`{{AGENT_MENTION}}`:** `/ai-implement` (comment trigger that re-runs Claude Code in gap-fill mode on a PR)
 - **`{{CODING_AGENT}}`:** AI-Implement testing instance (same as the handoff target above)
 
-## Plan documents — `{{PLAN_DIR}}`
+## Decision records — `{{ADR_DIR}}`
 
-- **`{{PLAN_DIR}}`:** `docs/superpowers/plans/`
+- **`{{ADR_DIR}}`:** `docs/adr/` — bd-mega-build-up's grill writes ADRs here, and terminology
+  into a root `CONTEXT.md`. These are committed; they are canonical reference, not session
+  working notes. (The old `{{PLAN_DIR}}` binding retired with the implementation-plan phase.)
 
 ## Build verification — `{{BUILD_CMD}}`
 
@@ -59,4 +61,4 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
   [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** Skip it and
   installs keep serving the stale skills.
 - **Minor** (`0.x.0`) for additive / backward-compatible changes; **patch** (`0.0.x`) for fixes and wording.
-- Current: **`0.6.0`**.
+- Current: **`1.4.0`**.

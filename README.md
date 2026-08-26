@@ -119,7 +119,7 @@ Trigger: *"bd-belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back 
 grouping* is in play, a labelled parent with labelled children becomes a feature node: children PR into
 its `ai-implement/feature/<key>` branch, and the tree rolls up to one human-reviewed `feature → base` PR.
 `bd-build-up`, `bd-mega-build-up`, `bd-summit-push`, `bd-build-down`, `bd-super-build-down`, and
-`bd-smoke-jumper` are grouping-aware. Full model: [`docs/feature-branch-grouping.md`](docs/feature-branch-grouping.md).
+`bd-smoke-jumper` are grouping-aware. Full model: [`plugin/skills/bd-shared/feature-branch-grouping.md`](plugin/skills/bd-shared/feature-branch-grouping.md).
 
 ---
 

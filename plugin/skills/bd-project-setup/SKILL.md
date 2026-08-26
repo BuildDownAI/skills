@@ -89,6 +89,7 @@ bullet keys, or inline text):
 | Tracker team | team short-code (e.g. `BDS`) |
 | `{{IMPLEMENT_LABEL}}` | label the coding-agent pickup trigger |
 | `enabledMcpjsonServers` / server-approval state | whether servers are pre-approved in `.claude/settings.json` |
+| `## Knowledge graph` block | `kg.present`, `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`, `kg.source_repo` (see Phase K; legacy blocks may still carry retired `kg.repo`/`kg.path`/`kg.branch`) |
 
 If `CLAUDE.md` is absent or contains none of these, record: *no CLAUDE.md bindings found*.
 
@@ -239,7 +240,7 @@ start; the rest can be filled in later as the project needs them.
 | `{{PREVIEW_HOST}}` | "Where do preview deploys live?" | `https://pr-{n}.preview.app` |
 | `{{AUTH_PROVIDER}}` | "How do you log into previews?" | Google SSO |
 | `{{BUILD_CMD}}` | "Build/verify command?" | `npm run build && npm test` |
-| `{{PLAN_DIR}}` | "Where do plan drafts go?" | `docs/plans/` (default) |
+| `{{ADR_DIR}}` | "Where do architecture decision records go?" | `docs/adr/` (default) |
 | `{{ARCHITECT_NAME}}` | "Persona name for bd-mega-build-up review?" | — |
 
 ## Phase 2 — Write `.mcp.json` (one tracker server, by `tracker.kind`)
@@ -373,6 +374,148 @@ user to an MCP panel:
 
 ---
 
+## Phase K — Knowledge graph (optional)
+
+Wires an **optional** project knowledge graph (KG) that KG-aware skills (e.g. `bd-kg-search`) query
+via hybrid search. The KG is served by an **orchestrator's `/mcp` endpoint** (OAuth-protected,
+streamable-HTTP) — the single source of truth for every machine and teammate (AII-324). There is no
+local KG checkout, venv, or stdio server to provision; binding a project = one remote server entry +
+one `CLAUDE.md` block. This phase never runs automatically as part of Phases 0–5 above — it is a
+distinct, opt-in pass over the same detect → classify → confirm discipline as Phase 0. Skipping this
+phase entirely leaves KG-aware skills as silent no-ops (`../bd-shared/kg-binding.md` — *Semantics*), so a
+project that never runs Phase K is not "misconfigured," just KG-less.
+
+### Step K.1 — Detect
+
+Read the project `CLAUDE.md` for an existing `## Knowledge graph` block, and `.mcp.json` for an
+`orch-<app-slug>` remote server entry. Classify the result — never clobber:
+
+| State | Condition |
+|---|---|
+| **Bound & present** | `## Knowledge graph` block exists with `kg.present: true` **AND** the `orch-<app-slug>` server is in `.mcp.json` |
+| **Dual-bound (transition)** | Orchestrator binding present AND a local stdio server named by `kg.local_mcp_server` — the supported transition state (`../bd-shared/kg-binding.md` *Dual-target resolution*) |
+| **Partially wired** | One of the block or the server entry exists, but not both |
+| **Unrecorded local binding** | A `<project-slug>-kg` **stdio** server (command/args/cwd shape) exists but the block does not name it in `kg.local_mcp_server` |
+| **Not wired** | Neither the block nor any KG server entry exists |
+| **Deliberately absent** | `## Knowledge graph` block exists with `kg.present: false` |
+
+Report the classification to the user before doing anything else. If **Bound & present**,
+**Dual-bound**, or **Deliberately absent**, confirm with the user before making any change — all
+are valid end states. An **Unrecorded local binding** gets a choice, not an auto-delete: ask the
+operator whether to (a) **keep it for the transition** — add the orchestrator binding alongside
+and record `kg.local_mcp_server` / `kg.local_search_tool` (+ `kg.prefer`, default
+`orchestrator`) in the block — or (b) **retire it** — replace the stdio entry with the remote
+entry (K.3) and rebind (K.4). Deleting a server entry always needs the operator's confirmation.
+
+### Step K.2 — Decide
+
+Ask the operator for the **orchestrator app URL** (e.g. `https://<app>.fly.dev`) and probe its MCP
+endpoint read-only:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" -X POST https://<app>.fly.dev/mcp -d '{}'
+```
+
+`401` = alive and OAuth-gated (the expected healthy answer). `503` = the orchestrator runs but has no
+KG sidecar (deploy one before binding — see the AI-Implement CLAUDE.md "KG sidecar" section). Present
+the finding and ask the operator to:
+- **Confirm** the orchestrator URL, or
+- **Override** (a different orchestrator app), or
+- **Create one** (when no KG exists yet) → invoke the **`bd-kg-create`** skill, which builds a new KG
+  source repo from the `BuildDownAI/bd-knowledge-graph-base` template and deploys it as the
+  orchestrator's sidecar, then returns here to bind, or
+- **Declare "no KG"** → write `kg.present: false` into the `## Knowledge graph` block (Step K.4's format)
+  and **end this phase** here — do not proceed to K.3.
+
+### Step K.3 — Write the remote server entry
+
+If no `orch-<app-slug>` server exists in `.mcp.json`, add one. The name is **per-orchestrator**, derived
+from the app slug — Claude Code ties a server's OAuth token to the server *name* (BDS-22), so distinct
+orchestrators must get distinct names, and a generic shared name (`kg`, `orchestrator`) would silently
+share tokens across projects. E.g. for `ai-implement-testing-orchestrator.fly.dev`:
+
+```json
+"orch-ai-implement-testing": {
+  "type": "http",
+  "url": "https://ai-implement-testing-orchestrator.fly.dev/mcp"
+}
+```
+
+Then add the server name to `enabledMcpjsonServers` in `.claude/settings.json` (same shared, committed
+file as Phase 3). If K.1 found an **Unrecorded local binding** and the operator chose to retire it,
+remove the old stdio entry and its pre-approval in the same edit; if they chose to keep it for the
+transition, leave it and record the `kg.local_*` fields in K.4 instead.
+
+### Step K.4 — Bind
+
+Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonical format in
+`../bd-shared/kg-binding.md` (orchestrator fields: `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`,
+`kg.source_repo`). Merge into any existing block rather than overwriting it — preserve values the user
+has already customized, and drop the retired local fields (`kg.path`, `kg.branch`) when migrating a
+legacy block.
+
+### Step K.5a — Provider redirect-URI preflight (automated — run BEFORE asking anyone to sign in)
+
+The MCP flow uses its OWN callback URLs — `{orchestrator}/mcp/callback/{provider}` — which must be
+registered in the OIDC provider console *in addition to* the admin-UI ones. Admin SSO working proves
+nothing about the MCP URIs; a missing registration hard-blocks sign-in with a provider error page
+(`Error 400: redirect_uri_mismatch` on Google, `AADSTS50011` on Entra). **Run this preflight
+mechanically — no browser, no sign-in — and only proceed to K.5b when it passes:**
+
+```bash
+BASE=https://<app>.fly.dev
+# 1. Register a throwaway client (RFC 7591, same as the real client will)
+CID=$(curl -s -X POST $BASE/mcp/register -H "Content-Type: application/json" \
+  -d '{"client_name":"preflight","redirect_uris":["http://localhost:33418/callback"]}' \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['client_id'])")
+# 2. Follow /mcp/authorize to the provider redirect (the exact live path a user hits)
+LOC=$(curl -s -o /dev/null -w '%{redirect_url}' "$BASE/mcp/authorize?client_id=$CID&redirect_uri=http%3A%2F%2Flocalhost%3A33418%2Fcallback&response_type=code&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256&state=preflight")
+# 3. Fetch the provider page headlessly and classify.
+#    -L is LOAD-BEARING: Google serves the mismatch page behind two redirects
+#    (accounts.google.com/signin/oauth/error?authError=<base64>) — a non-following
+#    fetch greps a clean interstitial and FALSE-PASSES. Check final URL + body.
+FINAL=$(curl -s -L -o /tmp/preflight.html -w '%{url_effective}' "$LOC")
+if echo "$FINAL" | grep -q "oauth/error" || grep -qE "redirect_uri_mismatch|AADSTS50011" /tmp/preflight.html; then
+  echo "❌ UNREGISTERED — register this URI verbatim: $(python3 -c "import urllib.parse as u; print(u.parse_qs(u.urlparse('$LOC').query)['redirect_uri'][0])")"
+else
+  echo "✅ registered — proceed to K.5b"
+fi
+```
+
+Registration gotchas when the operator swears they added it: wrong OAuth client (consoles often hold
+several — match the `client_id` the preflight prints), "Authorized JavaScript origins" instead of
+"Authorized **redirect** URIs", a trailing slash, or plain propagation lag (Google: 5 minutes to a
+few hours — re-run the preflight rather than re-editing).
+
+On ❌, hand the operator the printed URI plus the console path — Google: Cloud Console → APIs &
+Services → Credentials → the orchestrator's OAuth client → Authorized redirect URIs → Add; Microsoft:
+Entra → App registrations → the app → Authentication → Redirect URIs → Add — then re-run the
+preflight until ✅. (This is the one step that cannot be automated: Google exposes no API for a
+standard OAuth client's redirect URIs. Registration is per orchestrator app, once, for all users.)
+The orchestrator delegates to its **first configured provider**, so the preflight always probes the
+path real sign-ins will take; when both providers are configured, register both providers' URIs.
+
+### Step K.5b — Authenticate
+
+On first use, Claude Code runs the discovery + browser-SSO flow (like Phase 5's tracker auth — the
+in-browser approval is the one manual step). Auth realities to tell the operator: sign-in is per user
+via the orchestrator's SSO providers, the identity must pass the orchestrator's allowlist
+(`OAUTH_ALLOWED_DOMAINS` / `OAUTH_ALLOWED_EMAILS`, fail-closed), and Bearer tokens last **1 hour** —
+an expired token means a quick re-auth, not a broken binding.
+
+### Step K.6 — Restart + verify
+
+A Claude Code restart is required before a newly-wired server is available (MCP servers load once at
+session start). Then **verify with a real query, not just a connection**: call the bound
+`kg.search_tool` with a domain term and confirm non-empty results — a sidecar can be up, authed, and
+listing tools while serving an empty or wrong-namespace graph (boots ≠ serves).
+
+> Refreshing the graph's *content* is not part of setup: the orchestrator KG refreshes by
+> **ingest → commit snapshot → redeploy** in the KG source repo (`kg.source_repo`) — that is
+> `bd-kg-refresh`'s job, run when the graph is stale, not when a project binds.
+
+---
+
 ## Notes
 
 - The `builddown` plugin bundles **no** MCP servers — it ships skills only. Every project provisions its
@@ -387,4 +530,4 @@ user to an MCP panel:
   *feature-branch grouping*, re-sync workflows so the target repo's `claude-implement.yml` accepts the
   `base_branch` input — un-synced repos 422 on grouped dispatch (the non-grouped path keeps working). This
   applies to **Linear and Jira** target repos alike; only designation differs (Linear label vs Jira
-  `AI-Implement-Status` + Repo field). Full model: `docs/feature-branch-grouping.md`.
+  `AI-Implement-Status` + Repo field). Full model: `../bd-shared/feature-branch-grouping.md`.

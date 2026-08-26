@@ -93,6 +93,15 @@ Accept input in any of these forms:
 
 For each issue, capture: title, description/body, labels, dependencies (`blockedBy`), estimate, routing (assignee or `{{IMPLEMENT_LABEL}}`).
 
+### Phase 1b: KG recon (if a KG is bound)
+
+Before sequencing, consult the project's knowledge graph for prior learnings, decisions, and
+issues touching this plan's surfaces. Follow `../bd-shared/kg-recon.md`: derive 1–3 queries from **the
+plan's key nouns + the issue set's shared files/components**, call **only** `kg.search_tool`
+(hybrid-search), and cite any hit that changes a sequencing or one-shot-quality call (e.g. a
+prior failure class on a surface an issue touches lowers its confidence score). Advisory and
+non-blocking; silent skip when no KG is bound.
+
 ### Phase 2: Dependency Graph Analysis
 
 Build the full dependency graph and evaluate it.
@@ -131,7 +140,7 @@ In chat: blast radius is an estimate from description + project knowledge. In co
 
 **2e. Feature-branch grouping (both trackers)**
 
-When the plan contains a parent/child **feature node** (`docs/feature-branch-grouping.md`), the dependency
+When the plan contains a parent/child **feature node** (`../bd-shared/feature-branch-grouping.md`), the dependency
 graph is not "all PRs → base." Model the **cascade**:
 
 - Leaf children PR into their parent's **grouped branch** (`ai-implement/<mode>/<key>` — `feature` or `multi-issue`; same cascade either way, only the path segment differs), not the Default Branch.
@@ -145,7 +154,7 @@ graph is not "all PRs → base." Model the **cascade**:
   before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
   before its children.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ### Phase 3: One-Shot Quality Audit
 

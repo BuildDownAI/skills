@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install BuildDown skills into a Claude Code skills directory.
+# Install BuildDown skills into a Claude Code or Codex skills directory.
 set -euo pipefail
 
 # Every BuildDown SKILL.md carries `metadata.suite: builddown` in its
@@ -7,15 +7,17 @@ set -euo pipefail
 # apart from anyone else's, independent of the bd- name prefix.
 SUITE_MARKER="builddown"
 
-# Managed source checkout used by --from-git, so installs don't ride a random
-# working copy on a dev branch.
-SRC_HOME="${HOME}/.claude/_sources/builddown"
+# bd-shared is not a skill (no SKILL.md) — it holds shared reference docs the
+# skills point at via `../bd-shared/...`, so it installs and uninstalls
+# alongside them for those relative paths to resolve.
+SHARED_DIR="bd-shared"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+HOST="claude"
 MODE="symlink"
-TARGET_BASE="${HOME}/.claude"
 SCOPE="user"
+PROJECT_PATH=""
 FORCE=0
 DRY_RUN=0
 PRUNE=0
@@ -26,14 +28,16 @@ UPDATE=0
 
 usage() {
   cat <<EOF
-Install BuildDown skills into a Claude Code skills directory.
+Install BuildDown skills into a Claude Code or Codex skills directory.
 
 Usage:
   ./install.sh [options]
 
 Options:
-  --user               Install into ~/.claude/skills (default).
-  --project <path>     Install into <path>/.claude/skills.
+  --claude             Install for Claude Code (default).
+  --codex              Install for Codex App and Codex CLI.
+  --user               Install at user scope (default).
+  --project <path>     Install at project scope.
   --copy               Copy files instead of symlinking (default: symlink).
   --force              Overwrite existing skill directories at the target.
   --prune              Remove installed BuildDown skills (by suite marker) that
@@ -51,6 +55,8 @@ Options:
 Examples:
   ./install.sh
   ./install.sh --project ~/code/myrepo
+  ./install.sh --codex
+  ./install.sh --codex --project ~/code/myrepo
   ./install.sh --copy --force
   ./install.sh --prune
   ./install.sh --from-git https://github.com/BuildDownAI/skills.git --update
@@ -61,8 +67,10 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --user)        SCOPE="user"; TARGET_BASE="${HOME}/.claude"; shift ;;
-    --project)     SCOPE="project"; TARGET_BASE="${2:?--project requires a path}/.claude"; shift 2 ;;
+    --claude)      HOST="claude"; shift ;;
+    --codex)       HOST="codex"; shift ;;
+    --user)        SCOPE="user"; PROJECT_PATH=""; shift ;;
+    --project)     SCOPE="project"; PROJECT_PATH="${2:?--project requires a path}"; shift 2 ;;
     --copy)        MODE="copy"; shift ;;
     --force)       FORCE=1; shift ;;
     --prune)       PRUNE=1; shift ;;
@@ -75,6 +83,22 @@ while [[ $# -gt 0 ]]; do
     *)             echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+if [[ "$HOST" == "codex" ]]; then
+  HOST_DIR=".agents"
+  SRC_HOME="${HOME}/.codex/_sources/builddown"
+  RESTART_MESSAGE="Restart Codex (or start a new CLI session and run /skills) to pick up changes."
+else
+  HOST_DIR=".claude"
+  SRC_HOME="${HOME}/.claude/_sources/builddown"
+  RESTART_MESSAGE="Restart Claude Code (or run /skills) to pick up changes."
+fi
+
+if [[ "$SCOPE" == "project" ]]; then
+  TARGET_BASE="${PROJECT_PATH}/${HOST_DIR}"
+else
+  TARGET_BASE="${HOME}/${HOST_DIR}"
+fi
 
 TARGET_DIR="${TARGET_BASE}/skills"
 
@@ -241,6 +265,7 @@ main() {
 
   if [[ "$ACTION" == "install" ]]; then
     echo "Installing BuildDown skills"
+    echo "  host:    ${HOST}"
     echo "  scope:   ${SCOPE}"
     echo "  target:  ${TARGET_DIR}"
     echo "  source:  ${SCRIPT_DIR}"
@@ -251,13 +276,15 @@ main() {
     run "mkdir -p \"${TARGET_DIR}\""
     prune_stale "$names"
     while IFS= read -r name; do install_one "$name"; done <<< "$names"
+    if [[ -d "${SCRIPT_DIR}/plugin/skills/${SHARED_DIR}" ]]; then install_one "$SHARED_DIR"; fi
     echo
-    echo "Done. Restart Claude Code (or run /skills) to pick up changes."
+    echo "Done. ${RESTART_MESSAGE}"
   else
     echo "Uninstalling BuildDown skills from ${TARGET_DIR}"
     [[ $DRY_RUN -eq 1 ]] && echo "  dry-run: yes"
     echo
     while IFS= read -r name; do uninstall_one "$name"; done <<< "$names"
+    uninstall_one "$SHARED_DIR"
     echo
     echo "Done."
   fi

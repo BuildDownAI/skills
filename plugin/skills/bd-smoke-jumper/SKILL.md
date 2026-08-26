@@ -52,8 +52,11 @@ bd-smoke-jumper is chat-primary — browser MCP is load-bearing. State at sessio
 - If browser MCP is unavailable, bd-smoke-jumper cannot run. Report back to the host skill "smoke-testing unavailable" and let the host downgrade its classification accordingly.
 
 **Code-execution:**
-- Rarely used for smoke-jumping — no browser.
-- Used only if the test requires running the build command or a local script that browser MCP can't invoke.
+- **Primary for Backend/Service PRs** (see the Backend/Service profile): endpoints, daemons,
+  CLIs, and orchestrator/pipeline code have no preview deploy and no browser surface — the whole
+  smoke runs in code-execution (checkout, unit gauntlet, local boot, protocol-level contract,
+  real client handshake). Browser MCP being unavailable does NOT block these PRs.
+- For browser-surface PRs: used only if the test requires running the build command or a local script that browser MCP can't invoke.
 
 **Opening declaration:** State the environment, target PRs, and invocation context (standalone / invoked from bd-build-down / invoked from bd-super-build-down — this determines the autonomy posture).
 
@@ -112,7 +115,27 @@ Before running tests, check if a bd-smoke-jumper report already exists on the PR
 
 Before testing, understand what this PR actually does.
 
-### 2a. Read the gap analysis
+### 2a-pre. KG recon (if a KG is bound)
+
+Before reading the gap analysis, run 2–3 `kg_hybrid_search` queries (procedure:
+`../bd-shared/kg-recon.md` — advisory, hybrid-search only, silent skip when no KG), in two classes:
+
+1. **Surface priors** — the PR's linked issue key + title: known-fragile surfaces, past
+   failure classes, prior intent for the files touched.
+2. **Operational priors for the chosen profile** — how to *run* this test class here: for
+   Backend/Service, past boot-failure learnings (port collisions, DB-path fallbacks, env
+   extraction gotchas); for browser profiles, past preview/auth quirks. These priors shape the
+   test recipe itself, not just what to look at.
+
+The report's **KG priors** section states which priors were applied and whether results
+confirmed or contradicted them; the same goes in any issue filed from a failure. Non-blocking.
+
+### 2a. Read the gap analysis — and the review's open questions
+
+Also read the PR's automated review comments. **Any open blocking question that a live test can
+answer becomes a test item** (e.g. "the PR self-reports failing tests — please run the suite
+before merging"), and the report must answer it explicitly. A smoke test that ignores a
+review's unresolved question wastes the cheapest chance to close it.
 
 Find the AI coding agent's comment. Extract:
 
@@ -137,6 +160,7 @@ Based on files changed:
 - **Full stack** (both) → Flow profile
 - **Migration only** → Boot test + verify affected tables via internal API MCP if available
 - **Config/infra only** → Boot profile sufficient
+- **Service/endpoint/CLI code with no preview surface** (orchestrator routes, daemons, pipeline components) → Backend/Service profile — code-execution primary, browser MCP not required
 
 ### 2d. Determine test profile
 
@@ -148,6 +172,7 @@ Every PR gets **Boot + one or two specific profiles**. The Workstream Profile Ta
 | **API Shape** | API route changes | Key endpoints return expected HTTP status and response structure |
 | **UI Render** | Frontend changes | Target pages render, key components visible, no console errors |
 | **Flow** | Full-stack features | Complete user workflow end-to-end |
+| **Backend/Service** | Endpoints, daemons, CLIs, orchestrator/pipeline code — no preview surface | Unit gauntlet + isolated local boot + protocol contract + real client handshake (see 4f) |
 
 **Workstream-specific profiles (project-specific — populate per project):**
 
@@ -164,7 +189,7 @@ Examples of what workstream profiles look like (replace with project-specific en
 
 ### 2e. Feature-branch grouping (both trackers)
 
-Under AI-Implement parent/child **feature-branch grouping** (`docs/feature-branch-grouping.md`), a child PR
+Under AI-Implement parent/child **feature-branch grouping** (`../bd-shared/feature-branch-grouping.md`), a child PR
 targets a feature branch, not the repo base. Two implications for what you're actually testing:
 
 - A **child PR's** preview reflects *this slice on top of the feature branch* (the feature-in-progress),
@@ -173,7 +198,7 @@ targets a feature branch, not the repo base. Two implications for what you're ac
   for review`) is the highest-value smoke target: smoke-test the **whole integrated feature branch** before
   a human merges it. bd-super-build-down dispatches exactly this before surfacing that PR for human merge.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `docs/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
@@ -261,6 +286,60 @@ For full-stack features:
 
 Run these per the Workstream Profile Table in Phase 2d. They're project-specific — define them based on the surfaces the project has and the failure modes those surfaces are prone to.
 
+### 4f. Backend/Service Profile
+
+For PRs whose surface is a service, endpoint, CLI, or pipeline component with no preview
+deploy. Runs entirely in code-execution; "Boot" here means the service boots locally on the PR
+branch. Order matters — each stage gates the next:
+
+1. **Clean checkout** — `git worktree` of the PR branch + a clean install (`npm ci` or
+   equivalent) so the lockfile the PR shipped is what's tested. Never reuse the main
+   checkout's dependency tree.
+2. **Unit gauntlet** — the full test suite + typecheck on that checkout. This also settles any
+   review question about test status (2a).
+3. **Isolated boot** — boot the service with state and side-effects isolated: scratch
+   DB/data paths (explicitly exported — a missing path env silently falls back), a fresh
+   port, background/polling loops idled (long intervals or empty config), and secrets
+   extracted per the project's rules (grep from env files, never `source`). A process that
+   must outlive the shell needs `nohup … & disown`. Boot failure = STOP, verdict 🔴.
+4. **Contract tests** — exercise the endpoint's documented contract directly (`curl` or the
+   project's client): every auth/error mode (uniform failure bodies where the spec demands
+   them), then the happy-path protocol round-trip.
+   **When the PR's claim is about VCS/git semantics** (clone shapes, fetch refspecs, merge
+   capability, shallow/single-branch behavior), a live throwaway-repo fixture that replays the
+   shipped commands is REQUIRED, not optional — mocked unit tests assert the *commands issued*
+   and are structurally blind to what git actually does with them. Observed live: a PR whose
+   2,219 mocked tests were green shipped a base-branch fetch that never created the remote ref
+   in a real `--depth 1 --branch` (implied `--single-branch`) clone; a five-line fixture caught
+   it and verified the fix in the same sitting.
+5. **Real client handshake** — when the surface speaks a standard client protocol, finish
+   with the actual client, not just raw requests (e.g. MCP: `claude mcp add --transport http …`
+   then `claude mcp list` → ✔ Connected). Acceptance criteria phrased as "client X connects"
+   are only satisfied by client X.
+   **When the deliverable IS an artifact** (a Docker image, a bundled binary, a published
+   package — anything with its own dependency-resolution or packaging step), build and run the
+   *actual artifact*, not just the source tree. A green source suite says nothing about what a
+   fresh `docker build` / `pip install` / `npm install` resolves at package time. Observed
+   live: a sidecar image whose source tests all passed shipped an unbounded `mcp>=1.2` pin that
+   resolved to a new major on any fresh install — the module the code imported no longer
+   existed, so every future image build would have failed. Only a real `docker build` + `docker
+   run` surfaced it (and confirmed the fix). Populate the artifact per the PR's own operator
+   procedure and verify its documented degraded/failure modes actually degrade.
+   **Boots ≠ works — assert the artifact actually SERVES, not just that it starts.** A
+   data-serving artifact can boot healthy, pass a connect/health check, and even list its
+   tools — while serving an *empty* dataset. Run a real query and assert a **non-empty, correct
+   result**, not just HTTP 200 / "connected". Observed live: a KG sidecar image booted, was
+   "ready", and answered `tools/list` — but returned zero search results because the graph data
+   (`out/graph.trig`) was gitignored and the clone never got it; the fix was a materialize step,
+   and only inspecting the built image's data dir + running a real query caught it. The
+   preceding boot/connect checks would all have passed. An even subtler variant on the *same*
+   deploy: the graph was present and loaded (10k triples), raw standard-vocabulary queries
+   worked, `tools/list` worked — but every domain query returned empty because one config file
+   (pinning the IRI namespace) wasn't copied into the image, so the code queried the wrong
+   namespace. Data present + service up + tools listed, still zero results. A real query with a
+   **non-empty assertion** is the only check that fails here.
+6. **Teardown** — kill the service, remove the worktree and any client registrations.
+
 ---
 
 ## Phase 5: Results Reporting
@@ -283,9 +362,9 @@ Post via GitHub MCP (`add_issue_comment`). Post autonomously — this is an info
 ```
 ## 🔥 Smoke-Jumper Report — PR #{number}
 
-**Preview URL:** {preview URL}
+**Surface tested:** {preview URL | local boot of the PR branch (port, state isolation) for Backend/Service}
 **Tested:** {timestamp}
-**Auth:** {active session / human-assisted / skipped-auth-required}
+**Auth:** {active session / human-assisted / skipped-auth-required / n-a — endpoint's own auth contract under test}
 **Invocation:** {standalone / from bd-build-down / from bd-super-build-down}
 
 ### Boot
@@ -395,6 +474,9 @@ Single-PR invocations don't need a session summary — the PR comment is suffici
 | "Not found" on linked-detail pages | Mock data IDs don't exist in DB | 🟡 data-caveat — not a code defect. |
 | Feature not showing | Depends on unmerged PR | 🟡 data-caveat with dependency note. Don't block merge. |
 | Console errors on page load | Could be either — check severity | Investigate; if related to acceptance criteria → 🔴, else → 🟡 functional-caveat. |
+| VCS-behavior PR: unit suite green, but the claim untested against real git | Mocked tests assert issued commands, not git semantics | Backend/Service 4f: run the live throwaway-repo fixture before any verdict; a green suite alone never clears a VCS-semantics claim. |
+| Artifact PR (Docker image, package): source tests green | Source suite never exercises package-time dependency resolution | Backend/Service 4f: `docker build`/`pip install`/etc the real artifact and run it; an unbounded version pin can resolve to a breaking major that no source test sees. |
+| Service boots + connects + lists tools, but a query returns nothing | Boots ≠ serves — the data/asset the service reads may be absent (gitignored, unbaked, wrong path) | Backend/Service 4f: assert a real query returns a **non-empty, correct** result, not just health 200 / "connected". |
 
 ---
 

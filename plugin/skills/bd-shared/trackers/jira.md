@@ -1,8 +1,11 @@
-# Mega-Build-Up — Jira Tracker Adapter
+# Build-Up — Jira Tracker Adapter
 
-The core (`../SKILL.md`) delegates every tracker-touching action to this file
-when `{{TRACKER}}` is `jira`. Section names match the core's seam references
-exactly.
+**Shared by `bd-build-up` and `bd-mega-build-up`.** Both skills delegate every tracker-touching
+action to this file when `{{TRACKER}}` is `jira`. Section names match the seam references in
+each skill exactly.
+
+Sections marked **(mega only)** describe artifacts plain `bd-build-up` does not produce.
+Everything else applies to both.
 
 > **The trigger is a field, not a label.** A Jira issue carrying the
 > `AI-Implement` label but **without `AI-Implement-Status = Ready`** is never
@@ -28,14 +31,19 @@ node, promote it into a designated **Story with designated sub-task children** (
 grouping**). Designating the Epic itself would collapse the entire epic into one feature branch — an
 anti-pattern, not an option.
 
-## Doc home
-Write the Design Decisions and Implementation Plan as local markdown files (per
-the core's `{{PLAN_DIR}}` convention), then **attach both files to the container
-epic** as Jira attachments. There is no Confluence step. Note in the epic
-description that the two attachments are the authoritative design + plan.
+## Doc home (mega only)
+The **repo** is the home for the grill's decisions — ADRs in `{{ADR_DIR}}`, terminology
+in `CONTEXT.md` (see `../decision-docs.md`). Jira carries a pointer to
+them, not a second copy. There is no Confluence step.
+
+Add a `Design Decisions` section to the container epic's description holding a short
+index: one line per ADR written for this build-up, each with its repo path, its
+one-line decision statement, and a permalink to the file on the default branch. Add
+any glossary terms this build-up introduced. Note in the epic description that the
+ADRs in the repo are authoritative.
 
 ## Overlap scan
-Run the core's Backlog Overlap Scan with JQL instead of Linear search:
+Run the shared Backlog Overlap Scan (`../overlap-scan.md`) with JQL:
 - **Keyword:** `project = <PROJ> AND (summary ~ "<term>" OR description ~ "<term>")`
   across all statuses (do **not** filter to open — stale Backlog issues are the
   ones that get missed).
@@ -60,7 +68,7 @@ Concretely, on create:
 - **Wave 2+** (has blockers): create with `AI-Implement-Status` **unset** (any
   value that isn't `Ready`/`Plan Approved`). The pipeline ignores it. Promote to
   `Ready` during bd-build-down as blockers merge.
-- Pilot-first sequencing (from the core) maps to: file all siblings but set
+- Pilot-first sequencing (`../pipeline.md`) maps to: file all siblings but set
   `AI-Implement-Status = Ready` on **only the pilot**; leave the rest unset until
   the pilot's PR lands, then set them `Ready`.
 
@@ -98,8 +106,8 @@ Use this for the human "reference design context" link in issue bodies.
 
 ## Status check
 For Status Check Mode: list the epic's children (`parent = <epic>`), group by
-`AI-Implement-Status`, surface blockers via "Blocks" links. When asked "where's
-the design/plan?", fetch the **epic's attachments** (the two markdown docs).
+`AI-Implement-Status`, surface blockers via "Blocks" links. When asked "where's the design?",
+read the epic description's `Design Decisions` index and follow it to the ADRs in the repo.
 
 ## Red flags (Jira-specific)
 - **Filed with the `AI-Implement` label but no `AI-Implement-Status = Ready`.** →
@@ -161,10 +169,12 @@ needs team-managed native Story→Story parenting; classic Jira can't parent Sto
 instances use multiple independent single-level feature-node Stories under one tracking Epic. Both are fine
 — the orchestrator caps chains at depth 5 regardless.
 
-**Designate children first, parent last.** Set every child's `AI-Implement-Status` + Repo, wire every
-`parent` link and every `Blocks` link, then designate the **parent last**. Designate the parent early and it
-momentarily looks like a childless leaf and dispatches its closing work onto base ahead of its children
-(the Jira translation of Linear's "label the parent last").
+**Build the whole tree first, then designate the parent BEFORE the children.** Create every child and wire
+every `parent` link and every `Blocks` link first — a designated parent with no children yet looks like a
+childless leaf and dispatches its closing work onto base. Then designate the **parent**, then the children:
+a child designated while its parent is undesignated resolves an empty ancestor chain and PRs against the
+repo base branch, silently bypassing grouping. A designated parent whose children exist but are not yet
+designated is a *waiting parent* and is skipped (the Jira translation of Linear's parent-first rule).
 
 **Roll-ups (shared):** an internal roll-up (parent is itself a feature node) is a direct `git merge`, **no
 PR**, with an identifier-free commit so GitHub-for-Jira / Smart Commits don't auto-close the parent early. A
@@ -178,4 +188,4 @@ children); the branch-targeting ancestor walk fails **open** (nesting collapses 
 Default Branch, a feature node still gets its own branch cut from the Default Branch, only losing its
 position under any ancestor).
 
-Full model: `docs/feature-branch-grouping.md`.
+Full model: `../feature-branch-grouping.md`.
