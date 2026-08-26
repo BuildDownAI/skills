@@ -10,7 +10,7 @@
         "source": "git-subdir",
         "url": "https://github.com/BuildDownAI/skills.git",
         "path": "plugin",
-        "ref": "v1.0.0"
+        "ref": "v1.4.0"
       },
       "description": "Planning and landing skills for AI-assisted software delivery (bd-build-up, bd-build-down, bd-summit-push, bd-smoke-jumper, bd-belay-on, bd-project-setup, and more)."
     }
