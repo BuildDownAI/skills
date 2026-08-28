@@ -62,11 +62,51 @@ After this skill, the project has a working, queryable KG.
      so base design knowledge is searchable from this KG
    Commit and push the configuration.
 
-4. **Wire the orchestrator's sidecar build.** The KG serves from an orchestrator's
-   `/mcp` (AII-324) — the orchestrator's image build must clone THIS repo as its
-   sidecar source (see the orchestrator's `Dockerfile` KG clone step and its
-   CLAUDE.md "KG sidecar" section; the build secret needs read access to the new
-   repo). Without this leg the KG exists but nothing serves it.
+4. **Wire the orchestrator's server side.** Five ordered sub-steps — 4a and 4b must be
+   done before Step 5; 4c–4e describe the sequencing rules and verification criteria
+   that Step 5's bd-kg-refresh invocation must satisfy. Do not compress or reorder.
+
+   **4a. GitHub App installation.** The orchestrator's GitHub App must have `contents: read`
+   access to the new KG repo before the image build runs — skipping this produces a 422 at
+   deploy time. Locate the App ID from the orchestrator's Fly secrets (`GITHUB_APP_ID`) or
+   its deployment docs. Navigate to GitHub → the KG repo's org → Settings →
+   Third-party Access → GitHub Apps → Configure the orchestrator's App → add the new KG repo
+   to the selected-repositories list. If the KG repo's org differs from the orchestrator's
+   org, install the App on the KG repo's org first.
+
+   **4b. Set `KG_SOURCE_REPO`.** Point the orchestrator at the new repo:
+   ```bash
+   fly secrets set KG_SOURCE_REPO=<owner>/<kg-repo-name> --app <orchestrator-app>
+   ```
+   Set this explicitly — never rely on the default (`BuildDownAI/knowledge-graph-ai-implement`).
+   Even before AII-436 removes that default, omitting this causes the orchestrator to silently
+   serve the wrong graph after every deploy.
+
+   **4c. Snapshot before deploy (sequencing rule).** Step 5's ingest must commit and push
+   the snapshot to the KG repo's default branch **before** triggering the deploy — the image
+   build clones that branch, and a deploy against an empty or stale branch serves an empty
+   graph with no build error. Confirm the push LANDED (`git log origin/<default>`) before
+   triggering the deploy. Chaining push and deploy in one command lets the remote builder
+   clone the pre-push tree; 4e's unchanged stamp is how you find out.
+
+   **4d. The bake deploy.** Step 5 triggers one orchestrator deploy after 4a–4c complete.
+   This deploy bakes the KG namespace from `sources.yml` into the image; the namespace cannot
+   change at runtime.
+
+   > **Graph-switch-requires-deploy rule.** The refresh rail (`POST /api/kg/refresh`) updates
+   > content within the already-baked graph only — re-ingest and re-embed on the same
+   > `sources.yml`. It does **not** switch which graph is served. Switching graphs — a
+   > different namespace, `sources.yml`, or `KG_SOURCE_REPO` — always requires a new deploy.
+   > Deploy-free `POST /api/kg/refresh` applies only to updating the already-baked graph.
+
+   **4e. Real-query verification.** A 401 at `/mcp` or a healthy boot proves nothing about
+   graph content. **The signature failure mode is empty-but-healthy:** `degraded: false` with
+   zero results — the sidecar booted successfully but ingested the wrong or empty snapshot.
+   Step 5 verifies:
+   - `kg_hybrid_search` with a domain term returns non-empty, `degraded: false` results, and
+   - the graph's **age stamp equals Step 5's ingest stamp** (recon reads it via `kg_neighbors`
+     on the spine IRI — `../bd-shared/kg-recon.md`). An unchanged stamp means the deploy served
+     the OLD snapshot.
 
 5. **First build + deploy.** Invoke the **`bd-kg-refresh`** skill — its flow is
    ingest → snapshot commit → **orchestrator redeploy** → live verify, so a
