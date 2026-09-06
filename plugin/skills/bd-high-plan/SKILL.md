@@ -48,6 +48,12 @@ intent, reusable components, and decisions already made are the difference betwe
 guess. If an outside analysis was provided, the recon is also the fact-check: say where the
 analysis was right, wrong, or moot for this project.
 
+**Deploy-posture probe**, if the orchestrator MCP is bound — after KG recon, call
+`mcp__<kg.mcp_server>__get_deploy_posture`. Read `mergeCost`, `autoDeploy`, `deploy.held`,
+and `runnerChannel.matchesHead`. If the tool is absent or errors, posture = unknown; say so
+in one line. State the posture in the opening declaration next to the environment and tracker
+lines. Full rules: `../bd-shared/pipeline.md` §Landing cost and consolidation.
+
 ### Phase 2 — The ideas (the step count is itself a decision)
 
 **Do not default to a fixed number of steps.** The count is agreed with the user: if they named
@@ -117,6 +123,9 @@ implementation — one per step, or a standalone related issue where that fits b
 Once a child/related issue exists for a step, all accounting for that step (status,
 discussion, learnings) moves to that issue; this parent tracks only the breakdown
 and overall completion.
+{Landing cost: <posture line, if known>. When bd-build-up extracts these steps,
+same-subsystem steps may be grouped as one multi-issue set — see
+../bd-shared/pipeline.md §Landing cost and consolidation. Omit this note if posture is unknown.}
 ```
 
 **Never designate the parent for pipeline pickup during planning.** The parent is a planning

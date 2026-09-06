@@ -84,9 +84,9 @@ State the tracker in the opening declaration.
 - **Code-reading agent** — deep reads and grep. No tracker or GitHub MCP, so it returns
   findings for chat to file.
 
-**Opening declaration:** state the environment and primary tools. *"Running in chat. Tracker
-MCP for filing, bd-belay-on to a code-reading agent if we need to verify prototype
-structure."*
+**Opening declaration:** state the environment, primary tools, and landing cost. *"Running in
+chat. Landing cost: deploy+image on every merge to testing. Tracker MCP for filing,
+bd-belay-on to a code-reading agent if we need to verify prototype structure."*
 
 ---
 
@@ -189,6 +189,12 @@ answered by reading the tracker or the code.
 **KG recon**, if a knowledge graph is bound — follow `../bd-shared/kg-recon.md` so we do not re-solve
 solved problems. Advisory and non-blocking; skip silently when no KG is bound.
 
+**Deploy-posture probe**, if the orchestrator MCP is bound — call
+`mcp__<kg.mcp_server>__get_deploy_posture` and read `mergeCost`, `autoDeploy`, `deploy.held`,
+and `runnerChannel.matchesHead`. If the tool is absent or errors, posture = unknown; say so
+in one line. State the posture in the opening declaration. Rules and consolidation logic:
+`../bd-shared/pipeline.md` §Landing cost and consolidation.
+
 **Backlog overlap scan** — [`../bd-shared/overlap-scan.md`](../bd-shared/overlap-scan.md).
 Every hit carries a committed action before filing.
 
@@ -260,8 +266,10 @@ A numbered sequence. For each issue:
 
 Group into phases or tracks at eight or more issues, or wherever parallel paths exist.
 
-**Plan header:** build-up name, one-sentence objective, mode, issue count, and the critical
-path — the longest dependency chain, so the user sees the minimum time to complete.
+**Plan header:** build-up name, one-sentence objective, mode, issue count, the critical
+path — the longest dependency chain, so the user sees the minimum time to complete — plus
+the landing-cost posture and the filing choice (see `../bd-shared/pipeline.md` §Landing cost
+and consolidation).
 
 ### Present and iterate
 
@@ -295,6 +303,13 @@ demands on top of the template.
 
 Declare the surface; do not script the work. Exact paths, contracts, and testable acceptance
 criteria — not a step-by-step edit sequence for a capable implementer.
+
+### Consolidation check
+
+Before staging waves, apply the consolidation rule from `../bd-shared/pipeline.md` §Landing
+cost and consolidation. When `mergeCost` is `"deploy+image"` or `"image"` and two or more
+issues share a subsystem, file them as one multi-issue group instead of standalone issues.
+The plan header shows the filing choice and the merge-count reason.
 
 ### Stage the waves
 

@@ -64,6 +64,22 @@ on the spine IRI (`./kg-recon.md` — that exact call, nothing more). No other K
 internals are invoked by skill code. This keeps the contract minimal and the skill-to-KG
 coupling loose.
 
+## Other orchestrator tools
+
+The orchestrator MCP serves tools beyond `kg.search_tool` on the same server and sign-in —
+deploy posture, diagnostics, and others. These are not subject to the `## Tool usage` contract
+above; that contract covers only KG search. Skills construct the tool name directly from
+`kg.mcp_server`:
+
+```
+mcp__<kg.mcp_server>__<tool_name>
+```
+
+Examples: `get_deploy_posture` for landing-cost and consolidation (see
+`pipeline.md` §Landing cost and consolidation); the five diagnostics tools used by
+`bd-system-questions`. No separate CLAUDE.md binding field is required — `kg.mcp_server` is
+the only handle.
+
 ## Setup and maintenance
 
 - `bd-project-setup` (Phase K) writes this block into a project's CLAUDE.md during onboarding and
