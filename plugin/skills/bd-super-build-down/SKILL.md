@@ -63,7 +63,7 @@ Same as bd-build-down. State at session start and adapt.
 **Code-reading agent:**
 - Rarely used. If it's needed for something, that something is probably a pattern break that should escalate.
 
-**Opening declaration at session start:** Environment, tool availability, PR count, target completion time.
+**Opening declaration at session start:** Environment, tool availability, PR count, deploy posture (`mergeCost` or unknown), target completion time.
 
 ### The AI coding agent pipeline
 
@@ -102,6 +102,9 @@ PR # | Issue | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
 The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the session summary.
 
 **KG recon (advisory if a KG is bound):** For each PR, run one quiet `kg.search_tool` query on the issue key + title per `../bd-shared/kg-recon.md`, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
+
+**Deploy posture probe (one call, after the PR scan):**
+Call `get_deploy_posture` for `{{REPO}}`. Capture the `mergeCost` field. Valid values are `deploy+image`, `image`, and `none`. If the call fails or returns an unrecognised value, set posture to unknown. Unknown posture leaves current behaviour unchanged — no merge window activates. State `mergeCost` (or unknown) in the opening declaration alongside environment and PR count. See `../bd-shared/pipeline.md` for the authoritative `mergeCost` definitions.
 
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 
@@ -189,12 +192,52 @@ Work PRs in tier order: Tier 1 first (fast wins), Tier 2 second (handle follow-u
 
 ### 4a. Tier 1 — merge
 
+**Immediate merge** (`mergeCost` is `none`, unknown, or the PR is on the never-hold list — see Autonomy Guardrails):
+
 1. Verify smoke result 🟢
 2. Merge via GitHub MCP `merge_pull_request`, squash by default
 3. Verify PR shows Merged
 4. Update tracker issue to Done
 5. Log one line: `✅ Auto-merged PR #{N} — {title}`
 6. Continue — no commentary
+
+**Merge window** (`mergeCost` is `deploy+image` or `image`):
+
+Before buffering a PR, check the never-hold list. Merge the PR immediately if any of the following apply:
+
+- The PR is a hotfix (title or label indicates hotfix).
+- The user asked to merge this PR immediately ("merge now" naming this PR).
+- Merging this PR unblocks a live verification step.
+- The PR is the top-of-tree roll-up (`[ai-implement] Feature branch ready for review`).
+
+If none of the above apply, add the PR to the merge window buffer. Hold PRs in oldest-first order.
+
+The merge window does NOT apply to child-to-feature-branch merges (§4f grouped trees). Deploy cost is irrelevant for internal roll-ups.
+
+**Window close — whichever signal comes first:**
+
+- **Timer:** default 10 minutes from the first PR added to the buffer. Estimate elapsed time from the tool-call sequence — there is no system clock. The user can set a shorter window by saying "merge now" with no PR named.
+- **No remaining in-flight:** no other Tier 1 or Tier 2 candidates are pending (all remaining are Tier 3 or already done). Close the window early. Do not pad the timer.
+
+**"Merge now" override:**
+
+- Named PR: remove that PR from the buffer and merge it immediately (steps 1–6 above).
+- No PR named: close the window immediately and proceed to the flush.
+
+**Session-abort interaction:** If a session-abort trigger fires while the window is open, do NOT flush. Leave held PRs unmerged. Report them in the session summary as "held — session aborted before window close."
+
+**Window flush (when the window closes):**
+
+For each buffered PR, oldest first:
+
+1. Verify smoke result 🟢 (consume existing report if less than 24 h old; otherwise re-run bd-smoke-jumper)
+2. Merge via `merge_pull_request`, squash
+3. Verify PR shows Merged
+4. Update tracker issue to Done
+5. Run Phase 4c post-merge sweep
+6. Log one line: `✅ Auto-merged PR #{N} — {title}`
+
+After all buffered PRs are merged, log one summary line: `merge window: {K} PRs → 1 deploy`
 
 ### 4b. Tier 2 — act
 
@@ -370,6 +413,7 @@ Post as a tracker issue assigned to the architect (or to the user, single-operat
 ## Session Stats
 - PRs processed: {total}
 - Auto-merged (Tier 1): {count}
+- Merges: {K} PRs in {M} windows
 - Auto-acted (Tier 2): {count}
 - Escalated (Tier 3): {count}
 - Smoke tests run: {count} ({🟢}/{🟡}/{🔴})
@@ -451,6 +495,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 - CI failing (not transient infra)
 - PR open >5 days (aligned with bd-build-down's threshold)
 - The PR is the **top-of-tree `feature → base` roll-up PR** (title `[ai-implement] Feature branch ready for review`). Under feature-branch grouping (Linear or Jira), bd-super-build-down drives every leaf and parent-closing PR to merge and lets internal roll-ups happen automatically, but the final feature-branch merge is a deliberate human review of the whole integrated feature. Before surfacing it: **run the completion checkpoint** (§4f) — explicitly state "grouped tree complete — {summary}", **post the `# ai-implement-build-down-learnings` comment on the umbrella/parent**, and ask before proceeding. Then smoke-jump the integrated feature branch and **surface this PR for a human — do not merge it.**
+- **Merge window — never hold:** Hotfixes, PRs the user asked to merge immediately, PRs whose merge unblocks a live verification, and the top-of-tree roll-up bypass the merge window and merge at once. See Phase 4a for the full never-hold list and operative rule. The window only activates when `mergeCost` is `deploy+image` or `image`. Unknown posture never activates the window.
 
 ### Never auto-post agent comments when
 
