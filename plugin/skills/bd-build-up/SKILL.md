@@ -195,6 +195,11 @@ and `runnerChannel.matchesHead`. If the tool is absent or errors, posture = unkn
 in one line. State the posture in the opening declaration. Rules and consolidation logic:
 `../bd-shared/pipeline.md` §Landing cost and consolidation.
 
+**Mode 4 exception — use the parent's cached posture.** In Mode 4 (High-Plan Extraction),
+check the planning parent's body for a `Landing cost:` line before calling the tool. If the
+line is present, adopt that posture and skip the probe — the parent already carries the value
+from the bd-high-plan session. Only probe if the line is absent.
+
 **Backlog overlap scan** — [`../bd-shared/overlap-scan.md`](../bd-shared/overlap-scan.md).
 Every hit carries a committed action before filing.
 
