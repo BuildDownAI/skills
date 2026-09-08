@@ -87,9 +87,7 @@ not a report, still at altitude:
 - **Security lens:** does any step add public surface, credentials, or a new data path? For
   each one, name the door and who holds the key (e.g., "one public endpoint, OAuth on it; the
   data store binds localhost only"). A step that adds exposure without naming its control is
-  not settled. For each door, cite the blast-radius section in the repo's `docs/` that covers
-  it, or run `bd-blast-radius` first — [`../bd-shared/blast-radius.md`](../bd-shared/blast-radius.md).
-  A door with no census is not settled either.
+  not settled.
 - **Architecture lens:** does each step reuse before building, keep the simplest placement,
   and stay independently testable? Does the order let each step be verified before the next
   depends on it?
