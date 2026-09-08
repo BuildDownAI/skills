@@ -17,7 +17,6 @@ does **not** reach an installed skill.
 | `pipeline.md` | AI-Implement pickup, wave staging, feature-node designation order, pilot-first | build-up, mega-build-up |
 | `overlap-scan.md` | Backlog overlap scan, classification, and reconciliation | build-up, mega-build-up |
 | `decision-docs.md` | ADR and glossary format, and the test for when a decision earns an ADR | mega-build-up |
-| `blast-radius.md` | The blast-radius document: when a path earns one, the section template, the writing rules, and the hooks in other skills | blast-radius, high-plan, mega-build-up, build-down |
 | `feature-branch-grouping.md` | The full feature-branch model, both providers — operator reference | build-down, super-build-down, smoke-jumper, summit-push, project-setup, mega adapters |
 | `learnings-comments.md` | The `# ai-implement-*-learnings` comment convention | build-up, mega-build-up, build-down, super-build-down, belay-on |
 | `kg-binding.md` | The `## Knowledge graph` CLAUDE.md contract and dual-target resolution | kg-create, kg-refresh, kg-search, project-setup |

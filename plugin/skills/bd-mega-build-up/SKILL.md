@@ -166,7 +166,6 @@ Walk the tree until the frontier is empty. These branches are where the tree usu
 not a checklist to march through:
 
 **Scope boundary** · **Data model** · **API surface** · **UI surface** · **Trust boundaries**
-(asked against a census — [`../bd-shared/blast-radius.md`](../bd-shared/blast-radius.md); no census, no settled boundary)
 · **Failure modes** (empty, error, race, partial) · **Rollout** (flag, migration, backfill) ·
 **Testing** · **Observability** · **Explicit out-of-scope confirmation** · **Every row of the
 Overlap Inventory**
