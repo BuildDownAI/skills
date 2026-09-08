@@ -518,6 +518,7 @@ File a new tracker issue when:
 1. A gap is out of scope for the current PR but needs work soon (→ pickup-ready, per the active adapter's **Follow-up filing** section)
 2. A blocker is discovered during testing that needs planning (→ parked)
 3. A pattern of failures points to a root cause needing architectural attention (→ parked, route to the architect)
+4. A blocker or escalation whose cause is a credential, token, callback, or shared-table misuse → run `bd-blast-radius` before the session summary and link the resulting page from it ([`../bd-shared/blast-radius.md`](../bd-shared/blast-radius.md))
 
 ### Filing context matters
 
