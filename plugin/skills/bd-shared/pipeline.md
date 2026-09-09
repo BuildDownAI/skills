@@ -99,6 +99,14 @@ unfenced marker is ignored and the parent stays in feature mode. Always write th
 the `(example)` suffix: a bare `# ai-implement.yml` first line is the real marker and gets
 stripped from that issue's own spec.
 
+## The first issue of a chain is the smallest
+
+A chain's first issue is the only one nothing else can start before, and it sets the pattern
+every later issue mirrors. Make it the **smallest** issue in the chain — half the normal shape
+ceiling — even when the "foundation" feels like it wants to be complete. A large first issue
+delays the whole chain by its review rounds and teaches every follow-on its mistakes. The
+foundation is the module; the wiring is the second issue.
+
 ## Pilot-first sequencing
 
 **Trigger:** a wave holds **three or more issues applying the same template to different

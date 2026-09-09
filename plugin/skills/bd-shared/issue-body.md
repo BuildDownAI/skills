@@ -109,10 +109,12 @@ until the first merges.
 regardless of overlap and falls back on conflict auto-recovery. Every file the work touches
 belongs in this list. Prose mentions inside `## Task` are invisible to the guard.
 
-### Verify the list before filing
+### Verify the list before filing (required — no output, no filing)
 
 Run [`tools/verify-issue-files.py`](./tools/verify-issue-files.py) against the drafted body and
-the repo. It is a few seconds, and it checks what review reliably does not:
+the repo, and paste its output into the session before the approval gate. A red result blocks
+filing; a green result is the evidence the plan was checked. It is a few seconds, and it checks
+what review reliably does not:
 
 ```sh
 verify-issue-files.py draft.md --repo /path/to/repo
@@ -123,6 +125,11 @@ gh issue view 123 --json body --jq .body | verify-issue-files.py - --repo .
 It fails on a `Modify`/`Delete` target that does not exist, a `Create` target that already
 does, a body with no parseable bullets at all, and any `"<n> lines"` claim that disagrees with
 the file. It also prints each file's real line count and first meaningful line.
+
+It also enforces the shape rules from [`issue-shape.md`](./issue-shape.md): a `Create:` entry
+with more than three `Modify:` consumers, more than 12 declared entries, or a contract surface
+(migrations, schema, API/callback/envelope definitions — extend with `--contract`) modified in
+the same issue as a `Create:`. Each of those is a split, not a warning to note and file past.
 
 **Read that inventory, not just the exit code.** The exit code catches wrong paths; the
 inventory catches the more common error — a path that exists and is not the file you think it

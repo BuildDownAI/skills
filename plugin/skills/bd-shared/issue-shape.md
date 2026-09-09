@@ -20,12 +20,33 @@ Every issue is **either** wide-and-shallow **or** deep-and-targeted. Never both.
 - **Wide & deep is unsplit work.** Many files AND reasoning at each touch point. Refuse to
   file. Split into a deep core change plus a wide propagation that is `Blocked by:` it.
 
-**Turn budget.** The runner caps Claude turns per implement pass (a project Max-Turns setting,
-commonly ~50). Budget ~2–4 turns per file — read, edit, verify. An issue touching more than
-~12–15 files risks hitting the cap before the agent finishes and pushes. File count is the
-tell; check it at planning time. When an issue approaches the threshold, either **split**
-(deep core + wide propagation blocked by it) or **raise the project's Max Turns** before
-dispatch and note it on the issue.
+**The consumer test (mechanical).** Read the `## Files` list. If any `Create:` entry has more
+than **three** `Modify:` consumers — files that import or call the new module — the issue is
+wide-and-deep whatever it was labelled. Split it: the module with its own tests and **no
+consumers** first, then a wiring issue `Blocked by:` it. Observed: a new classification module
+wired into eight call sites, a callback contract, and a database column was filed as
+"deep-and-targeted, ~9 files". It took three review rounds, and every blocking finding was at a
+seam, not in the module. A reviewer looking only at wiring would have caught them in one.
+
+**Count every entry.** The file limit counts `Test:` and `Modify:` docs entries too, not only
+source files. The same issue above was "9 files" counted as source and 14 as declared; the PR
+touched 15, then 24.
+
+**Turn budget, by shape.** The runner caps Claude turns per implement pass (a project Max-Turns
+setting, commonly ~50). Budget by shape, not by a flat per-file number:
+
+| Shape | Turns per file | Ceiling |
+|---|---|---|
+| Wide & shallow | 2–4 (read, edit, verify) | ~12–15 files |
+| Deep & targeted | 8–15 (read, reason, edit, test, re-read) | ~5 files |
+
+Observed: a 14-file deep issue ran 130–139 turns per pass; the flat 2–4 estimate predicted 30–60.
+When an issue approaches its ceiling, either **split** (deep core + wide propagation blocked by
+it) or **raise the project's Max Turns** before dispatch and note it on the issue.
+
+**The shape linter checks all three.** `tools/verify-issue-files.py` fails on a `Create:` with more
+than three consumers, on more than 12 declared entries, and on a contract surface changed in the
+same issue as a new module (hard rule 13). Run it before filing; do not file over a red result.
 
 ## Hard rules
 
@@ -74,6 +95,15 @@ A violation splits the issue. No exceptions.
     reverse. A parent that must merge to the default branch *before* its children is a
     grouping violation — split the parent's closing work out and block it on the children.
     Full mechanics: [`pipeline.md`](./pipeline.md).
+13. **Contract change isolation.** A new field on a callback body, a new column on a persisted
+    record, a new envelope field, a schema or API shape — anything with readers and validators
+    on the other side of a process boundary — is its own issue, the way a migration is. The
+    issue that produces the value and the issue that carries it across the boundary are
+    different reviews: the producer's reviewer checks the value, the contract's reviewer checks
+    every reader, the validator, and what happens on version skew. Observed: a callback field
+    added in the same issue as its producer shipped with a validator that rejected the **whole**
+    callback on an unrecognised value, which would have stalled every failed ticket on the next
+    runner/orchestrator version skew. Nobody was reviewing the contract as a contract.
 
 ## The writer census (hard rule 9)
 
@@ -157,6 +187,38 @@ is not.
 | **Rollback path** | If this breaks in production, what is the recovery? | Risky changes need a flag or a revert note. Mechanical changes need neither. |
 | **Observability** | What log or metric confirms it works in production? | If the issue adds behaviour worth verifying, name the signal. |
 | **Parallel safety** | Does this share file edits with another unblocked issue? | One blocks the other, or they merge into one issue. |
+| **Chain position** | Is this the first issue in a dependency chain? | Make it the **smallest** issue in the chain, not the largest. It sets the pattern every later issue mirrors, and it is the one issue nothing else can start before. Cap it at half the normal ceiling. |
+
+
+## A worked split
+
+The shape violation that is hardest to see is the one where a single "foundation" issue looks
+cohesive. This is a real case, names generalised.
+
+**As filed (wide-and-deep, rejected):** *Add a shared failure taxonomy and evidence record.*
+`Create:` one classifier module. `Modify:` the pipeline runner, three step modules, the loop
+that calls them, the runner entry point, the callback handler, the database module, two docs.
+Three tests. Fourteen entries; labelled deep-and-targeted.
+
+Result: three review rounds, ~135 turns and ~$5 per pass, and every blocking finding at a seam —
+a check ordered wrong at a call site, a field dropped by a wrapper, the runner rethrowing an
+unclassified error, the callback validator rejecting the whole body.
+
+**As it should have been filed (three issues):**
+
+| # | Issue | Shape | Files | Blocked by |
+|---|---|---|---|---|
+| 1 | Add the failure classifier module | deep, no consumers | 1 create + 1 test | — |
+| 2 | Attach failure records at every pipeline throw site | wide-and-shallow | 6 modify + 3 test | 1 |
+| 3 | Carry the failure record on the completion callback | deep, contract (rule 13) | 3 modify + 1 test | 1 |
+
+Issue 1 reviews as an algorithm. Issue 2 reviews as wiring, and a wiring reviewer would have
+caught all four seam defects in one round. Issue 3 reviews as a contract: validator, readers,
+version skew. Issues 2 and 3 run in parallel. Total cost is lower, not higher, because each pass
+fits its turn budget and no pass repeats work a reviewer rejected.
+
+The tell was available before filing: the `Create:` entry had eight consumers, and the chain's
+first issue was its largest.
 
 ## Reshaping an existing detailed issue
 
