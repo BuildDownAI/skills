@@ -29,30 +29,20 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    | `kg.orchestrator` | required | Orchestrator URL for the rail handoff |
    | `kg.mcp_server` | required | Remote orchestrator MCP server name |
    | `kg.search_tool` | required | Orchestrator hybrid-search tool |
-   | `kg.local_mcp_server` | **required for this skill** | Local stdio server name — stop if absent, see note |
-   | `kg.local_search_tool` | **required for this skill** | Local stdio search tool — stop if absent, see note |
-
-   If `kg.local_mcp_server` or `kg.local_search_tool` is absent:
-   - Print: "bd-mega-kg-refresh requires a local KG server. Add `kg.local_mcp_server` and
-     `kg.local_search_tool` to the `## Knowledge graph` block in CLAUDE.md (see
-     `../bd-shared/kg-binding.md`), then restart a local stdio server against
-     `<checkout>/out/graph.trig` and retry."
-   - Stop.
+   | `kg.local_mcp_server` | required for Phase 4 | Local stdio server name — checked at Phase 4 start |
+   | `kg.local_search_tool` | required for Phase 4 | Local stdio search tool — checked at Phase 4 start |
 
 2. **Establish the KG source checkout.** This skill runs in the KG source checkout. Confirm
    the working directory contains `sources.yml` and the Python ingest package. If the checkout
    does not exist locally:
    - Clone: `gh repo clone <kg.source_repo> <local-path>`
-   - Create and activate the venv:
+   - Set up the venv and install dependencies:
      ```bash
      cd <local-path>
-     python -m venv .venv && source .venv/bin/activate
-     pip install -e .
+     ./setup.sh
      ```
-   - Start the local stdio MCP server (per the KG repo README — typically
-     `python -m <package>.mcp_server out/graph.trig` or the equivalent Makefile target).
-   - Announce: "KG checkout ready at `<local-path>`; local server `<kg.local_mcp_server>`
-     serving `out/graph.trig`."
+   - Do not start the local MCP server yet — Phase 4 starts it when needed.
+   - Announce: "KG checkout ready at `<local-path>`."
 
 3. **Orient.** Read `sources.yml` — list every `code_repo`, `secondary_repos` entry, `docs_sites`,
    classifier rules, and namespace. State counts: "N sources, M docs sites, classifier has K
@@ -65,17 +55,18 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 Goal: understand what the graph currently contains and what is missing, stale, or wrong.
 
 1. **Read the spine stamp.** Call `kg_neighbors` on the spine IRI (as defined in
-   `../bd-shared/kg-recon.md`) via `mcp__<kg.local_mcp_server>__kg_neighbors`. Record the
+   `../bd-shared/kg-recon.md`) via `mcp__<kg.mcp_server>__kg_neighbors`. Record the
    `dcterms:modified` stamp and per-part triple counts. Announce:
-   "Local graph as of `<stamp>`. Parts: `<counts>`."
+   "Served graph as of `<stamp>`. Parts: `<counts>`."
 
 2. **Run 3–5 hybrid searches.** Derive search terms from:
    - The user's named topics (ask: "What concepts or recent tracker activity should I search
      for?"), or
    - Recent tracker or PR activity from `mcp__<kg.mcp_server>__list_projects`.
 
-   For each search: call `mcp__<kg.local_mcp_server>__<kg.local_search_tool>` with the term.
-   Record what was found and what was absent.
+   For each search: call `mcp__<kg.mcp_server>__<kg.search_tool>` (i.e., `kg.search_tool` =
+   `mcp__<kg.mcp_server>__kg_hybrid_search`) with the term. Record what was found and what
+   was absent.
 
 3. **Produce a gap table.** Synthesize the searches and spine inspection into one table:
 
@@ -157,26 +148,36 @@ After all decisions are settled, summarize the agreed changes: "I will make thes
 
 Two loops, in order. The proof loop is the gate before Phase 5.
 
+**Local server required.** Before running the fast loop, confirm `kg.local_mcp_server` and
+`kg.local_search_tool` are bound in CLAUDE.md. If either is absent:
+- Print: "bd-mega-kg-refresh Phase 4 requires a local KG server. Add `kg.local_mcp_server`
+  and `kg.local_search_tool` to the `## Knowledge graph` block in CLAUDE.md (see
+  `../bd-shared/kg-binding.md`), then retry."
+- Stop.
+
 #### Fast loop — iterate quickly
 
 Goal: verify that the manifest changes produce a graph that answers the Phase 2 gaps.
 
 1. Apply the agreed changes to `sources.yml` and any classifier/ingest config files.
 
-2. Run the Python ingest into `out/`:
+2. Run the ingest — this rebuilds `out/graph.trig` and the vector index in one pass:
    ```bash
    cd <kg checkout>
-   source .venv/bin/activate
-   # Use the Makefile target if present (e.g. `make ingest`), otherwise:
-   python -m <ingest_package> --out out/
+   ./setup.sh --tracker --secondary
    ```
-   Check `out/graph.trig` for a non-empty result.
+   Check that `out/graph.trig` is non-empty.
 
-3. Query the rebuilt local graph through the stdio server:
+   **Restart the MCP client after each rebuild.** The local server
+   (`<kg checkout>/.venv/bin/kg-query serve`, server name `<project-slug>-kg`) loads the
+   graph once at startup — without a restart, queries hit the stale pre-build graph.
+
+3. Query the rebuilt local graph. If the local server is not yet running, start it:
+   ```bash
+   <kg checkout>/.venv/bin/kg-query serve
    ```
-   mcp__<kg.local_mcp_server>__<kg.local_search_tool>
-   ```
-   Repeat the Phase 2 searches. Confirm that gaps marked ✗ or ⚠ are now ✓.
+   Then call `mcp__<kg.local_mcp_server>__<kg.local_search_tool>` for each Phase 2 search.
+   Confirm that gaps marked ✗ or ⚠ are now ✓.
 
 4. **Repeat** the fast loop for each round of changes until the gap table is clean. Do not
    proceed to the proof loop while any expected source is still ✗ in the local graph.
@@ -185,14 +186,19 @@ Goal: verify that the manifest changes produce a graph that answers the Phase 2 
 
 Goal: prove the changes pass the harness dry-run before opening a PR.
 
-1. Run the harness dry-run from the AI-Implement project root:
+1. **Obtain `td.json`.** `td.json` is the request body of `POST /api/runner/kg-tracker-data`
+   for one team — the tracker data the rail uses as ingest input. Until AII-597 ships an admin
+   export route (`GET /api/kg/tracker-data?team=<key>`), ask an orchestrator admin to provide
+   the file. Do not invent or synthesize a substitute.
+
+2. Run the harness dry-run from the AI-Implement project root:
    ```bash
    npm run dev:run -- --phase kg-refresh --workspace <kg checkout> --tracker-data td.json
    ```
    This runs the clone, secondary, ingest steps and the snapshot guard in dry-run — it does
    **not** write to `snapshot/`.
 
-2. Inspect the guard table in the dry-run output. It must be **clean** (no rows marked
+3. Inspect the guard table in the dry-run output. It must be **clean** (no rows marked
    failed or degraded) before Phase 5 runs. If any guard row fails:
    - Read the failure detail.
    - Return to the fast loop to address the root cause.
