@@ -454,7 +454,7 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 **Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
 - MCP binding: Atlassian MCP (`atlassian-<workspace>` → `jira`); `tracker.kind: jira` in `CLAUDE.md`
 - Description updates: `update_issue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
-- Wave state: no direct `state` field — use `transition_issue` + `AI-Implement-Status` custom field for pipeline gating
+- Wave state: no direct `state` field — use `transition_issue` + `AI-Implement-Status` custom field for pipeline gating. Human-set values are exactly two: `Ready` (dispatch now) or **unset** (held). `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting them hides the issue from pickup and burns a concurrency slot
 
 ### Filing states (aligned with bd-build-up)
 

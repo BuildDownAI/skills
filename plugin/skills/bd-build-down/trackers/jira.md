@@ -17,7 +17,11 @@ ToolSearch (`jira search jql`, `jira get issue`, `jira transition issue`,
 `AI-Implement-Status` (the orchestrator's custom-field state machine: Ready →
 Planning → Plan Approved → Implementing → PR Ready) and the issue's **native
 workflow status** (whose `statusCategory` is `done` when complete). Completion
-means the native status, not the custom field.
+means the native status, not the custom field. Of the state-machine values,
+**`Ready` is the only one you ever set by hand** — `Planning`/`Implementing`/
+`PR Ready` are orchestrator-owned; hand-setting them hides the issue from pickup
+and burns a concurrency slot (they count as in-flight work). To hold an issue,
+leave the field unset.
 
 ## Issue scan & states
 Scan via JQL on `AI-Implement-Status`, within the mapping's scope JQL:

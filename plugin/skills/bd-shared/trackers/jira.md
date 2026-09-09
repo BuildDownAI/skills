@@ -11,6 +11,15 @@ Everything else applies to both.
 > `AI-Implement` label but **without `AI-Implement-Status = Ready`** is never
 > picked up by the pipeline. This is the single most common Jira filing mistake.
 
+> **The only values you ever set by hand are `Ready` or unset.** `Planning`,
+> `Implementing`, and `PR Ready` are **orchestrator-owned** lifecycle states —
+> the pipeline writes them as it works an issue. Hand-setting one (e.g. filing an
+> issue at `Planning`) both **hides the issue from pickup** (it fails the dispatch
+> predicate) and **burns a pipeline concurrency slot** (the orchestrator counts
+> `Planning`/`Implementing` as in-flight work). To hold an issue back, leave the
+> field **unset** and sequence with `Blocks` links — never park it in an
+> intermediate status.
+
 ## MCP & discovery
 Use the `atlassian-<workspace>` MCP. Tool names are not hardcoded — discover them
 at runtime with ToolSearch (`jira create issue`, `jira search jql`,
@@ -65,9 +74,10 @@ Concretely, on create:
 
 ## Wave staging
 - **Wave 1** (no blockers): `AI-Implement-Status = Ready` (see Pickup trigger).
-- **Wave 2+** (has blockers): create with `AI-Implement-Status` **unset** (any
-  value that isn't `Ready`/`Plan Approved`). The pipeline ignores it. Promote to
-  `Ready` during bd-build-down as blockers merge.
+- **Wave 2+** (has blockers): create with `AI-Implement-Status` **unset** —
+  literally empty, not `Planning` or any other placeholder (those are
+  orchestrator-owned and burn concurrency slots). The pipeline ignores an unset
+  field. Promote to `Ready` during bd-build-down as blockers merge.
 - Pilot-first sequencing (`../pipeline.md`) maps to: file all siblings but set
   `AI-Implement-Status = Ready` on **only the pilot**; leave the rest unset until
   the pilot's PR lands, then set them `Ready`.
@@ -112,6 +122,10 @@ read the epic description's `Design Decisions` index and follow it to the ADRs i
 ## Red flags (Jira-specific)
 - **Filed with the `AI-Implement` label but no `AI-Implement-Status = Ready`.** →
   Never picked up. Set the Status field.
+- **Filed with `AI-Implement-Status = Planning` (or `Implementing`/`PR Ready`).** →
+  Orchestrator-owned states. The issue is invisible to pickup **and** counts as
+  in-flight work, burning a concurrency slot. Human-set values are exactly two:
+  `Ready` or unset.
 - **Feature-node child filed without `AI-Implement-Status` set, or with the wrong Repo value.** →
   Silently **excluded from the group**: it neither gates its parent nor rolls up — it just quietly PRs to
   the Default Branch on its own. Designate every intended child (non-empty Status + matching Repo). "It's
@@ -139,6 +153,12 @@ and hierarchy differ.
   **feature-node-ready**, not "none designated → skip."
 - **Candidate dispatch** (worked *this* poll) = `AI-Implement-Status` ∈ {`Ready`, `Plan Approved`} + Repo
   match. Do **not** tell operators grouping needs Status = Ready — Ready is only for this poll's dispatch.
+
+The "any non-empty value" designation predicate describes how the orchestrator **reads** state — children
+it has already advanced to `Planning`/`Implementing`/`PR Ready` stay designated. It is **not** a menu of
+values you may write: when *you* designate an issue by hand, the only value you set is **`Ready`** (or the
+field stays unset for a held issue, with `Blocks` links doing the sequencing). Hand-parking a child in
+`Planning` to "designate without dispatching" hides it from pickup *and* burns a concurrency slot.
 
 **Terminal** = `fields.status.statusCategory.key === 'done'` (Done/Closed + Won't-Do/Cancelled).
 **Hierarchy** = `effectiveParentKey = native parent ?? Epic Link` (classic Epic Link is the best-effort

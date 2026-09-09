@@ -348,6 +348,14 @@ decision from issue bodies.
   follow links.
 - **No Overlap Inventory from Phase 1.** → The scan was skipped or too narrow. A mature
   backlog always has hits.
+- **A file described without being opened.** → The path existing is not evidence it is the
+  file you think it is. Run `tools/verify-issue-files.py` and read the inventory, not just the
+  exit code.
+- **Branching logic specified with some of its states.** → Hard rule 11. Write the state
+  table; a three-state model specified as two states fails silently in the third.
+- **A shared value's shape changed with no reader census.** → Hard rule 10. Search the
+  underlying state, not only the accessor — consumers that bypass the accessor are the ones
+  that break quietly.
 - **An Overlap Inventory row with no committed action.** → Silent overlap. Force the decision
   in the grill.
 - **Issues filed with no learnings comment.** → Step 7 is the capstone, not an extra.
