@@ -48,6 +48,46 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    classifier rules, and namespace. State counts: "N sources, M docs sites, classifier has K
    rules." This is the baseline for Phase 3 decisions.
 
+4. **Check upstream base drift.** Determine how far the derivative has drifted from the base
+   template before touching the manifest.
+
+   a. **Resolve the base URL.** Read `sources.yml` for a `base_repo:` field. If present, use
+      that value. Otherwise fall back to `https://github.com/BuildDownAI/bd-knowledge-graph-base.git`.
+
+   b. **Ensure the remote exists (idempotent):**
+      ```bash
+      git remote get-url upstream 2>/dev/null || git remote add upstream <base-url>
+      ```
+
+   c. **Fetch:**
+      ```bash
+      git fetch upstream
+      ```
+
+   d. **Count drift:**
+      ```bash
+      git rev-list --count HEAD..upstream/main
+      ```
+
+   e. **Announce:**
+      - If N = 0: "Derivative is current with base — no upstream commits to merge."
+      - If N > 0: "Derivative is **N commits behind base.**"
+
+      When N > 0, run `git log --oneline HEAD..upstream/main` and group commits by path prefix:
+
+      | Bucket | Path prefix |
+      |---|---|
+      | Learnings | `learnings/` |
+      | Ingest | `kg_ingest/` |
+      | Query / serve | `kg_query/` |
+      | Ontology and shapes | `ontology/`, `shapes/` |
+      | Docs | `docs/`, `README` |
+      | Other | *(everything else)* |
+
+      Omit any bucket with no commits. If no commits fall into a recognised bucket, show the
+      full raw `--oneline` log. This grouped summary is carried forward to Q0 in Phase 3 and
+      to the PR body when the merge is accepted.
+
 ---
 
 ### Phase 2 — Interrogate the served graph
@@ -97,6 +137,85 @@ Facts are the skill's job — read the code and the manifest before each questio
 user something the code already answers.
 
 **Decision domains — one question per domain that the gap table flags:**
+
+❓ **Q0** — **Upstream base merge**: The base template has N new commits since this derivative's
+last merge (see Phase 1 drift summary). Should those changes be merged now before adjusting the
+ingest manifest?
+
+**Options:**
+- **Merge now** — creates branch `kg-upstream/<YYYY-MM-DD>`, merges `upstream/main`, runs the
+  Phase 4 fast loop and proof loop, then opens a `kg-upstream` PR before continuing to Q1.
+- **Skip** — proceed directly to Q1; the upstream drift remains unaddressed this session.
+
+➡️ Merge now when N > 0 — base changes may include accepted learnings, classifier updates, KGB
+marker list changes, or ingest improvements that affect this refresh. Skip only when N = 0 or
+you explicitly defer to a later session.
+
+**On yes — upstream merge flow:**
+
+1. Create the branch from the derivative's current default branch:
+   ```bash
+   git checkout -b kg-upstream/<YYYY-MM-DD>
+   ```
+
+2. Merge:
+   ```bash
+   git merge upstream/main
+   ```
+
+3. **If there are conflicts:** Run `git status` to list every conflicting file. Stop with:
+   > "Merge conflicts in: `<file-list>`. Resolve these by hand, then run
+   > `git merge --continue`. **Never resolve `sources.yml` or `snapshot/` conflicts by taking
+   > the upstream version** — `sources.yml` encodes this derivative's scope and must not be
+   > overwritten with the base template's example project; `snapshot/` is the rail's output
+   > and must never be staged."
+   Do not auto-resolve any conflict.
+
+4. **On clean merge:** Run the full Phase 4 fast loop and then the proof loop on the
+   `kg-upstream/<YYYY-MM-DD>` branch exactly as described in Phase 4. `snapshot/` is never
+   staged at any point.
+
+5. **Open the upstream PR** (Phase 5 flow, adapted for this branch):
+   - Capture the short SHA of `upstream/main`:
+     ```bash
+     git rev-parse --short upstream/main
+     ```
+   - Stage only the files the merge changed — never `snapshot/`:
+     ```bash
+     git add <merged files — never snapshot/>
+     # NEVER: git add snapshot/
+     # NEVER: git add .
+     ```
+   - Commit and push:
+     ```bash
+     git commit -m "kg-upstream: merge base <short-sha> (<N> commits)"
+     git push -u origin kg-upstream/<YYYY-MM-DD>
+     ```
+   - Open PR:
+     ```bash
+     gh pr create --repo <kg.source_repo> \
+       --base <default-branch> \
+       --title "kg-upstream: merge base <short-sha> (<N> commits)" \
+       --body "<grouped base-change summary from Phase 1 drift analysis>"
+     ```
+   - Post the learnings comment on the PR:
+     ```
+     # ai-implement-kg-refresh-learnings
+
+     **What changed:** Merged N commits from upstream base template (<short-sha>).
+     **Why:** <grouped summary of base changes: learnings, ingest, classifier, ontology, docs>
+     **What the user rejected:** n/a (upstream merge)
+     ```
+
+6. **Wait for merge.** Announce the PR URL, then say:
+   > "Merge the `kg-upstream/<YYYY-MM-DD>` PR, then confirm here. After it merges, run
+   > `git pull` on the default branch so Q1–Q5 decisions are based on the post-merge state."
+   Do not continue to Q1 until the user confirms the upstream PR is merged.
+
+**On no / skip:** Proceed directly to Q1 with no further reference to the upstream merge in
+this session.
+
+---
 
 ❓ **Q1** — **Source repos in sources.yml**: Does the gap table show a repo that the orchestrator
 manages but `sources.yml` does not cover? Add it, or confirm intentional exclusion?
@@ -284,6 +403,9 @@ merges — the rail clones the KG source repo and will pick up merged changes on
 ### Phase 7 — Learnings loop
 
 Follow `../bd-shared/kg-learnings-loop.md`.
+
+The upstream base merge (`kg-upstream/<date>` PR) is not a derivative learning; nothing is
+filed to the base-note for it.
 
 **Additional input (optional — AII-596):** After bd-kg-refresh completes, look for the refresh
 PR the rail opened (title: `kg-refresh: snapshot @ <stamp>`). If a comment marked
