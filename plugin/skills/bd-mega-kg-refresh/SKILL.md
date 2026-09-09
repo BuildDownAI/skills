@@ -74,7 +74,7 @@ Goal: understand what the graph currently contains and what is missing, stale, o
      for?"), or
    - Recent tracker or PR activity from `mcp__<kg.mcp_server>__list_projects`.
 
-   For each search: call `mcp__<kg.local_mcp_server>__kg_hybrid_search` with the term.
+   For each search: call `mcp__<kg.local_mcp_server>__<kg.local_search_tool>` with the term.
    Record what was found and what was absent.
 
 3. **Produce a gap table.** Synthesize the searches and spine inspection into one table:
@@ -174,7 +174,7 @@ Goal: verify that the manifest changes produce a graph that answers the Phase 2 
 
 3. Query the rebuilt local graph through the stdio server:
    ```
-   mcp__<kg.local_mcp_server>__kg_hybrid_search
+   mcp__<kg.local_mcp_server>__<kg.local_search_tool>
    ```
    Repeat the Phase 2 searches. Confirm that gaps marked ✗ or ⚠ are now ✓.
 
