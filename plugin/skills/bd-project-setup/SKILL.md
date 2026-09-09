@@ -422,8 +422,13 @@ the finding and ask the operator to:
 - **Confirm** the orchestrator URL, or
 - **Override** (a different orchestrator app), or
 - **Create one** (when no KG exists yet) → invoke the **`bd-kg-create`** skill, which builds a new KG
-  source repo from the `BuildDownAI/bd-knowledge-graph-base` template and deploys it as the
-  orchestrator's sidecar, then returns here to bind, or
+  source repo from the `BuildDownAI/bd-knowledge-graph-base` template and runs the full server-wiring
+  phase (GitHub App install, `KG_SOURCE_REPO` secret, snapshot-before-deploy, bake deploy, and
+  real-query verification). Phase K picks up after those steps complete, binding a graph that is
+  already live and serving — the MCP entry and `CLAUDE.md` block in Steps K.3–K.4 point to a live,
+  queryable graph, not merely a repo that has been created. The client binding alone (MCP entry +
+  `CLAUDE.md` block) does not constitute a working KG; the server-wiring phase in bd-kg-create must
+  complete first.
 - **Declare "no KG"** → write `kg.present: false` into the `## Knowledge graph` block (Step K.4's format)
   and **end this phase** here — do not proceed to K.3.
 
