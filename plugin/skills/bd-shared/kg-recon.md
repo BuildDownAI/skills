@@ -54,7 +54,7 @@ old)" or "KG is fresh (4 hours old)".
 - Tracker issues **updated** since the build time — query the project's bound tracker MCP (Linear "updated after `<ISO timestamp>`", Jira likewise) and report the count.
 - PRs **merged** since — `gh pr list --state merged --search "merged:>=<YYYY-MM-DDTHH:MM:SSZ>" --limit 20` — and report the count.
 
-Present the gap explicitly ("graph as of `<date>` (`<age>` ago); since then `N` issues changed, `M` PRs merged — treat results as missing these") and nudge the operator to run `bd-kg-refresh` (ingest → snapshot commit → orchestrator redeploy) for fresh results.
+Present the gap explicitly ("graph as of `<date>` (`<age>` ago); since then `N` issues changed, `M` PRs merged — treat results as missing these") and nudge the operator: run `bd-kg-refresh` (rail) for a fresh orchestrator graph; run `bd-mega-kg-refresh` (forthcoming — see BDS-49) if a source repo is missing from the ingest.
 
 **If the KG is fresher than 24 hours**, skip these delta queries — stay fast. A recent build is good enough; no need to dig into tracker history.
 
@@ -65,7 +65,7 @@ Any error — tool unavailable, degraded response, empty index, tracker or `gh` 
 - Missing tool → "KG search unavailable (tool error); proceeding without orientation."
 - Auth failure, local bound → fall back per the dual-target rule and announce `KG: LOCAL FALLBACK — …`.
 - Auth failure, no local bound → "orchestrator MCP token expired (1h TTL) — re-auth via /mcp in an interactive session; proceeding without orientation."
-- Degraded index → "deployed sidecar is lexical-only (`degraded: true`); run `bd-kg-refresh` (its redeploy rebuilds embeddings)."
+- Degraded index → "deployed sidecar is lexical-only (`degraded: true`); run `bd-kg-refresh` — the rail rebuilds embeddings."
 - Empty index → "KG index empty; no prior learnings to draw on."
 - No age stamp → "graph has no age stamp (pre-AII-326 snapshot); staleness unknown — a `bd-kg-refresh` adds it."
 - Tracker query fails → "Tracker unavailable; staleness gap unknown."
