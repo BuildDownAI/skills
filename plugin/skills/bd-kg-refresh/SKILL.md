@@ -22,7 +22,7 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
 2. **Preflight.** Call `get_tenant_health` on the bound orchestrator MCP server
    (`mcp__<kg.mcp_server>__get_tenant_health`). Every row under `kgRefreshPreflight` must have
    `ok: true`. If any row fails:
-   - Print: "Preflight failed: <row.name> — <row.hint>"
+   - Print: "Preflight failed: <row.repo> <row.grant> — <row.hint>"
    - Stop. Do not trigger the rail against a known-broken orchestrator.
    If `get_tenant_health` returns no `kgRefreshPreflight` rows (orchestrator predates AII-594),
    note "preflight rows absent — proceeding" and continue.
@@ -71,9 +71,9 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
    | Stage | Meaning |
    |---|---|
    | `ingest-running` | Rail is cloning and ingesting |
-   | `staging` | Guard is evaluating the new snapshot |
+   | `staging` | Rail has fetched the pushed snapshot and is staging, swapping and verifying it locally (content guard already ran inside the runner before the push) |
    | `serving` | New snapshot promoted; refresh complete |
-   | `reverted` | Guard rejected the snapshot; old graph still serving |
+   | `reverted` | Stamp or verify gate failed after the swap; rail restored the previous snapshot, which is still serving |
    | `failed` | Rail error before staging |
 
    **Terminal conditions:**
@@ -105,24 +105,3 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
 - The binding format is canonical across all KG-aware skills (see `../bd-shared/kg-binding.md`).
 - An admin session token is required to trigger and poll the rail — an operator without one
   stops after Step 3 and hands the trigger to someone who has it.
-
----
-
-## Pre-rail orchestrators
-
-For orchestrators that predate the kg-refresh rail (`POST /api/kg/refresh` returns `404`),
-fall back to a self-deploy:
-
-`POST <kg.orchestrator>/api/deploy` with an admin session token. The orchestrator builds its
-own next image, minting the KG build secret internally
-(`202 {"deploying": <sha>}` = started; `409` = one already running).
-
-**Note:** for pre-rail orchestrators, the rail does not run the ingest — you must run the
-ingest locally in `kg.source_repo` and push the snapshot to the default branch before
-triggering the deploy. The standard path above skips this; it applies only here.
-
-Fallback for an image that predates self-deploy: the manual command in the orchestrator
-repo's `docs/deployment.md` —
-`fly deploy --remote-only --no-cache --build-secret kg_token=… --build-arg SOURCE_COMMIT/REPO/BRANCH … --app <app>`
-(all three stamps, or the resulting image cannot self-deploy). Never a plain `fly deploy` —
-it ships a sidecar-less image (`/mcp` → 503).
