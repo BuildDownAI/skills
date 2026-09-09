@@ -50,6 +50,26 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
      through a **PR on the KG source repo** — not to `snapshot/`, not a direct push to the
      default branch. Create a branch (`kg-scope-reconcile/<date>`), commit, open the PR
      (`gh pr create` on `kg.source_repo`), and merge it before triggering the rail.
+   - **Base drift.** Check whether the derivative KG repo is behind the base template:
+     1. If `get_tenant_health` returned a row with type `base:drift`, print that row directly
+        and skip the remaining git steps below.
+     2. Otherwise, read `base_repo:` from `sources.yml`. If the field is absent, use
+        `https://github.com/BuildDownAI/bd-knowledge-graph-base.git` as the upstream URL
+        and print "base_repo not set; using the base template". Skip the drift check only
+        if the URL cannot be fetched (e.g., network error or auth failure).
+     3. Ensure the `upstream` remote exists in the KG checkout: run
+        `git remote get-url upstream`. If the remote is missing, add it:
+        `git remote add upstream <base_repo>`.
+     4. Run `git fetch upstream`.
+     5. Count commits the derivative is behind: `git rev-list HEAD..upstream/main --count`
+        → N. If N > 0, find the last merge date:
+        `git log --merges --first-parent -1 --format=%cd HEAD`
+        (use "never merged" if no merge commit exists). Print:
+        "derivative is N commits behind base (last merge <date>); run bd-mega-kg-refresh to merge"
+        If N = 0, print: "derivative is current with base".
+     Advisory only — the refresh continues regardless of the result. Do not run
+     `git merge upstream`, do not create a `kg-upstream/` branch, and do not open any PR
+     in this sub-step.
    - Announce the delta: "orchestrator manages N projects; sources covered M; added
      <repos/teams/branches>". No delta → one line: "scope in sync (N projects)".
 
