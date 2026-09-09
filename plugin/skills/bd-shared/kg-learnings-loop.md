@@ -26,6 +26,15 @@ surface something the base template should absorb?* Qualifying learnings:
 A routine, uneventful run produces **no** learning PR. Do not spam the base.
 This step is advisory and never blocks the create/refresh that triggered it.
 
+## Inputs from the rail
+
+The `bd-kg-refresh` rail opens a refresh PR with a commit message of the form
+`kg-refresh: snapshot @ <stamp>`. When the rail posts a `# ai-implement-kg-refresh-learnings`
+comment on that PR (once AII-596 ships), treat it as an additional input to the base-note
+decision: review the comment for anomalies that qualify as learnings before deciding whether
+to write a base PR. The operator writes the sanitized learning note — the runner never PRs
+the base repo directly.
+
 ## What to write
 
 One time-based note in the **base repo**:

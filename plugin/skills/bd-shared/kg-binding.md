@@ -10,7 +10,7 @@ truth for every machine (AII-324). Skills never bind a local KG query server.
 - kg.orchestrator: https://<app>.fly.dev                       # orchestrator serving /mcp
 - kg.mcp_server:   orch-<app-slug>                             # remote server name in .mcp.json — per-orchestrator (OAuth token ties to the name, BDS-22)
 - kg.search_tool:  mcp__orch-<app-slug>__kg_hybrid_search      # the ONLY tool skills call
-- kg.source_repo:  <owner>/knowledge-graph-<project-slug>      # ingest source; refresh = ingest → commit snapshot → redeploy
+- kg.source_repo:  <owner>/knowledge-graph-<project-slug>      # ingest source; refresh = POST /api/kg/refresh on the orchestrator
 - kg.local_mcp_server:  <project-slug>-kg                          # OPTIONAL (transition/dev): local stdio server name
 - kg.local_search_tool: mcp__<project-slug>-kg__kg_hybrid_search   # OPTIONAL: its hybrid-search tool
 - kg.prefer:       orchestrator                                # orchestrator (default) | local — which target skills try first
@@ -46,7 +46,7 @@ resolves them the same way:
    say so — `"requires the orchestrator MCP — re-authenticate /mcp (or fix the deploy) to use
    this"` — and skip that step; do not silently substitute local data.
 5. The two graphs can differ in freshness (local: rebuilt by any ingest, served after a Claude
-   Code restart; orchestrator: rebuilt by snapshot commit + redeploy). The age stamp
+   Code restart; orchestrator: rebuilt by the rail (POST /api/kg/refresh)). The age stamp
    (`dcterms:modified` on the spine IRI) is readable on both — cite the served target's stamp.
 
 ## Semantics
@@ -68,8 +68,8 @@ coupling loose.
 
 - `bd-project-setup` (Phase K) writes this block into a project's CLAUDE.md during onboarding and
   wires the remote MCP server entry.
-- `bd-kg-refresh` keeps the **orchestrator's** graph current: re-run the ingest in `kg.source_repo`,
-  commit the snapshot parts, redeploy the orchestrator (the image build re-materializes graph +
-  embeddings). There is no live reload — the redeploy *is* the refresh.
+- `bd-kg-refresh` keeps the **orchestrator's** graph current: it triggers `POST /api/kg/refresh`
+  on the orchestrator (the rail clones, ingests, guards, and serves the updated graph). The laptop
+  never pushes `snapshot/`. For local iteration on the ingest, use `bd-mega-kg-refresh` (forthcoming — see BDS-49).
 - The graph stamps its own age at ingest (`dcterms:modified` on the spine IRI) — recon states
   "graph as of {date}" and flags staleness worth a refresh.
