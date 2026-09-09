@@ -53,8 +53,10 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
    - **Base drift.** Check whether the derivative KG repo is behind the base template:
      1. If `get_tenant_health` returned a row with type `base:drift`, print that row directly
         and skip the remaining git steps below.
-     2. Otherwise, read `base_repo:` from `sources.yml`. If the field is absent, print
-        "base_repo not set in sources.yml — skipping drift check" and skip.
+     2. Otherwise, read `base_repo:` from `sources.yml`. If the field is absent, use
+        `https://github.com/BuildDownAI/bd-knowledge-graph-base.git` as the upstream URL
+        and print "base_repo not set; using the base template". Skip the drift check only
+        if the URL cannot be fetched (e.g., network error or auth failure).
      3. Ensure the `upstream` remote exists in the KG checkout: run
         `git remote get-url upstream`. If the remote is missing, add it:
         `git remote add upstream <base_repo>`.
