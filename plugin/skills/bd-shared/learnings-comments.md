@@ -36,6 +36,15 @@ trace that future planning — and a future knowledge-graph ingester — can rea
 | An issue's PR **merges** | A build-down comment | **That issue** — the merge-time findings: smoke fixes, review-iteration causes, what the landing surfaced. Marker on line 1, same as always. |
 | A chain / tree **completes** (or a session closes) | The build-down **capstone** | The **parent / umbrella issue** — cross-issue patterns and the outcome table, naming the children covered. The per-issue comments carry the detail; the capstone carries the arc. |
 
+**When the covered issues have NO tracker parent** (a standalone related set — e.g. an ADR
+fanning out across repos), the single build-up comment anchors on one issue of the set, and
+**every other covered issue gets a one-line pointer comment** linking to the anchor ("build-up
+learnings for this wave live on <anchor>"). A pointer is not a learnings comment — no marker
+line — so one-canonical-comment-per-marker holds. Rationale: in a tree, the parent link leads
+a reader to the anchor; in a related-only set nothing does, and the rule fails its own
+discoverability purpose (observed live 2026-08-31: the operator landed on a covered issue and
+found nothing).
+
 **Why per-issue, not parent-only (the PR-invisibility rationale):** the KG spine ingests a PR's
 title, body, and state — **never its comment threads**. A smoke report or review finding posted
 only on the PR is invisible to the graph forever. The PR comment remains the review-facing copy;

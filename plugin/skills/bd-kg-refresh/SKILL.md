@@ -1,6 +1,6 @@
 ---
 name: bd-kg-refresh
-description: "Refresh a project's knowledge graph (KG) so hybrid search reflects the current code + tracker. The KG is served by the orchestrator's /mcp — REFRESH = REDEPLOY: run the ingest locally in the KG source repo, commit the snapshot parts, redeploy the orchestrator (the image build re-materializes graph + embeddings), then verify the deployed graph's age stamp changed. Trigger when the user says 'bd-kg-refresh', 'refresh the KG', 'rebuild the knowledge graph', 're-ingest the KG', or after landing work that should be searchable. No-op with a clear message if this project has no KG bound."
+description: "Refresh a project's knowledge graph (KG) so hybrid search reflects the current code + tracker. The KG is served by the orchestrator's /mcp — REFRESH = kg/refresh rail or redeploy fallback: run the ingest locally in the KG source repo, commit the snapshot parts (including embeddings), trigger POST /api/kg/refresh on the orchestrator (redeploy as 404 fallback), then verify the deployed graph's age stamp changed. Trigger when the user says 'bd-kg-refresh', 'refresh the KG', 'rebuild the knowledge graph', 're-ingest the KG', or after landing work that should be searchable. No-op with a clear message if this project has no KG bound."
 metadata:
   suite: builddown
 ---
@@ -8,12 +8,13 @@ metadata:
 # bd-kg-refresh Skill
 
 Refresh the **orchestrator's** knowledge graph. There is no local graph to refresh — the
-deployed sidecar is the single source of truth (AII-324), and it only changes when a new image
-is built from a committed snapshot. **The redeploy IS the refresh**; the deploy log is the
-refresh audit trail.
+deployed sidecar is the single source of truth (AII-324), and it only changes when a committed
+snapshot is loaded. The standard path triggers the refresh rail (`POST /api/kg/refresh`) without
+a redeploy; the redeploy path is a fallback for orchestrators predating the rail.
 
 ```
-ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrator → verify live
+ingest (local, KG source repo) → commit snapshot → POST /api/kg/refresh → verify live
+                                                  ↘ redeploy (fallback: 404) ↗
 ```
 
 ## Steps
@@ -59,13 +60,17 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
 3. **Run the ingest** from the source-repo checkout:
    - `./.venv/bin/python -m kg_ingest.cli --repo <code_repo.path from sources.yml> --tracker --secondary`
    - Rebuilds `out/graph.trig` + embeddings locally and — the part that matters for the
-     deploy — rewrites the **committed snapshot parts** (`snapshot/parts/*.nt`), including the
-     graph **age stamp** (`dcterms:modified` on the spine IRI, written at ingest).
+     refresh — rewrites the **committed snapshot** (`snapshot/parts/*.nt` and
+     `snapshot/embeddings.npz`), including the graph **age stamp** (`dcterms:modified` on the
+     spine IRI, written at ingest). The refresh rail stages the committed snapshot directly;
+     `snapshot/embeddings.npz` must be present and stamped or the rail will serve stale vectors.
    - Tracker credentials come from the KG repo's own configuration; this skill does not
      manage secrets.
 
-4. **Report the ingest**: quad count, issue/vector counts, `SHACL conforms`, and the
-   `graph age stamp` line (this run's date — the value the live verify checks for in Step 7).
+4. **Report the ingest**: quad count, issue/vector counts, `SHACL conforms`, the
+   `graph age stamp` line (this run's date — the value the live verify checks for in Step 7),
+   and confirm `snapshot/embeddings.npz` was written and stamped (the refresh rail stages this
+   file; its absence causes the rail to serve stale vectors).
    When `docs_sites:` entries exist, include the crawl line — "docs: N sites, M pages,
    K changed" (the ingest prints `pages: M fetched, K changed` per site; `K < M` on a warm
    refresh means the incremental path skipped re-chunking unchanged pages — expected, not
@@ -76,21 +81,30 @@ ingest (local, KG source repo) → commit snapshot parts → redeploy orchestrat
    - Data-refresh commits go straight to the default branch — the snapshot is generated
      output, not reviewed code. The orchestrator's image build clones this branch.
 
-6. **Redeploy the orchestrator.** Standard path (AI-Implement ≥ AII-357): trigger a
-   **self-deploy** — `POST <orchestrator>/api/deploy` with an admin session token; the
-   orchestrator builds its own next image, minting the KG build secret internally
+6. **Trigger the refresh.** Confirm the snapshot push LANDED (`git log origin/<default>`)
+   *before* triggering either path — the refresh rail fetches from the same repo the image
+   build clones, and a race produces the same stale-snapshot symptom regardless of transport.
+
+   **Standard path (AII-426+):** `POST <orchestrator>/api/kg/refresh` with an admin session
+   token. Expected responses:
+   - `202` — refresh accepted and running; poll Step 7 until the age stamp changes.
+   - `409` — a refresh is already running; wait and poll, do not re-trigger.
+   - Refusal while a deploy hold is active — the rail surfaces this explicitly; wait for the
+     hold to clear before retrying.
+
+   **Fallback (404 — orchestrator predates the refresh rail):** fall through to a self-deploy:
+   `POST <orchestrator>/api/deploy` with an admin session token; the orchestrator builds its
+   own next image, minting the KG build secret internally
    (`202 {"deploying": <sha>}` = started; `409` = one already running). Fallback for an
    image that predates self-deploy: the manual command in the orchestrator repo's
    `docs/deployment.md` — `fly deploy --remote-only --no-cache --build-secret kg_token=…
    --build-arg SOURCE_COMMIT/REPO/BRANCH … --app <app>` (all three stamps, or the resulting
    image cannot self-deploy). Never a plain `fly deploy` — it ships a sidecar-less image
    (`/mcp` → 503).
-   **Sequencing rule:** confirm the snapshot push LANDED (`git log origin/<default>`)
-   *before* triggering the deploy — chaining push and deploy in one command lets the remote
-   builder clone the pre-push tree, and Step 7's unchanged stamp is how you find out.
 
-7. **Verify live (boots ≠ serves).** Query the deployed graph through `kg.search_tool` and
-   confirm:
+7. **Verify live (boots ≠ serves).** First, `GET <orchestrator>/api/kg/status` — this reports
+   the served stamp and the last refresh outcome, a faster first check than a full KG query.
+   Then query the deployed graph through `kg.search_tool` and confirm:
    - a domain query returns non-empty, `degraded: false` results, and
    - the graph's **age stamp equals Step 3's date** (recon reads it via `kg_neighbors` on the
      spine IRI — `../bd-shared/kg-recon.md`). An unchanged stamp means the deploy served the OLD

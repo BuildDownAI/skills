@@ -52,13 +52,28 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 
 - *(not applicable — this repo has no preview deployments; bd-smoke-jumper is not used here)*
 
-## Releasing — ⚠️ bump the plugin version on every skill change
+## Releasing
 
-> **Reminder:** the plugin **`version`** is the *only* signal that tells `/plugin update` (and the
-> marketplace) to pull new content. `marketplace.json` carries no version — it just sources `./plugin`.
+`testing` and `main` have different jobs. Keep the branch-specific rules below separate.
+
+### On `testing` — where every change lands
 
 - **Any change to `plugin/skills/**` (or other shipped plugin content) must bump `version` in
-  [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** Skip it and
-  installs keep serving the stale skills.
-- **Minor** (`0.x.0`) for additive / backward-compatible changes; **patch** (`0.0.x`) for fixes and wording.
-- Current: **`1.4.1`**.
+  [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** The plugin
+  `version` is the only signal that tells `/plugin update` to pull new content.
+- **Minor** (`0.x.0`) for additive/backward-compatible changes; **patch** (`0.0.x`) for fixes and wording.
+- `.claude-plugin/marketplace.json` uses `./plugin` on this branch; it should not be edited on `testing`.
+
+### On `main` — where releases live
+
+- No direct commits: changes arrive by merging `testing`, except for catalog repoint PRs.
+- `.claude-plugin/marketplace.json` must pin the plugin source to a release tag (`git-subdir` + `ref`).
+- Keep the URL explicit: `https://github.com/BuildDownAI/skills.git`.
+
+### Cutting a release
+
+1. Merge `testing` → `main` with a merge commit (no extra version bump commit).
+2. Create/push annotated tag `vX.Y.Z`, then publish the GitHub release from that tag.
+3. Repoint `main` catalog `ref` to that tag in a `main`-only PR.
+
+After merges between `testing` and `main`, verify the catalog file still matches the branch’s required mode.
