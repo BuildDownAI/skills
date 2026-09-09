@@ -15,8 +15,17 @@ Two failure modes this catches, both observed in real build-ups:
    `sources/page.tsx` — a different file, one path segment away. The implementer
    correctly skipped the work, and the reviewer wrongly called it a silent drop.
 
-So this prints what each file *actually is* next to what the issue claims, and
-fails on any numeric line-count claim that does not match.
+3. An issue whose shape violates issue-shape.md: a new module plus more than a
+   few consumers (wide-and-deep), too many declared entries for one implement
+   pass, or a contract surface changed in the same issue as a new module. The
+   observed case: one "foundation" issue creating a classifier and wiring it
+   into eight call sites, a callback body, and a database column. Three review
+   rounds; every blocking finding at a seam. The rubric said to split it; prose
+   is walked past, a non-zero exit is not.
+
+So this prints what each file *actually is* next to what the issue claims, fails
+on any numeric line-count claim that does not match, and fails on a shape
+violation unless --no-shape is given.
 
 Usage:
     verify-issue-files.py BODY.md --repo /path/to/repo
@@ -43,6 +52,61 @@ LINE_RANGE_SUFFIX = re.compile(r":\d+(?:-\d+)?$")
 LINE_CLAIM = re.compile(r"(?:~|approximately\s+|about\s+)?([\d,]{2,})\s+lines?\b", re.IGNORECASE)
 # Any backticked path-looking token, so a claim can be attributed to a file.
 INLINE_PATH = re.compile(r"`([^`\s]*/[^`\s]*\.[A-Za-z0-9]+)(?::\d+(?:-\d+)?)?`")
+
+# Shape thresholds (issue-shape.md, "The shape rule"). Overridable per invocation.
+DEFAULT_MAX_CONSUMERS = 3   # Modify: source files alongside a Create: source file
+DEFAULT_MAX_ENTRIES = 12    # every declared bullet, tests and docs included
+# Paths that are contract surfaces: readers and validators live on the other side
+# of a process boundary. A Create: in the same issue as a Modify: here is hard
+# rule 13 (contract change isolation). Substring match on the declared path;
+# extend per project with --contract.
+DEFAULT_CONTRACT_MARKERS = (
+    "migrations/", "migration", "schema", "run-config", "callback", "envelope",
+    "openapi", ".proto", ".graphql", "/contracts/", "/api/types",
+)
+DOC_SUFFIXES = (".md", ".mdx", ".rst", ".txt")
+TEST_MARKERS = ("__tests__/", "/tests/", "/test/", ".test.", ".spec.", "_test.", "spec/")
+
+
+def is_doc(path: str) -> bool:
+    return path.lower().endswith(DOC_SUFFIXES)
+
+
+def is_test(path: str) -> bool:
+    return any(m in path for m in TEST_MARKERS)
+
+
+def check_shape(
+    entries: list[tuple[str, str, int]],
+    max_consumers: int,
+    max_entries: int,
+    contract_markers: tuple[str, ...],
+) -> list[str]:
+    """Shape violations per issue-shape.md. Each one is a split, not a note."""
+    problems: list[str] = []
+    creates = [p for v, p, _ in entries if v == "Create" and not is_doc(p) and not is_test(p)]
+    modifies = [p for v, p, _ in entries if v == "Modify" and not is_doc(p) and not is_test(p)]
+
+    if len(entries) > max_entries:
+        problems.append(
+            f"shape: {len(entries)} declared entries (limit {max_entries}, tests and docs count). "
+            "Split: deep core + wide propagation blocked by it."
+        )
+    if creates and len(modifies) > max_consumers:
+        problems.append(
+            f"shape: {len(creates)} new module(s) plus {len(modifies)} modified source file(s) — "
+            f"wide-and-deep (consumer limit {max_consumers}). Split: the module with its tests "
+            "and NO consumers first, then a wiring issue `Blocked by:` it."
+        )
+    if creates:
+        contract_hits = [p for p in modifies if any(m in p.lower() for m in contract_markers)]
+        if contract_hits:
+            problems.append(
+                "shape: a new module and a contract surface change in one issue (hard rule 13): "
+                + ", ".join(f"`{p}`" for p in contract_hits)
+                + ". The producer and the contract are different reviews — split them."
+            )
+    return problems
 
 
 def find_files_section(body: str) -> list[tuple[str, str, int]]:
@@ -120,6 +184,13 @@ def main() -> int:
     ap.add_argument(
         "--quiet", action="store_true", help="only print problems, not the inventory"
     )
+    ap.add_argument("--no-shape", action="store_true", help="skip the issue-shape checks")
+    ap.add_argument("--max-consumers", type=int, default=DEFAULT_MAX_CONSUMERS,
+                    help=f"Modify: source files allowed alongside a Create: (default {DEFAULT_MAX_CONSUMERS})")
+    ap.add_argument("--max-entries", type=int, default=DEFAULT_MAX_ENTRIES,
+                    help=f"declared ## Files entries allowed (default {DEFAULT_MAX_ENTRIES})")
+    ap.add_argument("--contract", action="append", default=[],
+                    help="extra path substring that marks a contract surface (repeatable)")
     args = ap.parse_args()
 
     repo = Path(args.repo).resolve()
@@ -166,6 +237,15 @@ def main() -> int:
         )
 
     problems.extend(check_line_claims(body, repo))
+    if not args.no_shape:
+        problems.extend(
+            check_shape(
+                entries,
+                args.max_consumers,
+                args.max_entries,
+                DEFAULT_CONTRACT_MARKERS + tuple(m.lower() for m in args.contract),
+            )
+        )
 
     if not args.quiet:
         width = max(len(r[1]) for r in rows)
@@ -180,7 +260,8 @@ def main() -> int:
             print(f"  - {p}")
         print(
             "\nRead each file before describing it. A path that exists is not "
-            "evidence\nthat it is the file you think it is."
+            "evidence\nthat it is the file you think it is. A shape violation is a split, "
+            "not a note."
         )
         return 1
 
