@@ -304,6 +304,11 @@ adapter's **Pickup trigger**, **Wave staging**, **Architect routing**, **Depende
 **Feature-node grouping** sections. File in dependency order so each `Blocked by:` resolves to
 a real issue ID.
 
+**Tracker links are direction-sensitive, and a backwards link blocks the wrong issue.** Follow
+the adapter's **Dependencies** section for the exact call, then verify each link by reading the
+blocked issue back before filing anything that depends on it. This applies to a build-down or
+split that files follow-ups too, not only to a full build-up.
+
 **The pickup signal is tracker-specific.** Linear uses state plus a label; Jira uses the
 `AI-Implement-Status` field, where setting only a label is a silent no-op. On Jira the only
 value ever set by hand is `Ready` (or the field stays unset for held issues) — `Planning`

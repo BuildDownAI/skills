@@ -94,6 +94,29 @@ blocks B". The pipeline (`isBlockedByIncomplete`) skips an issue that has an
 inward "Blocks" link to a non-`done` issue. Get the direction right or the
 dependency will not serialize.
 
+**The exact call.** With the Atlassian MCP `createIssueLink` tool, the argument
+names are the direction — do not translate them through "blocks"/"is blocked by"
+prose in your head:
+
+```
+createIssueLink({ type: "Blocks", inwardIssue: "<BLOCKER>", outwardIssue: "<BLOCKED>" })
+# "BAC-27134 is blocked by BAC-27115":
+createIssueLink({ type: "Blocks", inwardIssue: "BAC-27115", outwardIssue: "BAC-27134" })
+```
+
+**Verify every link you create, before filing anything that depends on it.**
+Fetch the *blocked* issue with `fields: ["issuelinks"]`; the blocker must appear
+under `inwardIssue` on a `Blocks` entry. If it appears under `outwardIssue`, the
+link is backwards — and the *blocker* is now the one that will not dispatch.
+There is no MCP tool to delete a link; a backwards link has to be removed in the
+Jira UI, so a wrong direction costs a human round-trip.
+
+The failure looks like this: the issue sits at `Ready` for polls on end with no
+run, and the orchestrator log says
+`[jira] Skipping BAC-NNNNN: blocked by an incomplete issue`. Observed
+2026-09-09: four links created backwards held the one issue that was meant to
+unblock the whole chain.
+
 > Default link-type name is "Blocks". An instance that renamed it will fail open
 > (the issue dispatches as if unblocked) — confirm the link type name if
 > dependencies don't hold.
@@ -137,8 +160,10 @@ read the epic description's `Design Decisions` index and follow it to the ADRs i
   filing the wave.
 - **Hardcoded custom-field IDs.** → Instance-specific; read them from the mapping
   / mirror doc.
-- **"Blocks" link created in the wrong direction.** → Blocker must be the inward
-  issue. Verify the dependency actually serializes on the pilot.
+- **"Blocks" link created in the wrong direction.** → `inwardIssue` is the
+  blocker, `outwardIssue` is the blocked issue. Fetch the blocked issue's
+  `issuelinks` after every link and confirm the blocker is under `inwardIssue`;
+  a backwards link needs the Jira UI to delete.
 
 ## Feature-node grouping
 
