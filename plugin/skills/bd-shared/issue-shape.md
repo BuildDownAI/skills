@@ -220,6 +220,11 @@ fits its turn budget and no pass repeats work a reviewer rejected.
 The tell was available before filing: the `Create:` entry had eight consumers, and the chain's
 first issue was its largest.
 
+**If it was filed anyway:** the first review tells you. Findings concentrated at the seams
+between the new module and its consumers mean the shape was wrong, and the right move is to
+close the PR and split — not to drive it through gap-fill rounds. `bd-build-down`'s round cap
+and split signal exist for exactly this case.
+
 ## Reshaping an existing detailed issue
 
 The rubric above authors issues from scratch. Reshaping an already-detailed issue carries a
