@@ -126,7 +126,7 @@ effect until the env var is unset — say so.
 
 Call `get_kg_status`. Surface in one line:
 
-> stage: `<stage>` | served: `<servedAt>` | last ok: `<lastRefresh.ok>`
+> stage: `<stage>` | served: `<servedStamp>` | last ok: `<lastRefresh.ok>`
 
 Then give `gate` and `detail` if `lastRefresh.ok` is false — these name the failing check
 and its reason.
@@ -142,7 +142,7 @@ The five rail stages and their meanings:
 | `failed` | Rail error before staging |
 
 **When `stage` is terminal (`serving`, `reverted`, or `failed`):** look up the refresh PR
-the rail opened on the KG source repo — its title is `kg-refresh: snapshot @ <servedAt>`.
+the rail opened on the KG source repo — its title is `kg-refresh: snapshot @ <servedStamp>`.
 If the PR has a comment whose first line is `# ai-implement-kg-refresh-learnings` (posted
 by the rail when it detects an anomaly — present only when the rail flagged something),
 surface the key findings from that comment. An uneventful refresh has no learnings comment;
