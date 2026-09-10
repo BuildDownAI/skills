@@ -23,8 +23,10 @@ and stop.
 
 ## Step 1 — Discover
 
-At session start, use ToolSearch with the query `mcp__<server>__` (the bound server's
-prefix) to list all tools the server exposes along with their descriptions.
+At session start, use ToolSearch with the query `mcp__<server>__` and `max_results: 50`
+(the bound server's prefix) to list all tools the server exposes along with their
+descriptions. The `max_results: 50` value gives headroom well beyond any plausible tool
+count and does not need updating as new tools are added.
 
 Print exactly one line:
 
