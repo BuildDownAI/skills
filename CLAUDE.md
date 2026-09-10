@@ -58,10 +58,22 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 
 ### On `testing` — where every change lands
 
-- **Any change to `plugin/skills/**` (or other shipped plugin content) must bump `version` in
+- **Any change to `plugin/skills/**` (or other shipped plugin content) must change `version` in
   [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** The plugin
   `version` is the only signal that tells `/plugin update` to pull new content.
-- **Minor** (`0.x.0`) for additive/backward-compatible changes; **patch** (`0.0.x`) for fixes and wording.
+- **Compute the new version from `main`, not from the previous `testing` value.** Read `main`'s
+  version first (a shallow clone needs the fetch):
+  `git fetch origin main --depth=1 && git show origin/main:plugin/.claude-plugin/plugin.json`
+  1. **Release target, set once per cycle.** If `testing` still carries `main`'s version, set the
+     target: `main` + `0.1.0` for additive or backward-compatible work, `main` + `1.0.0` for a
+     breaking change. This happens **once** between releases, however many PRs land. A later
+     breaking PR may raise a minor target to the major target (`1.5.x` → `2.0.0`); nothing raises
+     the same level twice.
+  2. **Patch per PR.** Every later PR that changes shipped content adds `0.0.1`. A PR that touches
+     no shipped content leaves the version alone.
+
+  Worked example: `main` is `1.4.0`. The first content PR sets `1.5.0`; the next two set `1.5.1`
+  and `1.5.2`; the release is tagged `v1.5.2`. `testing` never reaches `1.6.0` before a release.
 - `.claude-plugin/marketplace.json` uses `./plugin` on this branch; it should not be edited on `testing`.
 
 ### On `main` — where releases live
@@ -73,7 +85,7 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 ### Cutting a release
 
 1. Merge `testing` → `main` with a merge commit (no extra version bump commit).
-2. Create/push annotated tag `vX.Y.Z`, then publish the GitHub release from that tag.
+2. Create/push annotated tag `vX.Y.Z`, where `X.Y.Z` is the version `testing` carries at merge time. Publish the GitHub release from that tag.
 3. Repoint `main` catalog `ref` to that tag in a `main`-only PR.
 
 After merges between `testing` and `main`, verify the catalog file still matches the branch’s required mode.

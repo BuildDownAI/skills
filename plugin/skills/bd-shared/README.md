@@ -48,5 +48,6 @@ merge, PR handling), so they are not shared with these.
 - **`feature-branch-grouping.md` cites `docs/feature-branch-grouping.md` twice on purpose.**
   Those two references point at the **upstream `BuildDownAI/AI-Implement` repo**, which is the
   authoritative source. They are not stale local paths — leave them alone.
-- Changing anything here is a change to shipped plugin content, so bump `version` in
-  `plugin/.claude-plugin/plugin.json` in the same PR.
+- Changing anything here is a change to shipped plugin content, so change `version` in
+  `plugin/.claude-plugin/plugin.json` in the same PR. The rule is in the repo root `CLAUDE.md`
+  (Releasing): one release target per cycle computed from `main`, then `+0.0.1` per PR.
