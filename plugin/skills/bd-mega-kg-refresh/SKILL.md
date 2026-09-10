@@ -29,8 +29,6 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    | `kg.orchestrator` | required | Orchestrator URL for the rail handoff |
    | `kg.mcp_server` | required | Remote orchestrator MCP server name |
    | `kg.search_tool` | required | Orchestrator hybrid-search tool |
-   | `kg.local_mcp_server` | required for Phase 4 | Local stdio server name — checked at Phase 4 start |
-   | `kg.local_search_tool` | required for Phase 4 | Local stdio search tool — checked at Phase 4 start |
 
 2. **Establish the KG source checkout.** This skill runs in the KG source checkout. Confirm
    the working directory contains `sources.yml` and the Python ingest package. If the checkout
@@ -41,7 +39,6 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
      cd <local-path>
      ./setup.sh
      ```
-   - Do not start the local MCP server yet — Phase 4 starts it when needed.
    - Announce: "KG checkout ready at `<local-path>`."
 
 3. **Orient.** Read `sources.yml` — list every `code_repo`, `secondary_repos` entry, `docs_sites`,
@@ -252,13 +249,6 @@ After all decisions are settled, summarize the agreed changes: "I will make thes
 
 Two loops, in order. The proof loop is the gate before Phase 5.
 
-**Local server required.** Before running the fast loop, confirm `kg.local_mcp_server` and
-`kg.local_search_tool` are bound in CLAUDE.md. If either is absent:
-- Print: "bd-mega-kg-refresh Phase 4 requires a local KG server. Add `kg.local_mcp_server`
-  and `kg.local_search_tool` to the `## Knowledge graph` block in CLAUDE.md (see
-  `../bd-shared/kg-binding.md`), then retry."
-- Stop.
-
 #### Fast loop — iterate quickly
 
 Goal: verify that the manifest changes produce a graph that answers the Phase 2 gaps.
@@ -272,15 +262,14 @@ Goal: verify that the manifest changes produce a graph that answers the Phase 2 
    ```
    Check that `out/graph.trig` is non-empty.
 
-   **Restart the MCP client after each rebuild.** The local server
-   (`<kg checkout>/.venv/bin/kg-query serve`, server name `<project-slug>-kg`) loads the
-   graph once at startup — without a restart, queries hit the stale pre-build graph.
-
-3. Query the rebuilt local graph. If the local server is not yet running, start it:
+3. Query the rebuilt local graph using the checkout's CLI:
    ```bash
-   <kg checkout>/.venv/bin/kg-query serve
+   ./.venv/bin/kg-query search --hybrid "<term>"
    ```
-   Then call `mcp__<kg.local_mcp_server>__<kg.local_search_tool>` for each Phase 2 search.
+   Run one query per Phase 2 search term. For the spine-stamp lookup use:
+   ```bash
+   ./.venv/bin/kg-query --neighbors <iri>
+   ```
    Confirm that gaps marked ✗ or ⚠ are now ✓.
 
 4. **Repeat** the fast loop for each round of changes until the gap table is clean. Do not
