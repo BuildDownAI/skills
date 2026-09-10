@@ -260,6 +260,13 @@ A numbered sequence. For each issue:
 
 Group into phases or tracks at eight or more issues, or wherever parallel paths exist.
 
+**Setting surface check (required before presenting the plan).** For every issue in the plan
+that introduces an env var or feature flag, the plan must state where the operator changes it
+at runtime. Ask: *"Where does the operator change this?"* Recommended answer: on the page
+whose action it affects, stored in settings, with the env var as the seed on first boot.
+Record the answer as the `Setting surface:` value in that issue's `## Shape` block. A plan
+with a surfaceless flag is not ready for approval.
+
 **Plan header:** build-up name, one-sentence objective, mode, issue count, and the critical
 path — the longest dependency chain, so the user sees the minimum time to complete.
 

@@ -170,7 +170,7 @@ not a checklist to march through:
 **Testing** · **Observability** · **Explicit out-of-scope confirmation** · **Every row of the
 Overlap Inventory**
 
-Two branches carry a hard requirement:
+Three branches carry a hard requirement:
 
 - **Rollout ending in a tighter constraint** — `NOT NULL`, `UNIQUE`, a narrowed type, a new
   FK or CHECK — forces the **writer census** in this phase. Enumerate every writer to the
@@ -178,6 +178,12 @@ Two branches carry a hard requirement:
   importers, admin tooling. See hard rule 9 in
   [`../bd-shared/issue-shape.md`](../bd-shared/issue-shape.md). Do not defer this to "we will
   find them when CI breaks."
+- **Rollout introducing an env var or feature flag** — ask *"Where does the operator change
+  this?"* before Gate 1 and record the answer as `Setting surface:` in the affected issue's
+  `## Shape` block. Recommended answer: on the page whose action it affects, stored in
+  settings, with the env var as the seed on first boot. A flag with no admin surface is not
+  a finished setting — the operator would need a deploy or `fly secrets set` to change it at
+  runtime, with no UI path.
 - **Every Overlap Inventory row** gets a committed action from the user, not from you.
 
 ### Adversarial principles
