@@ -149,8 +149,8 @@ surface the key findings from that comment. An uneventful refresh has no learnin
 skip if absent.
 
 **If `get_kg_status` is not in the discovery list** (tool not yet live on this orchestrator),
-apply the unanswerable rule:
-
-> no tool answers this; closest is `get_tenant_health`, which reports in-flight jobs and
-> overall rail health but not per-refresh stage detail. Ask your operator to deploy the
-> orchestrator version that exposes `get_kg_status`.
+apply the unanswerable rule. If `get_tenant_health` is also in the discovery list, cite it:
+`no tool answers this; closest is \`get_tenant_health\`, which reports in-flight jobs and overall
+rail health but not per-refresh stage detail. Ask your operator to deploy the orchestrator version
+that exposes \`get_kg_status\`.` If `get_tenant_health` is not in the discovery list either,
+apply the general unanswerable rule without naming a specific closest tool.
