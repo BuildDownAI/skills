@@ -453,6 +453,31 @@ If AI-Implement replies that it has no record of the PR (or an equivalent regist
 
 The trigger is accepted only when the configured agent acknowledges or queues it for the current head without an immediate registration error.
 
+### Round cap (hard rule)
+
+**At most three gap-fill rounds per PR.** Count every `@agent` comment that dispatches a fix
+run, conflict resolutions excluded. After the third, the PR merges if CI is green and no open
+finding changes a retry decision, a credential or authorization posture, or data integrity —
+and every remaining finding goes into **one** follow-up issue, filed pickup-ready. Doc wording,
+test hygiene, naming, and consistency nits are never merge blockers past round three.
+
+Why: two thorough reviewers re-review every delta, and on a PR with an under-specified contract
+each fix produces the next finding indefinitely. Observed: a 3-file push-retry PR took five
+rounds, all inside one first-match regex table; a 9-file comment-rendering PR took eight, all on
+a two-producer comment contract nobody had written down. The rounds cost ~20 minutes and $3–7
+each and stopped finding anything a follow-up could not hold.
+
+**Never append residuals to an in-flight issue.** A finding from PR A that belongs in PR B's
+files goes into a new follow-up issue, not into B's body. Bolting three PRs' residuals onto one
+open issue turned an 11-file issue into 22 files and ten rounds — the wide-and-deep shape the
+build-up rubric exists to prevent, recreated during build-down.
+
+**Split signal at round one.** If the first review's blocking findings sit mostly at seams
+between a new module and its consumers, the PR is over-shaped. Do not drive it: close the PR,
+keep the branch as reference, and re-file as module / wiring / contract issues per
+`../bd-shared/issue-shape.md`. The linter would have flagged it before filing; the first review
+is the last cheap moment to act on it.
+
 ### Posting rules
 
 - **Never wrap the agent mention in backticks** — markdown rendering can prevent the agent from recognizing it
