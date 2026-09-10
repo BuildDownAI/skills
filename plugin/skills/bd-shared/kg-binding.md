@@ -11,43 +11,20 @@ truth for every machine (AII-324). Skills never bind a local KG query server.
 - kg.mcp_server:   orch-<app-slug>                             # remote server name in .mcp.json — per-orchestrator (OAuth token ties to the name, BDS-22)
 - kg.search_tool:  mcp__orch-<app-slug>__kg_hybrid_search      # the ONLY tool skills call
 - kg.source_repo:  <owner>/knowledge-graph-<project-slug>      # ingest source; refresh = POST /api/kg/refresh on the orchestrator
-- kg.local_mcp_server:  <project-slug>-kg                          # OPTIONAL (transition/dev): local stdio server name
-- kg.local_search_tool: mcp__<project-slug>-kg__kg_hybrid_search   # OPTIONAL: its hybrid-search tool
-- kg.prefer:       orchestrator                                # orchestrator (default) | local — which target skills try first
 
-**Retired fields**: `kg.repo`, `kg.path`, `kg.branch`. A local stdio server is NOT retired when
-named by `kg.local_mcp_server` — that is the supported **transition binding** (below). An
-*unnamed* stdio entry is legacy; bd-project-setup Phase K records or removes it.
+**Retired fields**: `kg.repo`, `kg.path`, `kg.branch`, and the former transition-mode fields (namespaced `kg.`: `local_mcp_server`, `local_search_tool`, `prefer` — retired by BDS-56). The local `kg-query` CLI (`./.venv/bin/kg-query search --hybrid "<term>"`) is a checkout tool for iterating on ingest — it is not a binding and is not configured here.
 
-## Scope contract (orchestrator-driven)
+## Scope contract (rail-owned repos and teams, operator-owned docs roots)
 
 The orchestrator's **project list is the KG's intended scope**: every repo the orchestrator
 manages should be ingested, and every project's tracker team should be in the tracker config.
-`sources.yml` in the KG source repo is the *materialized* scope — bd-kg-refresh's reconcile
-step (2b) converges it to the project list on every run, cloning missing repos and asking the
-operator for each new project's `docs_url`. The Python ingest itself never calls the MCP:
+`sources.yml` in the KG source repo is the *materialized* scope. The rail's `kg-scope-reconcile`
+step updates it automatically on every refresh — adding any repo or team that appears in the
+orchestrator's project list but is missing from `sources.yml`. This is additive only: the rail
+never removes an existing entry or overwrites its `path`, `docs_url`, `docs_sites`, or `tier`
+values. Those fields are **operator-owned** — a removed entry's `path`/`docs_url`/`tier` stay
+absent until the operator explicitly restores them. The Python ingest itself never calls the MCP:
 config lives in git, MCP access lives in the session.
-
-## Dual-target resolution (transition mode)
-
-During the local→orchestrator transition a project may bind BOTH targets. Every KG-aware step
-resolves them the same way:
-
-1. **Try `kg.prefer` first** (default `orchestrator`). Its search tool is the primary.
-2. **Fall back to the other target** only if the preferred tool is unavailable or errors
-   (server unauthenticated / token expired / 503 / not loaded) AND the other is bound.
-3. **Always announce the target that served the query — one line, every time:**
-   - `KG: orchestrator (graph as of <date>)`
-   - `KG: local (kg.prefer=local; graph as of <date>)`
-   - `KG: LOCAL FALLBACK — orchestrator unavailable (<reason>); local graph may drift from the shared source of truth`
-   The user must never wonder which graph answered.
-4. **Orchestrator-only capabilities never fall back.** Anything the local server does not serve
-   (e.g. the orchestrator diagnostics tools) is orchestrator-required: if it is unavailable,
-   say so — `"requires the orchestrator MCP — re-authenticate /mcp (or fix the deploy) to use
-   this"` — and skip that step; do not silently substitute local data.
-5. The two graphs can differ in freshness (local: rebuilt by any ingest, served after a Claude
-   Code restart; orchestrator: rebuilt by the rail (POST /api/kg/refresh)). The age stamp
-   (`dcterms:modified` on the spine IRI) is readable on both — cite the served target's stamp.
 
 ## Semantics
 

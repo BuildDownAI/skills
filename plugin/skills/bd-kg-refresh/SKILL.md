@@ -1,6 +1,6 @@
 ---
 name: bd-kg-refresh
-description: "Refresh a project's knowledge graph (KG) via the orchestrator's refresh rail. Preflights the orchestrator, reconciles sources.yml scope (opening a PR for any changes), triggers POST /api/kg/refresh, polls the five rail stages to serving, then verifies the deployed graph. For local ingest iteration, use bd-mega-kg-refresh. No-op with a clear message if this project has no KG bound."
+description: "Refresh a project's knowledge graph (KG) via the orchestrator's refresh rail. Preflights the orchestrator, reports scope from the rail's manifest reconcile, triggers POST /api/kg/refresh, polls the five rail stages to serving, then verifies the deployed graph. For local ingest iteration, use bd-mega-kg-refresh. No-op with a clear message if this project has no KG bound."
 metadata:
   suite: builddown
 ---
@@ -28,28 +28,14 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
    note "preflight rows absent — proceeding" and continue.
    Auth error → tell the user to re-authenticate via `/mcp` in an interactive session.
 
-3. **Reconcile scope.** The orchestrator's project list is the KG's scope authority;
-   `sources.yml` is the materialized copy.
+3. **Report scope.** The rail reconciles `sources.yml` automatically on every refresh —
+   adding any repo or team from the orchestrator's project list that is not yet in the manifest.
    - Call `list_projects` on the bound orchestrator MCP
-     (`mcp__<kg.mcp_server>__list_projects`). For each project repo, check that it appears
-     in `sources.yml` (as `code_repo` or a `secondary_repos` entry). For each missing repo,
-     add the entry and ask the docs question — two parts (BDS-38):
-     - (a) "What is the published docs root for <repo>? Skip if none."
-     - (b) **For a versioned docs site only** (stable/latest areas): "Which docs version/area
-       documents the branch this KG ingests?" Record answers as `docs_url:` on the repo entry
-       and a `docs_sites:` entry — `url:`, `repo:`, `documents_branch:` (when versioned).
-       A skip leaves both keys absent.
-   - **Branch fill:** each `code_repo` and every `secondary_repos[]` entry must carry
-     `branch:`. When `branch:` is absent, fill it from the `defaultBranch` field on the
-     matching `list_projects` row. Failure-tolerant: if `list_projects` is unreachable,
-     announce it and proceed with the existing config; the reconcile is a convergence step,
-     not a gate.
-   - **Diff teams:** every project `teamKey` must appear under `trackers:`. Add missing teams
-     at `tier: secondary`.
-   - If `sources.yml` changed (new repos, new teams, or filled branches): commit the change
-     through a **PR on the KG source repo** — not to `snapshot/`, not a direct push to the
-     default branch. Create a branch (`kg-scope-reconcile/<date>`), commit, open the PR
-     (`gh pr create` on `kg.source_repo`), and merge it before triggering the rail.
+     (`mcp__<kg.mcp_server>__list_projects`) to obtain a project count. If `list_projects`
+     is unreachable, note "project count unavailable" and continue — this report is
+     informational, not a gate.
+   - Print: "scope: N mapped projects; the rail adds missing repos and teams on this refresh
+     (see the refresh PR's Scope section)."
    - **Base drift.** Check whether the derivative KG repo is behind the base template:
      1. If `get_tenant_health` returned a row with type `base:drift`, print that row directly
         and skip the remaining git steps below.
@@ -70,8 +56,6 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
      Advisory only — the refresh continues regardless of the result. Do not run
      `git merge upstream`, do not create a `kg-upstream/` branch, and do not open any PR
      in this sub-step.
-   - Announce the delta: "orchestrator manages N projects; sources covered M; added
-     <repos/teams/branches>". No delta → one line: "scope in sync (N projects)".
 
 4. **Trigger the rail.** Send `POST <kg.orchestrator>/api/kg/refresh` with an admin session
    token. Handle each response:
@@ -110,11 +94,16 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
 
 7. **Close — learnings loop (required check, usually a no-op).** Follow
    `../bd-shared/kg-learnings-loop.md`. In addition: find the refresh PR the rail opened
-   (title: `kg-refresh: snapshot @ <stamp>`) and read any comment marked
-   `# ai-implement-kg-refresh-learnings` (posted by the rail when it detects an anomaly —
-   present only if the rail flagged something, per AII-596). Use that comment, if present,
-   as an additional input to the base-note decision alongside the ingest report. An uneventful
-   refresh with no learnings comment files nothing. Advisory — never blocks.
+   (title: `kg-refresh: snapshot @ <stamp>`) and read two items from it:
+   - **`### Scope` section (AII-607):** The rail writes a `### Scope` section listing any
+     repos or teams it added to `sources.yml` on this run. Read it and include the delta as
+     additional context for the learnings loop. If the Scope section is absent (rail predates
+     AII-607), note its absence and proceed — this is not an error.
+   - **`# ai-implement-kg-refresh-learnings` comment (AII-596):** If a comment with this
+     exact marker is present (posted when the rail detects an anomaly), use it as additional
+     input to the base-note decision alongside the ingest report. If absent (uneventful run or
+     rail predates AII-596), proceed without it — this is normal.
+   An uneventful refresh with no learnings comment files nothing. Advisory — never blocks.
 
 ---
 

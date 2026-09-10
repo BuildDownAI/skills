@@ -12,11 +12,7 @@ When the block is present and `kg.present: true`, continue to the query step.
 
 Derive **1–3 short queries** from the work at hand — e.g. the objective's key nouns, or an issue key + title + gap topics from its gap analysis. These queries are brief and direct (2–4 words), surfacing the core concept(s) the operator needs orientation on.
 
-Resolve the target per `./kg-binding.md` *Dual-target resolution* (try `kg.prefer` — default
-orchestrator — fall back to the other bound target on error), then call its hybrid-search tool
-(and only hybrid-search) with `{query, limit: 8}`. Repeat for each derived query. **Open the
-recon output with the one-line target announce** (`KG: orchestrator …` / `KG: LOCAL FALLBACK —
-…`) so the operator knows which graph oriented them.
+Call the orchestrator's hybrid-search tool (`kg.search_tool`) with `{query, limit: 8}`. Repeat for each derived query. **Open the recon output with the one-line target announce** (`KG: orchestrator (graph as of <date>)`) so the operator knows which graph oriented them.
 
 ## Use the results
 
@@ -63,8 +59,7 @@ Present the gap explicitly ("graph as of `<date>` (`<age>` ago); since then `N` 
 Any error — tool unavailable, degraded response, empty index, tracker or `gh` hiccup — generates **one-line note** and **proceeds**. Recon is advisory, never blocking.
 
 - Missing tool → "KG search unavailable (tool error); proceeding without orientation."
-- Auth failure, local bound → fall back per the dual-target rule and announce `KG: LOCAL FALLBACK — …`.
-- Auth failure, no local bound → "orchestrator MCP token expired (1h TTL) — re-auth via /mcp in an interactive session; proceeding without orientation."
+- Auth failure → "orchestrator MCP token expired (1h TTL) — re-auth via /mcp in an interactive session; proceeding without orientation."
 - Degraded index → "deployed sidecar is lexical-only (`degraded: true`); run `bd-kg-refresh` — the rail rebuilds embeddings."
 - Empty index → "KG index empty; no prior learnings to draw on."
 - No age stamp → "graph has no age stamp (pre-AII-326 snapshot); staleness unknown — a `bd-kg-refresh` adds it."
