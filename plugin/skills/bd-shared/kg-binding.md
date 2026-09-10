@@ -19,13 +19,16 @@ truth for every machine (AII-324). Skills never bind a local KG query server.
 named by `kg.local_mcp_server` — that is the supported **transition binding** (below). An
 *unnamed* stdio entry is legacy; bd-project-setup Phase K records or removes it.
 
-## Scope contract (orchestrator-driven)
+## Scope contract (rail-owned repos and teams, operator-owned docs roots)
 
 The orchestrator's **project list is the KG's intended scope**: every repo the orchestrator
 manages should be ingested, and every project's tracker team should be in the tracker config.
-`sources.yml` in the KG source repo is the *materialized* scope — bd-kg-refresh's reconcile
-step (2b) converges it to the project list on every run, cloning missing repos and asking the
-operator for each new project's `docs_url`. The Python ingest itself never calls the MCP:
+`sources.yml` in the KG source repo is the *materialized* scope. The rail's `kg-scope-reconcile`
+step updates it automatically on every refresh — adding any repo or team that appears in the
+orchestrator's project list but is missing from `sources.yml`. This is additive only: the rail
+never removes an existing entry or overwrites its `path`, `docs_url`, `docs_sites`, or `tier`
+values. Those fields are **operator-owned** — a removed entry's `path`/`docs_url`/`tier` stay
+absent until the operator explicitly restores them. The Python ingest itself never calls the MCP:
 config lives in git, MCP access lives in the session.
 
 ## Dual-target resolution (transition mode)
