@@ -14,7 +14,7 @@ instructions are in each skill's `SKILL.md`.
 | `bd-super-build-down` | Autonomous, high-throughput `bd-build-down` for lean-back runs with many PRs. |
 | `bd-smoke-jumper` | Autonomous PR smoke-testing — log into a preview deploy, run adaptive tests, post verdicts. |
 | `bd-belay-on` | Formalize pause-and-recon handoffs between tools mid-session. |
-| `bd-system-questions` | Ask the orchestrator about system health, in-flight jobs, project list, or runner mode. |
+| `bd-system-questions` | Discovers the bound orchestrator MCP's tools at session start and routes questions by their descriptions. Answers questions about system health, in-flight jobs, project list, runner mode, KG refresh status, and more — any tool the server exposes is askable the day it ships (e.g. `get_issue_dispatch_status`, `get_tenant_health`, `list_in_flight_jobs`, `list_projects`, `get_runner_mode`, `get_kg_status`). |
 | `bd-kg-create` | Bootstrap a new KG repo from the `bd-knowledge-graph-base` template. |
 | `bd-kg-refresh` | Refresh a project's KG via the orchestrator's refresh rail: preflight, reconcile scope, trigger, poll five stages to serving, verify. |
 | `bd-mega-kg-refresh` | Local, interactive KG refresh: merge upstream base template changes, interrogate the served graph, propose and test ingest changes with the user, PR manifest/ingest changes to the KG repo, then hand off to bd-kg-refresh for the snapshot. Triggers: "bd-mega-kg-refresh", "change the ingest", "why is X not in the KG", "interactive KG refresh". |
