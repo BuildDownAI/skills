@@ -1,26 +1,91 @@
 ---
 name: bd-system-questions
-description: "Ask the orchestrator direct questions about the system: why a ticket isn't running, whether a pipeline is stuck, overall health, the project list, the runner mode. Trigger when the user says 'bd-system-questions', 'why isn't <ticket> running', 'why wasn't my ticket picked up', 'is the pipeline stuck', 'what's running right now', 'system health', 'orchestrator health', 'list the projects', or 'what runner mode are we in'. Uses the orchestrator MCP's read-only diagnostics tools. No-op with a clear message if no orchestrator MCP is bound."
+description: "Ask the orchestrator direct questions about the system: why a ticket isn't running, whether a pipeline is stuck, overall health, the project list, the runner mode, or the KG refresh status. Discovers the bound orchestrator MCP's tools at session start and routes questions by their descriptions — new capabilities are askable the day they ship. Trigger when the user says 'bd-system-questions', 'why isn't <ticket> running', 'why wasn't my ticket picked up', 'is the pipeline stuck', 'what's running right now', 'system health', 'orchestrator health', 'list the projects', 'what runner mode are we in', 'what is the KG refresh doing', or 'did the last refresh work'. No-op with a clear message if no orchestrator MCP is bound."
 metadata:
   suite: builddown
 ---
 
 # bd-system-questions Skill
 
-Answer system questions from the orchestrator itself. The orchestrator MCP serves five
-read-only diagnostics tools next to the KG tools, on the same server and the same sign-in.
-This skill maps plain questions to the right tool and interprets the answer.
+Answer system questions from the orchestrator itself. This skill discovers the bound MCP
+server's tools at session start and routes each question to the tool whose description best
+answers it. Fixed sections 1–6 are priors — they accelerate routing for known patterns but
+do not block unknown questions from reaching step 2.
 
 ## Binding
 
-Read `CLAUDE.md` → `## Knowledge graph` block → `kg.mcp_server` (the orchestrator MCP server,
-e.g. `orch-ai-implement-testing`). The diagnostics tools ride that server:
-`mcp__<server>__get_issue_dispatch_status`, `get_tenant_health`, `list_in_flight_jobs`,
-`list_projects`, `get_runner_mode`. If no orchestrator server is bound, print: "No orchestrator
-MCP bound — run bd-project-setup (Phase K)." and stop. On an auth error, tell the user to
-re-authenticate via `/mcp` in an interactive session (rare — tokens refresh automatically).
+Read `CLAUDE.md` → `## Knowledge graph` block → `kg.mcp_server` (the orchestrator MCP
+server, e.g. `orch-ai-implement-testing`). If no orchestrator server is bound, print:
 
-## The questions, and how to answer them
+> No orchestrator MCP bound — run bd-project-setup (Phase K).
+
+and stop.
+
+## Step 1 — Discover
+
+At session start, use ToolSearch with the query `mcp__<server>__` and `max_results: 50`
+(the bound server's prefix) to list all tools the server exposes along with their
+descriptions. The `max_results: 50` value gives headroom well beyond any plausible tool
+count and does not need updating as new tools are added.
+
+Print exactly one line:
+
+> orchestrator MCP exposes N tools
+
+where N is the count returned. Keep the full list — tool name and description — for the
+session. Never assume a tool exists because this skill names it; the discovery list is the
+authority.
+
+**If N = 0** (server bound but no tools returned — typically an auth error): tell the user
+to re-authenticate via `/mcp` in an interactive session and stop. Do not fall through to
+the prior sections.
+
+## Step 2 — Route by description
+
+For each user question:
+
+1. Check the priors table (sections 1–6). A prior section that matches the question gives
+   the primary tool and the fields to surface — use it directly.
+2. If no prior matches, scan the discovery list. Pick the tool(s) whose description answers
+   the question. When two tools fit, call the cheaper read first and the other only if the
+   first leaves the question open. State which tool answered and why in one line.
+3. If no tool description fits, apply the unanswerable rule (see Rules).
+
+## Rules
+
+**Write-guard.** A tool whose description implies a write — any of: create, update, delete,
+trigger, set, pause, resume, or similar mutating verbs — is never called from this skill.
+Route write-adjacent questions to the admin UI.
+
+**Interpret, don't dump.** Answer the user's question in one or two sentences first; show
+raw fields after, only where they help.
+
+**Chain when the first answer points elsewhere** — e.g. question 1's "never dispatched"
+leads to question 4's paused check. Two calls beat one guess.
+
+**Composition.** When a question spans tools (e.g. "why is my refresh slow" → `get_kg_status`
++ `list_in_flight_jobs`), call each matching tool once and give one combined answer. Do not
+dump two separate result blocks; synthesize into a single response that addresses the
+question.
+
+**Unanswerable questions.** When no tool description fits the question, respond with:
+
+> no tool answers this; closest is `<tool>`, which would tell you `<what it answers>`
+
+Never guess from memory of orchestrator internals.
+
+**A question with no prior falls through to step 2** — the absence of a prior section does
+not mean the question is unanswerable.
+
+Works from any surface with the orchestrator MCP bound: Claude Code sessions (this binding),
+or claude.ai chat with the connector added.
+
+---
+
+## Priors
+
+The sections below are worked examples that accelerate routing. They do not constrain which
+questions can be answered — any tool the discovery step finds is available to step 2.
 
 ### 1. "Given ticket ID X, why isn't it running?"
 
@@ -57,13 +122,35 @@ my ticket running" questions by itself.
 Call `get_runner_mode`. Report mode and source. Source `env` means the UI switch has no
 effect until the env var is unset — say so.
 
-## Rules
+### 6. "What is the KG refresh doing?" / "Did the last refresh work?"
 
-- **Read-only.** These tools change nothing. Admin actions (add a project, set the mode) go
-  through the admin UI until the Admin write tier ships (AII-381, blocked by AII-340).
-- **Interpret, don't dump.** Answer the user's question in one or two sentences first; show
-  the raw fields after, only where they help.
-- **Chain when the first answer points elsewhere** — e.g. question 1's "never dispatched"
-  leads to question 4's paused check. Two calls beat one guess.
-- Works from any surface with the orchestrator MCP bound: Claude Code sessions (this binding),
-  or claude.ai chat with the connector added.
+Call `get_kg_status`. Surface in one line:
+
+> stage: `<stage>` | served: `<servedStamp>` | last ok: `<lastRefresh.ok>`
+
+Then give `gate` and `detail` if `lastRefresh.ok` is false — these name the failing check
+and its reason.
+
+The five rail stages and their meanings:
+
+| Stage | Meaning |
+|---|---|
+| `ingest-running` | Rail is cloning and ingesting |
+| `staging` | Snapshot fetched; being staged, swapped, and verified |
+| `serving` | Refresh complete; new snapshot promoted |
+| `reverted` | Stamp or verify gate failed after swap; previous snapshot still serving |
+| `failed` | Rail error before staging |
+
+**When `stage` is terminal (`serving`, `reverted`, or `failed`):** look up the refresh PR
+the rail opened on the KG source repo — its title is `kg-refresh: snapshot @ <servedStamp>`.
+If the PR has a comment whose first line is `# ai-implement-kg-refresh-learnings` (posted
+by the rail when it detects an anomaly — present only when the rail flagged something),
+surface the key findings from that comment. An uneventful refresh has no learnings comment;
+skip if absent.
+
+**If `get_kg_status` is not in the discovery list** (tool not yet live on this orchestrator),
+apply the unanswerable rule. If `get_tenant_health` is also in the discovery list, cite it:
+`no tool answers this; closest is \`get_tenant_health\`, which reports in-flight jobs and overall
+rail health but not per-refresh stage detail. Ask your operator to deploy the orchestrator version
+that exposes \`get_kg_status\`.` If `get_tenant_health` is not in the discovery list either,
+apply the general unanswerable rule without naming a specific closest tool.

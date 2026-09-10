@@ -170,6 +170,18 @@ For each gap item, classify:
 
 **Action:** Note in session summary, do not act.
 
+**Never acceptable as-is — surfaceless flags.** A gap that describes a feature flag or env
+var with no admin surface (the operator must run `fly secrets set` or redeploy to change it)
+is never acceptable as-is, regardless of how cosmetic it looks. Classify it as:
+- **Agent-fixable** — when the relevant admin page already exists in the codebase (add the
+  toggle there, store the value in settings, use the env var only as seed on first boot).
+- **Out of scope (file follow-up issue)** — when no suitable admin page exists yet; the
+  follow-up issue must name the page, control, and storage in its `Setting surface:` field.
+
+An issue body that lacks `Setting surface:` because it was filed before BDS-53 landed is
+treated the same way — not as a parsing failure, but as a surfaceless-flag gap if the issue
+introduces a flag or env var.
+
 ### 2b. Process 🔧 Manual Steps Required
 
 Manual steps are by nature not agent-fixable — the agent surfaces them because a human needs to do them (one-time infra setup, secret configuration, dashboard changes).

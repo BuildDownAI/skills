@@ -50,6 +50,7 @@ Test fixture: {test path, or "full test inlined above"}
 Trust boundary: {none | crosses X, handled by Y}
 Rollback: {mechanical | flag `name` | revert}
 Observability: {none | `metric.name`}
+Setting surface: {none | <page> · <control> · settings-table row, env `NAME` as seed}
 
 ## Notes
 
@@ -163,3 +164,22 @@ user's own queue.
 Always `Blocked by: {ISSUE-ID} (reason)`. Never "Depends on", "Requires", or "After". One
 phrase, one pattern — bd-build-down reads it to sequence merges. The tracker-native relation
 mechanism is per-adapter; see the adapter's **Dependencies** section.
+
+## Setting surface
+
+`Setting surface:` names where an operator goes to change a flag or env var at runtime.
+Set it to `none` only when the issue genuinely introduces no operator-facing configuration.
+
+For every other case, name the page, the control, the storage mechanism, and the env var
+that seeds it on first boot:
+
+```
+Setting surface: /admin#runners · runner-mode select · settings-table row, env `RUNNER_MODE` as seed
+```
+
+**Why this field exists.** An env-only flag requires a deploy or `fly secrets set` to
+change — the operator has no UI path once the service is running. Naming the admin surface
+at filing time makes the gap visible before implementation, not at the incident where someone
+discovers there is no toggle. The `env NAME as seed` clause enforces the canonical pattern:
+the env var seeds the settings table on first boot and the table is the runtime source of
+truth; this is not endorsement of env-only storage.
