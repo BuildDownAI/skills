@@ -116,6 +116,8 @@ Goal: understand what the graph currently contains and what is missing, stale, o
 
    Include every source in `sources.yml`. Mark each as: ✓ present, ⚠ stale or thin,
    ✗ absent. Add a "not in sources.yml" row for any topic the user names that has no source entry.
+   Mark any repo or team that appears in the orchestrator's project list but not in `sources.yml`
+   as "rail will add" — the rail's reconcile step handles those automatically.
 
 ---
 
@@ -144,8 +146,8 @@ ingest manifest?
 
 **Options:**
 - **Merge now** — creates branch `kg-upstream/<YYYY-MM-DD>`, merges `upstream/main`, runs the
-  Phase 4 fast loop and proof loop, then opens a `kg-upstream` PR before continuing to Q1.
-- **Skip** — proceed directly to Q1; the upstream drift remains unaddressed this session.
+  Phase 4 fast loop and proof loop, then opens a `kg-upstream` PR before continuing to Q3.
+- **Skip** — proceed directly to Q3; the upstream drift remains unaddressed this session.
 
 ➡️ Merge now when N > 0 — base changes may include accepted learnings, classifier updates, KGB
 marker list changes, or ingest improvements that affect this refresh. Skip only when N = 0 or
@@ -209,28 +211,11 @@ you explicitly defer to a later session.
 
 6. **Wait for merge.** Announce the PR URL, then say:
    > "Merge the `kg-upstream/<YYYY-MM-DD>` PR, then confirm here. After it merges, run
-   > `git pull` on the default branch so Q1–Q5 decisions are based on the post-merge state."
-   Do not continue to Q1 until the user confirms the upstream PR is merged.
+   > `git pull` on the default branch so Q3–Q5 decisions are based on the post-merge state."
+   Do not continue to Q3 until the user confirms the upstream PR is merged.
 
-**On no / skip:** Proceed directly to Q1 with no further reference to the upstream merge in
+**On no / skip:** Proceed directly to Q3 with no further reference to the upstream merge in
 this session.
-
----
-
-❓ **Q1** — **Source repos in sources.yml**: Does the gap table show a repo that the orchestrator
-manages but `sources.yml` does not cover? Add it, or confirm intentional exclusion?
-
-➡️ Add it, matching the `code_repo` format of existing entries; exclusion should be documented
-as a comment.
-
----
-
-❓ **Q2** — **Branch selection per repo**: For each new or changed repo, which branch should
-the ingest clone? The orchestrator's `list_projects` gives `defaultBranch`; the current
-`sources.yml` may override it.
-
-➡️ Use `defaultBranch` from `list_projects` unless the project documents a stable/release branch
-as its KG-ingested target.
 
 ---
 
@@ -388,7 +373,7 @@ merges — the rail clones the KG source repo and will pick up merged changes on
 
 2. **Run bd-kg-refresh.** After the user confirms, invoke bd-kg-refresh. It will:
    - Preflight the orchestrator.
-   - Reconcile scope (the merged PR is already reflected in `sources.yml`).
+   - Report scope (the rail adds any missing repos or teams automatically).
    - Trigger `POST <kg.orchestrator>/api/kg/refresh`.
    - Poll the five rail stages to serving.
    - Verify the live graph.
@@ -407,12 +392,18 @@ Follow `../bd-shared/kg-learnings-loop.md`.
 The upstream base merge (`kg-upstream/<date>` PR) is not a derivative learning; nothing is
 filed to the base-note for it.
 
-**Additional input (optional — AII-596):** After bd-kg-refresh completes, look for the refresh
-PR the rail opened (title: `kg-refresh: snapshot @ <stamp>`). If a comment marked
-`# ai-implement-kg-refresh-learnings` is present on that PR, read it and use it as additional
-input to the base-note decision alongside the ingest report from Phase 5. If no such comment
-is present (the rail has not yet shipped AII-596, or this was an uneventful run), proceed
-without it — this is normal, not an error.
+**Additional inputs:** After bd-kg-refresh completes, find the refresh PR the rail opened
+(title: `kg-refresh: snapshot @ <stamp>`) and read two items from it:
+
+1. **`### Scope` section (AII-607):** The rail writes a `### Scope` section into the refresh
+   PR listing any repos or teams it added to `sources.yml` on this run. Read it and include the
+   delta as additional context for the learnings loop. If the Scope section is absent (rail
+   predates AII-607), note its absence and proceed — this is not an error.
+
+2. **`# ai-implement-kg-refresh-learnings` comment (AII-596):** If a comment with this exact
+   marker is present on that PR, read it and use it as additional input to the base-note
+   decision alongside the ingest report from Phase 5. If no such comment is present (uneventful
+   run or rail predates AII-596), proceed without it — this is normal, not an error.
 
 An uneventful refresh with no learnings comment and no base-relevant patterns files nothing.
 This step is advisory and never blocks.
