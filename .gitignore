@@ -11,3 +11,6 @@
 
 # Local install symlinks created by ./install.sh --project .
 .claude/skills/
+
+# BuildDown landing-session state (plugin/skills/bd-shared/session-state.md)
+.bd/
