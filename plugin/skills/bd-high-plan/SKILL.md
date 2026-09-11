@@ -24,8 +24,9 @@ without showing the draft; nothing proceeds past the filed parent until the user
 
 ## Configuration
 
-Same bindings as bd-build-up (`{{TRACKER}}`, workspace/team, KG binding). No pipeline
-designation is ever applied by this skill — see Filing.
+Same bindings as bd-build-up (`{{TRACKER}}`, workspace/team, KG binding), plus `{{ADR_DIR}}` —
+the repo's decision-record directory, as bd-mega-build-up binds it. No pipeline designation is
+ever applied by this skill — see Filing.
 
 ## When to Use / When Not
 
@@ -47,6 +48,14 @@ same surface). Open the response by stating what the recon found that shaped the
 intent, reusable components, and decisions already made are the difference between a plan and a
 guess. If an outside analysis was provided, the recon is also the fact-check: say where the
 analysis was right, wrong, or moot for this project.
+
+**Documentation recon (same pass, always — KG or no KG).** Look in `{{ADR_DIR}}` and the
+repo's reference docs (`docs/*.md`, or wherever the repo's `docs/README.md` says subsystem
+references live) for the files that describe each subsystem the capability touches. Report one
+line per subsystem: **documented** (name the file), **partly** (name the file and the gap), or
+**undocumented**. This is the other half of the fact-check: a subsystem with no reference is a
+subsystem whose current behaviour the plan is guessing at, and the gap is filled before the
+parent is filed (Phase 5), not left for the children to discover.
 
 ### Phase 2 — The ideas (the step count is itself a decision)
 
@@ -99,7 +108,24 @@ say so in one line and move on; this phase should cost minutes, not a session.
 ### Phase 5 — File the planning parent
 
 One issue, in the tracker (not a local file — the tracker feeds the KG and is where breakdown
-natively happens). **Show the draft body and get approval before filing.** Body template:
+natively happens). **Show the draft body and get approval before filing.**
+
+**Subsystem documentation rides in the parent.** For every subsystem the recon marked
+**undocumented**, draft its reference `.md` in the repo's house style (the conventions in its
+`docs/README.md`; the ADR format under `{{ADR_DIR}}` for a decision this plan settles). For one
+marked **partly**, draft the update as replacement text for the affected section. Put each
+draft under `## Subsystem documentation` in the parent body: one fenced block per file, headed
+by its target path and `new` or `update`. Write at reference altitude — how the subsystem works
+and why — and verify every claim against the code as you write; a wrong reference is worse than
+none. The drafts are the one place bd-high-plan goes below altitude, because they describe what
+exists, not what a child will build.
+
+**The drafts leave the issue when the work lands.** Each step names the docs it carries. The
+child that changes a subsystem takes that subsystem's draft into `docs/` or `{{ADR_DIR}}` in the
+same PR, re-verified against the landed code; a repo with no such child gets one docs child.
+After transfer the parent's copy is the historical draft, not the reference.
+
+Body template:
 
 ```
 **Objective:** {one paragraph — the end state, who uses it, the one non-negotiable}
@@ -108,8 +134,18 @@ natively happens). **Show the draft body and get approval before filing.** Body 
 - {each decision from Phase 3, one bullet, with the one-line why}
 
 ## Steps (each becomes a child issue)
-1. {step} — test: {how this step alone is verified}
+1. {step} — test: {how this step alone is verified} — docs: {files from the section below this step carries, or none}
 2. …
+
+## Subsystem documentation (transfers to the repo with the step that changes each subsystem)
+### `docs/{subsystem}.md` — new
+~~~markdown
+{the full reference draft}
+~~~
+### `docs/{existing}.md` — update of section "{heading}"
+~~~markdown
+{replacement text for that section}
+~~~
 
 ## Process
 This parent is a planning umbrella and must be broken into child issues before
@@ -162,10 +198,14 @@ The parent must be visible to the pipeline's tracker but invisible to its pickup
 | Step count asserted instead of agreed | Ask the user, or propose a count with its reason and confirm |
 | Parent drafted without the soundness pass | Run the Phase 4 lenses first; unresolved risks become Phase 3 questions |
 | Plan written as a local doc "to file later" | File the parent in the tracker; the tracker is what the KG ingests |
+| A subsystem the plan touches is undocumented and the parent carries no draft for it | Draft it (Phase 5); an undocumented subsystem is a guessed subsystem |
+| Doc drafts still sit in the parent after the child that changed the subsystem landed | The child's PR carries them into `docs/` or `{{ADR_DIR}}`; the parent's copy is never the reference |
 
 ## Integration
 
 - **bd-build-up** — consumes the parent via High-Plan Extraction mode (one step → one child).
+  A step's doc drafts become `Create:` / `Modify:` entries in the child's `## Files`, so the
+  transfer is part of the child's acceptance, not a follow-up.
 - **bd-mega-build-up** — when one step turns out to need deep adversarial design, extract it as
   a standalone related issue and run mega on it.
 - **bd-kg-refresh** — the parent and its decision trail are ingested with the tracker; write

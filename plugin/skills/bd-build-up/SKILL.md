@@ -150,6 +150,10 @@ native sub-issues, with `Blocked by:` relations mirroring the parent's step orde
 
 - **Scope is the step, verbatim.** The parent's step line is the objective, and its settled
   decisions are binding context. Do not re-open what the high-plan dialogue already settled.
+- **The step's doc drafts travel with it.** When the parent's `## Subsystem documentation`
+  section holds drafts the step names, list each as `Create:` or `Modify:` in the child's
+  `## Files` with the draft's target path, and add an acceptance line that the landed file
+  matches the code. The parent's copy stays as the historical draft.
 - **Output shape:** a child issue of the parent by default. When the work outgrows child shape
   — its own tree, a different repo, a mega candidate — file it standalone and link it to the
   parent instead. Same content rules.
