@@ -92,6 +92,9 @@ If the agent in use doesn't produce a structured gap analysis, build the equival
 
 ## Phase 1: Orient
 
+**Check for an unfinished session first.** If `.bd/session.md` exists with an open `phase`, follow
+the resume rule in `../bd-shared/session-state.md` before scanning anything.
+
 Pull current state before assessing anything. Use tracker MCP and GitHub MCP in parallel.
 
 **Tracker scan:**
@@ -127,6 +130,11 @@ PR # | Issue | Gap Count | Checks | Conflicts | Migration | Files | Age
 ```
 
 Flag any PR >5 days old — it's likely stale and needs a context check before normal triage.
+
+**Write the session state file.** Create `.bd/session.md` per `../bd-shared/session-state.md` —
+header plus one `queued` row per PR in the table. From here on, rewrite it at every per-PR state
+change and every phase boundary; the session summary and learnings comment are written from it at
+close. Mirror the queue into the harness plan tool if one exists.
 
 ### KG recon (if a KG is bound)
 
@@ -503,6 +511,7 @@ is the last cheap moment to act on it.
 
 - Verify that the configured agent accepted or queued the trigger for the recorded head (for example, a reaction, status comment, job, or check). If it reports that the PR is unknown, execute the registration-race recovery in the trigger readiness gate.
 - Note in session log: "Agent comment posted on PR #N for gap: {one-line summary}"
+- Set the PR's row in `.bd/session.md` to `awaiting-agent`
 - Do not merge the PR yet — wait for the agent to resolve, then the PR re-enters triage when CI goes green
 
 ---
@@ -535,7 +544,7 @@ Merge via GitHub MCP using squash merge as the default method. After merging:
 
 ### Post-merge sweep
 
-After each merge, re-evaluate remaining open PRs:
+After each merge, set the PR's row in `.bd/session.md` to `merged`, then re-evaluate remaining open PRs:
 
 - Do any now have conflicts against the now-updated base branch? (Check `get_pull_request` mergeable state)
 - If so, post the pre-drafted agent conflict comment for each
@@ -616,6 +625,9 @@ Blocked by: {ISSUE-ID} (if any)
 
 ## Phase 6: Session Summary
 
+Write the summary from `.bd/session.md` — every row appears under the heading its state maps to. A
+PR the file does not know about is a PR the session did not track; add it to the file first.
+
 Post the session summary as a new tracker issue assigned to the architect (or the user, single-operator). This is an **autonomous write** — do not ask for approval. Summaries are informational artifacts, not actions.
 
 **Title format:** `Session Summary — {Month Day}: {brief focus}`
@@ -674,6 +686,9 @@ An **autonomous write** — no approval gate, same as the session summary. For e
 - **superseded** — replaced by another PR/issue.
 
 Abandonment is a valid, valuable terminal outcome — "killed because X" is a learning, not a gap.
+
+After the comment is posted, set `phase: closed` in `.bd/session.md`. The session is not done until
+both are written.
 
 **Scope is session-only.** Record PRs this session drove or observed. A PR closed with no build-down session running is not auto-captured here — a deliberate boundary, partially covered by the absence signal (a build-up learnings comment with no build-down sibling = never landed). Do not reconcile historical closed PRs unless asked.
 
