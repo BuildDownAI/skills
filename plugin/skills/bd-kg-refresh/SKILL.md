@@ -1,6 +1,6 @@
 ---
 name: bd-kg-refresh
-description: "Refresh a project's knowledge graph (KG) via the orchestrator's refresh rail. Preflights the orchestrator, reports scope from the rail's manifest reconcile, triggers POST /api/kg/refresh, polls the five rail stages to serving, then verifies the deployed graph. For local ingest iteration, use bd-mega-kg-refresh. No-op with a clear message if this project has no KG bound."
+description: "Refresh a project's knowledge graph (KG) via the orchestrator's refresh rail (admin role). Preflights the orchestrator, reports scope from the rail's manifest reconcile, triggers the refresh rail through the orchestrator MCP (admin role), polls the five rail stages to serving, then verifies the deployed graph. For local ingest iteration, use bd-mega-kg-refresh. No-op with a clear message if this project has no KG bound."
 metadata:
   suite: builddown
 ---
@@ -19,7 +19,21 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
    - Print: "This project has no KG bound — run bd-project-setup to add one."
    - Stop.
 
-2. **Preflight.** Call `get_tenant_health` on the bound orchestrator MCP server
+2. **Check your role.** Before any orchestrator call, confirm the session has admin access.
+   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_session_identity` is in the
+     session's tool list. If the tool is absent:
+     - Print: "This orchestrator has no `get_session_identity` tool; it predates the MCP write
+       tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
+       Update the orchestrator, then retry."
+     - Stop.
+   - Call `mcp__<kg.mcp_server>__get_session_identity`. Read `role` from the result. If `role`
+     is not `admin`:
+     - Print: "This skill needs an admin account on the orchestrator. Your MCP session is signed
+       in as `<email>` with role `<role>`. Ask an admin to change your allowlist entry, or ask
+       them to run the refresh."
+     - Stop.
+
+3. **Preflight.** Call `get_tenant_health` on the bound orchestrator MCP server
    (`mcp__<kg.mcp_server>__get_tenant_health`). Every row under `kgRefreshPreflight` must have
    `ok: true`. If any row fails:
    - Print: "Preflight failed: <row.repo> <row.grant> — <row.hint>"
@@ -28,7 +42,7 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
    note "preflight rows absent — proceeding" and continue.
    Auth error → tell the user to re-authenticate via `/mcp` in an interactive session.
 
-3. **Report scope.** The rail reconciles `sources.yml` automatically on every refresh —
+4. **Report scope.** The rail reconciles `sources.yml` automatically on every refresh —
    adding any repo or team from the orchestrator's project list that is not yet in the manifest.
    - Call `list_projects` on the bound orchestrator MCP
      (`mcp__<kg.mcp_server>__list_projects`) to obtain a project count. If `list_projects`
@@ -57,18 +71,21 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
      `git merge upstream`, do not create a `kg-upstream/` branch, and do not open any PR
      in this sub-step.
 
-4. **Trigger the rail.** Send `POST <kg.orchestrator>/api/kg/refresh` with an admin session
-   token. Handle each response:
-   - `202` — refresh accepted and running; proceed to Step 5.
-   - `409` — a refresh is already running; proceed to Step 5 to poll the in-flight run;
+5. **Trigger the rail.** Call `mcp__<kg.mcp_server>__trigger_kg_refresh` (no arguments).
+   Read `status` from the result:
+   - `202` — refresh accepted and running; proceed to Step 6.
+   - `409` — a refresh is already running; proceed to Step 6 to poll the in-flight run;
      do not re-trigger.
-   - Refusal — the response body names the failing preflight row or the deploy hold; state
-     the gate and stop. Never re-trigger on a refusal; wait for the gate to clear before
-     retrying from Step 2.
+   - `422` or any other refusal — the response body names the failing gate; state the gate
+     and stop. Never re-trigger on a refusal; wait for the gate to clear before retrying
+     from Step 3.
+   - `isError` result containing `forbidden` — your role changed since Step 2; print:
+     "This skill needs an admin account on the orchestrator. Your MCP session is signed in as
+     `<email>` with role `<role>`. Ask an admin to change your allowlist entry, or ask them to
+     run the refresh." and stop.
 
-5. **Poll.** Every 60 seconds, check the rail status:
-   - **Preferred (when available — AII-595):** `mcp__<kg.mcp_server>__get_kg_status`
-   - **Current default:** `GET <kg.orchestrator>/api/kg/status` with an admin session token.
+6. **Poll.** Every 60 seconds, check the rail status via
+   `mcp__<kg.mcp_server>__get_kg_status`.
 
    Report the stage each minute. The five rail stages are:
 
@@ -81,18 +98,18 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
    | `failed` | Rail error before staging |
 
    **Terminal conditions:**
-   - `serving` with a `servedStamp` newer than before the trigger → proceed to Step 6.
+   - `serving` with a `servedStamp` newer than before the trigger → proceed to Step 7.
    - `reverted` or `failed` → report `lastRefresh.gate` and `lastRefresh.detail`; stop.
      Do not re-trigger; state the gate and let the operator decide next steps.
 
-6. **Verify live.** Query the deployed graph through `kg.search_tool` and confirm:
+7. **Verify live.** Query the deployed graph through `kg.search_tool` and confirm:
    - A domain query returns non-empty, `degraded: false` results.
    - The graph's spine stamp (via `kg_neighbors` on the spine IRI — `../bd-shared/kg-recon.md`)
-     equals `servedStamp` from Step 5.
+     equals `servedStamp` from Step 6.
    An unchanged stamp means the rail served the old snapshot — check `lastRefresh.gate` and
    `lastRefresh.detail` from the status response.
 
-7. **Close — learnings loop (required check, usually a no-op).** Follow
+8. **Close — learnings loop (required check, usually a no-op).** Follow
    `../bd-shared/kg-learnings-loop.md`. In addition: find the refresh PR the rail opened
    (title: `kg-refresh: snapshot @ <stamp>`) and read two items from it:
    - **`### Scope` section (AII-607):** The rail writes a `### Scope` section listing any
@@ -112,5 +129,4 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
 - **Local iteration on the ingest** (interrogate the served graph, change the ingest config,
   hand the result to the rail) is `bd-mega-kg-refresh`, not this skill.
 - The binding format is canonical across all KG-aware skills (see `../bd-shared/kg-binding.md`).
-- An admin session token is required to trigger and poll the rail — an operator without one
-  stops after Step 3 and hands the trigger to someone who has it.
+- This is an admin-only skill: it needs an allowlist entry with role admin on the orchestrator.

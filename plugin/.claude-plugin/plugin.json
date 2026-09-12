@@ -1,7 +1,7 @@
 {
   "name": "builddown",
   "description": "BuildDown skills \u2014 plan and drive work: decompose objectives into tracker issues (bd-build-up / bd-mega-build-up), sequence them (bd-summit-push), drive PRs to merge (bd-build-down / bd-super-build-down), smoke-test previews (bd-smoke-jumper), hand off across tools (bd-belay-on), wire a project's MCP servers (bd-project-setup), and refresh a project's knowledge graph (bd-kg-refresh / bd-mega-kg-refresh).",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "author": {
     "name": "BuildDownAI"
   }

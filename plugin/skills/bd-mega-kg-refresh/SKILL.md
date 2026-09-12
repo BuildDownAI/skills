@@ -30,7 +30,21 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    | `kg.mcp_server` | required | Remote orchestrator MCP server name |
    | `kg.search_tool` | required | Orchestrator hybrid-search tool |
 
-2. **Establish the KG source checkout.** This skill runs in the KG source checkout. Confirm
+2. **Check your role.** Before any orchestrator call, confirm the session has admin access.
+   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_session_identity` is in the
+     session's tool list. If the tool is absent:
+     - Print: "This orchestrator has no `get_session_identity` tool; it predates the MCP write
+       tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
+       Update the orchestrator, then retry."
+     - Stop.
+   - Call `mcp__<kg.mcp_server>__get_session_identity`. Read `role` from the result. If `role`
+     is not `admin`:
+     - Print: "This skill needs an admin account on the orchestrator. Your MCP session is signed
+       in as `<email>` with role `<role>`. Ask an admin to change your allowlist entry, or ask
+       them to run the refresh."
+     - Stop.
+
+3. **Establish the KG source checkout.** This skill runs in the KG source checkout. Confirm
    the working directory contains `sources.yml` and the Python ingest package. If the checkout
    does not exist locally:
    - Clone: `gh repo clone <kg.source_repo> <local-path>`
@@ -41,11 +55,11 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
      ```
    - Announce: "KG checkout ready at `<local-path>`."
 
-3. **Orient.** Read `sources.yml` — list every `code_repo`, `secondary_repos` entry, `docs_sites`,
+4. **Orient.** Read `sources.yml` — list every `code_repo`, `secondary_repos` entry, `docs_sites`,
    classifier rules, and namespace. State counts: "N sources, M docs sites, classifier has K
    rules." This is the baseline for Phase 3 decisions.
 
-4. **Check upstream base drift.** Determine how far the derivative has drifted from the base
+5. **Check upstream base drift.** Determine how far the derivative has drifted from the base
    template before touching the manifest.
 
    a. **Resolve the base URL.** Read `sources.yml` for a `base_repo:` field. If present, use
@@ -363,7 +377,7 @@ merges — the rail clones the KG source repo and will pick up merged changes on
 2. **Run bd-kg-refresh.** After the user confirms, invoke bd-kg-refresh. It will:
    - Preflight the orchestrator.
    - Report scope (the rail adds any missing repos or teams automatically).
-   - Trigger `POST <kg.orchestrator>/api/kg/refresh`.
+   - Trigger the rail through the `trigger_kg_refresh` MCP tool.
    - Poll the five rail stages to serving.
    - Verify the live graph.
 
@@ -410,3 +424,4 @@ This step is advisory and never blocks.
 - The binding format is canonical across all KG-aware skills (see `../bd-shared/kg-binding.md`).
 - Phase 4's proof-loop command must be run from the AI-Implement project root (the directory
   containing `package.json` with the `dev:run` script), not from the KG checkout.
+- Admin-only skill, same rule as bd-kg-refresh.
