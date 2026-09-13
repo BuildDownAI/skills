@@ -204,13 +204,26 @@ you explicitly defer to a later session.
      git commit -m "kg-upstream: merge base <short-sha> (<N> commits)"
      git push -u origin kg-upstream/<YYYY-MM-DD>
      ```
-   - Open PR:
+   - Open PR (body must include the `### Guard table` section from the Phase 4 dry-run):
      ```bash
      gh pr create --repo <kg.source_repo> \
        --base <default-branch> \
        --title "kg-upstream: merge base <short-sha> (<N> commits)" \
-       --body "<grouped base-change summary from Phase 1 drift analysis>"
+       --body "$(cat <<'EOF'
+     <grouped base-change summary from Phase 1 drift analysis>
+
+     ### Guard table
+
+     <paste lastRefresh.partTable verbatim from the Phase 4 dry-run>
+
+     **Verdict:** <passed | refused — and if refused, which part and whether the delta predicted it>
+     EOF
+     )"
      ```
+     The Phase 4 gate rule applies here exactly as for the ingest PR: the dry-run verdict must
+     be `passed`, **or** `refused` only on a part the settled Snapshot delta predicted. A
+     `refused` row the delta did not predict sends the session back to the fast loop before this
+     PR is opened.
    - Post the learnings comment on the PR:
      ```
      # ai-implement-kg-refresh-learnings
@@ -218,6 +231,7 @@ you explicitly defer to a later session.
      **What changed:** Merged N commits from upstream base template (<short-sha>).
      **Why:** <grouped summary of base changes: learnings, ingest, classifier, ontology, docs>
      **What the user rejected:** n/a (upstream merge)
+     **Guard table:** <verdict>; accept-new-baseline needed: yes/no
      ```
 
 6. **Wait for merge.** Announce the PR URL, then say:
@@ -291,27 +305,53 @@ Goal: verify that the manifest changes produce a graph that answers the Phase 2 
 
 #### Proof loop — the PR gate
 
-Goal: prove the changes pass the harness dry-run before opening a PR.
+Goal: prove the changes pass the rail's own dry-run before opening a PR.
 
-1. **Obtain `td.json`.** `td.json` is the request body of `POST /api/runner/kg-tracker-data`
-   for one team — the tracker data the rail uses as ingest input. Until AII-597 ships an admin
-   export route (`GET /api/kg/tracker-data?team=<key>`), ask an orchestrator admin to provide
-   the file. Do not invent or synthesize a substitute.
-
-2. Run the harness dry-run from the AI-Implement project root:
+1. **Push the working branch.** Push the current branch (`kg-upstream/<date>` or
+   `kg-ingest/<date>-<slug>`) to origin:
    ```bash
-   npm run dev:run -- --phase kg-refresh --workspace <kg checkout> --tracker-data td.json
+   git push -u origin <branch>
    ```
-   This runs the clone, secondary, ingest steps and the snapshot guard in dry-run — it does
-   **not** write to `snapshot/`.
 
-3. Inspect the guard table in the dry-run output. It must be **clean** (no rows marked
-   failed or degraded) before Phase 5 runs. If any guard row fails:
-   - Read the failure detail.
-   - Return to the fast loop to address the root cause.
-   - Re-run the proof loop.
+2. **Trigger the dry-run.**
 
-**The proof loop guard table must be clean. Do not open a PR until it is.**
+   > **`ref` parameter status (blocked by AII-632 / AII-630 step 3):** Until AII-632 step 3
+   > ships, `trigger_kg_refresh` does not yet accept `ref` and runs the default branch. Interim
+   > fallback: merge the working branch into a throwaway branch named by the operator, then pass
+   > that branch name as `ref`. If no throwaway branch is available, the dry-run targets default-
+   > branch content; note this limitation in the PR body.
+
+   Call:
+   ```
+   mcp__<kg.mcp_server>__trigger_kg_refresh { dryRun: true, ref: "<branch>" }
+   ```
+   The dry-run runs the same job as a live refresh but does **not** write to `snapshot/`.
+
+3. **Poll to a terminal state.** Call `mcp__<kg.mcp_server>__get_kg_status` every 60 s.
+   Terminal dry-run states are: `passed`, `refused`, `failed`, `error`, `timed-out`.
+   Stop polling on any of these.
+
+4. **Read the verdict and Guard table.** From `get_kg_status`, read:
+   - `lastRefresh.verdict` — the terminal state.
+   - `lastRefresh.partTable` — the per-part guard table exactly as returned (do not synthesise it).
+
+   Apply the gate rule below.
+
+**Gate rule — Guard table:** The dry-run verdict must be `passed`, **or** `refused` only on a
+part that the settled Snapshot delta (agreed in Phase 3) predicted would shrink or change.
+Paste `lastRefresh.partTable` verbatim under `### Guard table` in the PR body.
+A `refused` row on a part the delta did **not** predict sends the session back to the fast loop.
+Do not open a PR until the gate rule is satisfied.
+
+> **Without network (offline alternative):** If the orchestrator MCP is unreachable, use the
+> local harness instead. Obtain `td.json` (the request body of
+> `POST /api/runner/kg-tracker-data` for one team — ask an orchestrator admin to export it; do
+> not invent or synthesise a substitute). Run from the AI-Implement project root:
+> ```bash
+> npm run dev:run -- --phase kg-refresh --workspace <kg checkout> --tracker-data td.json
+> ```
+> This runs the same guard check locally. Inspect the guard table in the output and apply the
+> same gate rule. The harness path does not require pushing the branch first.
 
 ---
 
@@ -343,13 +383,25 @@ Branch, commit only the manifest/ingest changes, open the PR, post the learnings
    git push -u origin kg-ingest/<date>-<slug>
    ```
 
-4. **Open the PR** against the KG repo's default branch:
+4. **Open the PR** against the KG repo's default branch (body must include the `### Guard table`
+   section from the Phase 4 dry-run):
    ```bash
    gh pr create --repo <kg.source_repo> \
      --base <default-branch> \
      --title "kg-ingest: <short description>" \
-     --body "<summary of what changed and why, referencing the Phase 2 gap table>"
+     --body "$(cat <<'EOF'
+   <summary of what changed and why, referencing the Phase 2 gap table>
+
+   ### Guard table
+
+   <paste lastRefresh.partTable verbatim from the Phase 4 dry-run>
+
+   **Verdict:** <passed | refused — and if refused, which part and whether the delta predicted it>
+   EOF
+   )"
    ```
+
+   The gate rule from Phase 4 applies: the dry-run verdict must be `passed`, **or** `refused` only on a part the settled Snapshot delta predicted. A `refused` row the delta did not predict sends the session back to the fast loop before this PR is opened.
 
 5. **Post the learnings comment** on the PR:
    ```
@@ -358,6 +410,7 @@ Branch, commit only the manifest/ingest changes, open the PR, post the learnings
    **What changed:** <list of manifest/ingest changes made>
    **Why:** <root cause from the gap table — what was missing, stale, or mis-classified>
    **What the user rejected:** <any Phase 3 option the user declined, with their reason>
+   **Guard table:** <verdict>; accept-new-baseline needed: yes/no
    ```
    The marker `# ai-implement-kg-refresh-learnings` must be the exact first line of this
    comment. This is the marker that `../bd-shared/kg-learnings-loop.md` reads back in Phase 7.
@@ -380,6 +433,11 @@ merges — the rail clones the KG source repo and will pick up merged changes on
    - Trigger the rail through the `trigger_kg_refresh` MCP tool.
    - Poll the five rail stages to serving.
    - Verify the live graph.
+
+   If the Phase 4 Guard table recorded a `refused` row on a predicted tracker-file shrink, state
+   this finding when invoking bd-kg-refresh: e.g. "The Phase 4 dry-run Guard table showed a
+   refused row for part `<part>` — this was a predicted tracker-file shrink." bd-kg-refresh's
+   regression branch (a BDS child issue) offers the accept-new-baseline flow for this case.
 
 3. **Report the served stamp.** After bd-kg-refresh completes, read the `servedStamp` it
    reports. Announce: "Rail complete. Served graph as of `<stamp>`."
@@ -422,6 +480,7 @@ This step is advisory and never blocks.
 - **bd-kg-refresh** handles the orchestrator rail (preflight, trigger, poll, verify). This
   skill owns the ingest iteration; bd-kg-refresh owns the snapshot production.
 - The binding format is canonical across all KG-aware skills (see `../bd-shared/kg-binding.md`).
-- Phase 4's proof-loop command must be run from the AI-Implement project root (the directory
-  containing `package.json` with the `dev:run` script), not from the KG checkout.
+- Phase 4's offline harness (`npm run dev:run`) must be run from the AI-Implement project root
+  (the directory containing `package.json` with the `dev:run` script), not from the KG checkout.
+  The primary network path (MCP dry-run) has no such constraint.
 - Admin-only skill, same rule as bd-kg-refresh.
