@@ -216,8 +216,8 @@ you explicitly defer to a later session.
 
      <paste lastRefresh.partTable verbatim from the Phase 4 dry-run>
 
-     **Verdict:** <passed | refused — and if refused, which part and whether the delta predicted it>
-     EOF
+     **Verdict:** <passed | refused | current | failed — and if refused, which part and whether the delta predicted it>
+EOF
      )"
      ```
      The Phase 4 gate rule applies here exactly as for the ingest PR: the dry-run verdict must
@@ -315,30 +315,40 @@ Goal: prove the changes pass the rail's own dry-run before opening a PR.
 
 2. **Trigger the dry-run.**
 
-   > **`ref` parameter status (blocked by AII-632 / AII-630 step 3):** Until AII-632 step 3
-   > ships, `trigger_kg_refresh` does not yet accept `ref` and runs the default branch. Interim
-   > fallback: merge the working branch into a throwaway branch named by the operator, then pass
-   > that branch name as `ref`. If no throwaway branch is available, the dry-run targets default-
-   > branch content; note this limitation in the PR body.
+   > **`ref` parameter status (AII-633 / AII-630 step 3):** Until AII-633 ships `ref`, the rail
+   > dry-run runs the default branch and cannot prove an unmerged branch. For the proof loop
+   > before then, use the offline harness path below and say so under `### Guard table` in the
+   > PR body.
 
    Call:
    ```
    mcp__<kg.mcp_server>__trigger_kg_refresh { dryRun: true, ref: "<branch>" }
    ```
    The dry-run runs the same job as a live refresh but does **not** write to `snapshot/`.
+   Record the time of this call as the trigger time.
 
 3. **Poll to a terminal state.** Call `mcp__<kg.mcp_server>__get_kg_status` every 60 s.
-   Terminal dry-run states are: `passed`, `refused`, `failed`, `error`, `timed-out`.
-   Stop polling on any of these.
+   Stop when all three conditions hold:
+   - `running === false`
+   - `lastRefresh.dryRun === true`
+   - `lastRefresh.at` is later than the trigger time
 
 4. **Read the verdict and Guard table.** From `get_kg_status`, read:
-   - `lastRefresh.verdict` — the terminal state.
-   - `lastRefresh.partTable` — the per-part guard table exactly as returned (do not synthesise it).
+   - `lastRefresh.ok` — `true` for guard passed or graph-is-current; `false` for refused or failed.
+   - `lastRefresh.detail` — the detail string; derive the verdict:
+     - `passed` — detail starts with `dry-run: guard passed`
+     - `refused` — detail starts with `dry-run: guard refused`
+     - `current` — detail is `dry-run: graph is current — no new data to check` (ok: true, benign)
+     - `failed` — anything else (runner failed before the guard; read `detail` for the reason)
+   - `lastRefresh.partTable` — array of `{ part, prev, new }` (absent when the run failed before
+     the guard); paste verbatim under `### Guard table` in the PR body.
 
    Apply the gate rule below.
 
-**Gate rule — Guard table:** The dry-run verdict must be `passed`, **or** `refused` only on a
-part that the settled Snapshot delta (agreed in Phase 3) predicted would shrink or change.
+**Gate rule — Guard table:** The verdict (derived from `lastRefresh.detail`) must be `passed` or
+`current`, **or** `refused` only on a part that the settled Snapshot delta (agreed in Phase 3)
+predicted would shrink or change. A `failed` verdict is not a guard result — read `lastRefresh.detail`
+for the reason and return to the fast loop.
 Paste `lastRefresh.partTable` verbatim under `### Guard table` in the PR body.
 A `refused` row on a part the delta did **not** predict sends the session back to the fast loop.
 Do not open a PR until the gate rule is satisfied.
@@ -396,8 +406,8 @@ Branch, commit only the manifest/ingest changes, open the PR, post the learnings
 
    <paste lastRefresh.partTable verbatim from the Phase 4 dry-run>
 
-   **Verdict:** <passed | refused — and if refused, which part and whether the delta predicted it>
-   EOF
+   **Verdict:** <passed | refused | current | failed — and if refused, which part and whether the delta predicted it>
+EOF
    )"
    ```
 
