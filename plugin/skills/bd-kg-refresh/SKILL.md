@@ -60,13 +60,18 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
      3. Ensure the `upstream` remote exists in the KG checkout: run
         `git remote get-url upstream`. If the remote is missing, add it:
         `git remote add upstream <base_repo>`.
-     4. Run `git fetch upstream`.
-     5. Count commits the derivative is behind: `git rev-list HEAD..upstream/main --count`
-        → N. If N > 0, find the last merge date:
-        `git log --merges --first-parent -1 --format=%cd HEAD`
+     4. Run `git fetch origin` (to bring the derivative's remote refs current), then
+        `git fetch upstream`.
+     5. Determine the derivative's default branch: run
+        `git remote show origin | grep 'HEAD branch'`; fall back to `main` if absent.
+        Read the short SHA: `git rev-parse --short origin/<default-branch>` → `<SHA>`.
+        Count commits the derivative is behind:
+        `git rev-list origin/<default-branch>..upstream/main --count` → N.
+        If N > 0, find the last merge date:
+        `git log --merges --first-parent -1 --format=%cd origin/<default-branch>`
         (use "never merged" if no merge commit exists). Print:
-        "derivative is N commits behind base (last merge <date>); run bd-mega-kg-refresh to merge"
-        If N = 0, print: "derivative is current with base".
+        "derivative is N commits behind base (last merge <date>, origin/<default-branch> at <SHA>); run bd-mega-kg-refresh to merge"
+        If N = 0, print: "derivative is current with base (origin/<default-branch> at <SHA>)".
      Advisory only — the refresh continues regardless of the result. Do not run
      `git merge upstream`, do not create a `kg-upstream/` branch, and do not open any PR
      in this sub-step.
@@ -99,8 +104,45 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
 
    **Terminal conditions:**
    - `serving` with a `servedStamp` newer than before the trigger → proceed to Step 7.
-   - `reverted` or `failed` → report `lastRefresh.gate` and `lastRefresh.detail`; stop.
-     Do not re-trigger; state the gate and let the operator decide next steps.
+   - `reverted` or `failed`:
+     - Report `lastRefresh.gate` and `lastRefresh.detail`.
+     - If `lastRefresh.detail` contains `KG_SNAPSHOT_TRACKER_REGRESSION` and you have **not**
+       already accepted a new baseline in this session:
+       1. **If `lastRefresh.partTable` is absent** (real failures do not carry the table;
+          the orchestrator attaches it only for dry-runs, pending AII-638):
+          - Print: "The refusal carries no part table (this orchestrator reports it only
+            for dry-runs). Running a dry-run to fetch it."
+          - Call `mcp__<kg.mcp_server>__trigger_kg_refresh { dryRun: true }`.
+          - Poll `get_kg_status` every 60 s until `running === false` **and**
+            `lastRefresh.dryRun === true` **and** `lastRefresh.at` is newer than the
+            dry-run trigger time.
+          - If the dry-run's `lastRefresh.detail` contains
+            `dry-run: guard passed: no shrink`: print "The guard refusal did not reproduce
+            on the dry-run — the ingest may have changed; stop and re-run bd-kg-refresh
+            from Step 5." and stop.
+          - Otherwise use `lastRefresh.partTable` and `lastRefresh.detail` from the
+            dry-run result for the steps below. The dry-run does not count as an
+            `acceptNewBaseline` acceptance; the never-twice rule applies only to the
+            `acceptNewBaseline: true` re-trigger.
+
+          **If `lastRefresh.partTable` is present**, proceed directly to the render step.
+
+          Render `lastRefresh.partTable` as a markdown table with columns
+          `part | before | after | delta` (delta = after − before; negative means shrink).
+       2. Ask exactly one question in STE, including every row from the table whose
+          `after` count is below its `before` count (there may be more than one part):
+          > "The guard refused because `<part1>` shrank from A to B lines[, and `<part2>`
+          > shrank from C to D lines, …]. Is this shrink expected from a change you know
+          > about (name it)? Yes: I re-trigger once with accept-new-baseline, which records
+          > your name and the table in the refresh PR. No: I stop."
+       3. On **yes**: call `trigger_kg_refresh { acceptNewBaseline: true }`, mark the
+          baseline as accepted for this session (never accept twice in one session), and
+          return to the top of the poll loop (Step 6).
+       4. On **no**: stop.
+     - If `lastRefresh.detail` contains `KG_SNAPSHOT_TRACKER_REGRESSION` and you have
+       **already** accepted a new baseline in this session: print "Guard fired again after
+       accept-new-baseline — stopping without re-triggering." and stop.
+     - Otherwise: stop. Do not re-trigger; state the gate and let the operator decide next steps.
 
 7. **Verify live.** Query the deployed graph through `kg.search_tool` and confirm:
    - A domain query returns non-empty, `degraded: false` results.
@@ -121,6 +163,9 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
      input to the base-note decision alongside the ingest report. If absent (uneventful run or
      rail predates AII-596), proceed without it — this is normal.
    An uneventful refresh with no learnings comment files nothing. Advisory — never blocks.
+   If a new baseline was accepted in this session (Step 6), include in the closing note:
+   the part name, the before-lines count, the after-lines count, and the change the operator
+   named when they accepted.
 
 ---
 
@@ -130,3 +175,4 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
   hand the result to the rail) is `bd-mega-kg-refresh`, not this skill.
 - The binding format is canonical across all KG-aware skills (see `../bd-shared/kg-binding.md`).
 - This is an admin-only skill: it needs an allowlist entry with role admin on the orchestrator.
+- `acceptNewBaseline` is the only sanctioned path past the `KG_SNAPSHOT_TRACKER_REGRESSION` guard; run `bd-mega-kg-refresh` (dry-run proof loop) before any refresh where a part shrink is expected.
