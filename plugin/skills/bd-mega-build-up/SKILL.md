@@ -184,6 +184,12 @@ Three branches carry a hard requirement:
   settings, with the env var as the seed on first boot. A flag with no admin surface is not
   a finished setting — the operator would need a deploy or `fly secrets set` to change it at
   runtime, with no UI path.
+- **Emitter change in a KG source repo (KGB/KGA scope)** — if the plan touches a KG repo's
+  classifier rules, node types, `doc_exclude`, or `sources.yml` scope, ask *"What is the
+  expected change per snapshot part, and does it need accept-new-baseline?"* before Gate 1
+  and record the answer as `Snapshot delta:` in the affected issue's `## Shape` block.
+  `"None"` is accepted only with explicit user confirmation that the change cannot alter any
+  part. A KG-repo emitter-change issue with no `Snapshot delta:` value is not ready to file.
 - **Every Overlap Inventory row** gets a committed action from the user, not from you.
 
 ### Adversarial principles
@@ -255,12 +261,17 @@ Work through the committed actions from the Overlap Inventory **before** filing 
 Present the manifest before filing. Never file and then ask.
 
 ```
-| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing |
+| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing | Snapshot delta |
 ```
 
 **Files overlap** carries the Step 2 verdict per issue: `∅`, or `sibling-key: paths` with the
 `Blocked by:` that resolves it. `UNPARSEABLE` means the audit failed — fix the `## Files`
 block before filing.
+
+**Snapshot delta** — for KG-repo emitter-change issues, carries the `Snapshot delta:` value
+from the issue's `## Shape` block. Leave blank for issues that are not emitter changes. **The
+gate refuses any emitter-change issue whose `Snapshot delta` column is blank** — fill it
+before filing.
 
 ### Step 5 — file
 

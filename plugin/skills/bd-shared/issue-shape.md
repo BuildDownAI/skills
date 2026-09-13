@@ -104,6 +104,19 @@ A violation splits the issue. No exceptions.
     added in the same issue as its producer shipped with a validator that rejected the **whole**
     callback on an unrecognised value, which would have stalled every failed ticket on the next
     runner/orchestrator version skew. Nobody was reviewing the contract as a contract.
+14. **Snapshot delta.** An issue in a KG source repo (a repo whose `sources.yml` drives
+    `kg_ingest`, or the base template) that changes what ingest emits — classifier rules, node
+    types, `doc_exclude`, or `sources.yml` scope — states the expected change per snapshot part
+    (`comment.nt`, `issue.nt`, `doc.nt`, …) as a direction and rough size, and whether it needs
+    the orchestrator's `accept-new-baseline`. **`bd-build-up` and `bd-mega-build-up` refuse to
+    file an emitter change that lacks this field.** `"None"` is a valid value only for a change
+    that provably cannot alter any part; the skill asks the user to confirm it explicitly rather
+    than accepting it silently.
+
+    *Why this rule exists.* KGB-16 changed which tracker comments become nodes and said nothing
+    about the snapshot effect. Nobody asked. The guard refused the first refresh after it merged.
+    Stating the expected delta at filing time makes the gap visible before implementation —
+    not at the incident where the guard blocks the next refresh.
 
 ## The writer census (hard rule 9)
 

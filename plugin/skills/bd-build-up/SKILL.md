@@ -271,6 +271,15 @@ whose action it affects, stored in settings, with the env var as the seed on fir
 Record the answer as the `Setting surface:` value in that issue's `## Shape` block. A plan
 with a surfaceless flag is not ready for approval.
 
+**Snapshot delta check (required for KG-repo emitter changes).** If the repo's `CLAUDE.md`
+has a `## Knowledge graph` block and any issue's `## Files` list touches `sources.yml`,
+classifier rules, node types, or `doc_exclude`, that issue must carry a `Snapshot delta:`
+value in its `## Shape` block before the plan is presented. Ask: *"What is the expected
+change per snapshot part, and does it need accept-new-baseline?"* `"None"` is accepted
+only with explicit user confirmation that the change cannot alter any part. **Refuse to file
+an emitter-change issue whose `Snapshot delta:` is absent.** A plan with a missing delta
+is not ready for approval.
+
 **Plan header:** build-up name, one-sentence objective, mode, issue count, and the critical
 path — the longest dependency chain, so the user sees the minimum time to complete.
 

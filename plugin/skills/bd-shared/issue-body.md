@@ -51,6 +51,7 @@ Trust boundary: {none | crosses X, handled by Y}
 Rollback: {mechanical | flag `name` | revert}
 Observability: {none | `metric.name`}
 Setting surface: {none | <page> · <control> · settings-table row, env `NAME` as seed}
+Snapshot delta: {none | per-part: `<part.nt>` <direction> <rough size>[; needs accept-new-baseline]}
 
 ## Notes
 
@@ -183,3 +184,29 @@ at filing time makes the gap visible before implementation, not at the incident 
 discovers there is no toggle. The `env NAME as seed` clause enforces the canonical pattern:
 the env var seeds the settings table on first boot and the table is the runtime source of
 truth; this is not endorsement of env-only storage.
+
+## Snapshot delta
+
+`Snapshot delta:` names the expected effect on each affected KG snapshot part when an issue in
+a KG source repo changes what ingest emits — classifier rules, node types, `doc_exclude`, or
+`sources.yml` scope. Required for any such emitter change; `bd-build-up` and `bd-mega-build-up`
+refuse to file one without it.
+
+Set it to `none` only when the change provably cannot alter any snapshot part. The build-up skills
+ask the user to confirm `none` explicitly; it is not accepted silently.
+
+For every other case, name each part that changes, the direction, a rough size, and whether the
+orchestrator's `accept-new-baseline` is required:
+
+```
+Snapshot delta: `comment.nt` shrinks by every bot Decision, roughly −60%; needs accept-new-baseline
+```
+
+*KGB-16 example:* KGB-16 typed tracker issue comments, narrowing which comments became nodes. The
+value above is the delta that should have been stated at filing time. Nobody asked; the guard refused
+the first refresh after it merged.
+
+**Why this field exists.** A KG ingest change has a downstream artefact whose size is guarded.
+Naming the expected delta at filing time makes the assumption explicit — and gives the guard a
+baseline to compare against when the refresh runs, rather than discovering the mismatch at the
+incident where the guard blocks production.
