@@ -3,6 +3,10 @@
     "linear-eudoxus": {
       "type": "http",
       "url": "https://mcp.linear.app/mcp"
+    },
+    "orch-ai-implement-testing": {
+      "type": "http",
+      "url": "https://ai-implement-testing-orchestrator.fly.dev/mcp"
     }
   }
 }
