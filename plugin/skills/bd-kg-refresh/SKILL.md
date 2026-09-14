@@ -9,7 +9,7 @@ metadata:
 
 Refresh the **orchestrator's** knowledge graph via the rail. The rail clones the KG source repo,
 runs the ingest, guards the result, and promotes it to serving — the laptop does not push a
-snapshot. A refresh takes about 15 minutes on GitHub Actions.
+snapshot. A refresh takes about 13 minutes on GitHub Actions.
 
 ## Steps
 
@@ -32,6 +32,16 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
        in as `<email>` with role `<role>`. Ask an admin to change your allowlist entry, or ask
        them to run the refresh."
      - Stop.
+
+**2b. Check search tool availability.** Use ToolSearch to confirm `kg.search_tool` (the
+   fully-qualified name from the binding, e.g. `mcp__orch-ai-implement-testing__kg_hybrid_search`)
+   is present in the session's tool list. Query for that exact tool name.
+   - If present: proceed normally; Step 7 will run the full verification including the live query.
+   - If absent: print "The bound server lists no KG search tools this session — the sidecar is not
+     serving, or the tool list was cached before it came up. Restart the session; if the tools are
+     still absent, check the orchestrator logs for `KG sidecar tools/list`." Set a session flag
+     **search-tool-absent = true**. Continue to Step 3 — the rail does not need the sidecar.
+     Step 7 will be limited to stamp verification only.
 
 3. **Preflight.** Call `get_tenant_health` on the bound orchestrator MCP server
    (`mcp__<kg.mcp_server>__get_tenant_health`). Every row under `kgRefreshPreflight` must have
@@ -102,6 +112,9 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
    | `reverted` | Stamp or verify gate failed after the swap; rail restored the previous snapshot, which is still serving |
    | `failed` | Rail error before staging |
 
+   Note: the `servedStamp` in `get_kg_status` already updates when the stage reaches `staging`;
+   only `serving` is the terminal condition. Do not exit the poll loop at `staging`.
+
    **Terminal conditions:**
    - `serving` with a `servedStamp` newer than before the trigger → proceed to Step 7.
    - `reverted` or `failed`:
@@ -144,12 +157,33 @@ snapshot. A refresh takes about 15 minutes on GitHub Actions.
        accept-new-baseline — stopping without re-triggering." and stop.
      - Otherwise: stop. Do not re-trigger; state the gate and let the operator decide next steps.
 
-7. **Verify live.** Query the deployed graph through `kg.search_tool` and confirm:
-   - A domain query returns non-empty, `degraded: false` results.
-   - The graph's spine stamp (via `kg_neighbors` on the spine IRI — `../bd-shared/kg-recon.md`)
-     equals `servedStamp` from Step 6.
-   An unchanged stamp means the rail served the old snapshot — check `lastRefresh.gate` and
-   `lastRefresh.detail` from the status response.
+7. **Verify.** Perform the stamp check first (minimum verification, never requires the sidecar),
+   then the live query if the search tool is available.
+
+   **7a. Stamp-vs-PR check (always required).** Using the `servedStamp` from Step 6:
+   - Find the refresh PR the rail opened. If `get_kg_status` returns `lastRefresh.prUrl`, use
+     that directly; otherwise run `gh pr list --search "kg-refresh: snapshot @"` on the
+     `kg.source_repo` to locate the PR.
+   - Confirm the PR title matches `kg-refresh: snapshot @ <servedStamp>` exactly. (This check
+     assumes the rail's PR title format is stable; if the format changes, the lookup will fail.)
+   - Confirm `lastRefresh.detail` reads `refreshed: <old stamp> -> <new stamp>`.
+   - If either check fails: print "Stamp mismatch — the rail may have served the old snapshot.
+     Check `lastRefresh.gate` and `lastRefresh.detail`." and stop.
+   - If both pass: the rail successfully promoted a new snapshot; proceed to 7b.
+
+   **7b. Live query (requires search tool; skip if search-tool-absent = true).** If the search
+   tool is present and operational (flag from Step 2b is not set):
+   - Call `kg.search_tool` with a domain query and confirm it returns non-empty,
+     `degraded: false` results.
+   - Confirm the graph's spine stamp (via `kg_neighbors` on the spine IRI —
+     `../bd-shared/kg-recon.md`) equals `servedStamp` from Step 6.
+   - If the live query fails (tool execution error or degraded result) but 7a passed, end with
+     the limited-verification outcome below.
+
+   If **search-tool-absent = true** (set in Step 2b), skip 7b entirely.
+
+   **Limited-verification outcome** (used when the live query is impossible or fails but 7a passed):
+   "Rail refresh complete and served (stamp <servedStamp>); the served graph is not reachable through MCP from this session — verify the sidecar before relying on the KG."
 
 8. **Close — learnings loop (required check, usually a no-op).** Follow
    `../bd-shared/kg-learnings-loop.md`. In addition: find the refresh PR the rail opened
