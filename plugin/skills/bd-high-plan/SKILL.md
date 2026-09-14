@@ -120,6 +120,12 @@ and why — and verify every claim against the code as you write; a wrong refere
 none. The drafts are the one place bd-high-plan goes below altitude, because they describe what
 exists, not what a child will build.
 
+**Anchors are verified, not recalled.** Every module, function, route, table, or key the parent
+names — in a step, a reuse note, or a doc draft — is opened and grepped in the repository before
+it is written, per [`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md).
+A handoff document, a memory, a KG hit, or a repository doc is a lead, not a verification. A name
+that fails the check is corrected or dropped.
+
 **The drafts leave the issue when the work lands.** Each step names the docs it carries. The
 child that changes a subsystem takes that subsystem's draft into `docs/` or `{{ADR_DIR}}` in the
 same PR, re-verified against the landed code; a repo with no such child gets one docs child.

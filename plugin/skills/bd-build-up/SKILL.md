@@ -52,6 +52,7 @@ Load each when its phase reaches it:
 | [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md) | The issue body template, routing, and the machine-read `## Files` contract |
 | [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md) | Pickup, waves, feature-node designation order, pilot-first |
 | [`../bd-shared/overlap-scan.md`](../bd-shared/overlap-scan.md) | Backlog overlap scan and reconciliation |
+| [`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md) | Every path, symbol, route, table, or key named in a body is opened and grepped before it is written |
 | `../bd-shared/trackers/{{TRACKER}}.md` | The tracker adapter — every tracker-touching step follows its matching section |
 
 ## Environment and tracker
@@ -315,6 +316,11 @@ demands on top of the template.
 
 Declare the surface; do not script the work. Exact paths, contracts, and testable acceptance
 criteria — not a step-by-step edit sequence for a capable implementer.
+
+**Every anchor is verified before it is written.** Open the file, grep the symbol, cite the path —
+[`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md). Docs, memories, KG
+hits, handoffs, and earlier issues are leads, not verification. `tools/verify-issue-files.py`
+checks the paths in `## Files` only; symbols and routes in prose are checked by hand.
 
 ### Stage the waves
 
