@@ -164,8 +164,10 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
    - Find the refresh PR the rail opened. If `get_kg_status` returns `lastRefresh.prUrl`, use
      that directly; otherwise run `gh pr list --search "kg-refresh: snapshot @"` on the
      `kg.source_repo` to locate the PR.
-   - Confirm the PR title matches `kg-refresh: snapshot @ <servedStamp>` exactly. (This check
-     assumes the rail's PR title format is stable; if the format changes, the lookup will fail.)
+   - Confirm the PR title is `kg-refresh: snapshot @ <stamp>` where `<stamp>` is `servedStamp`
+     in compact form (`YYYYMMDDTHHMMSSZ`, e.g. `2026-09-13T22:54:43+00:00` → `20260913T225443Z`).
+     (This check assumes the rail's PR title format is stable; if the format changes, the lookup
+     will fail.)
    - Confirm `lastRefresh.detail` reads `refreshed: <old stamp> -> <new stamp>`.
    - If either check fails: print "Stamp mismatch — the rail may have served the old snapshot.
      Check `lastRefresh.gate` and `lastRefresh.detail`." and stop.
@@ -180,7 +182,8 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
    - If the live query fails (tool execution error or degraded result) but 7a passed, end with
      the limited-verification outcome below.
 
-   If **search-tool-absent = true** (set in Step 2b), skip 7b entirely.
+   If **search-tool-absent = true** (set in Step 2b), skip 7b entirely and use the
+   limited-verification outcome below.
 
    **Limited-verification outcome** (used when the live query is impossible or fails but 7a passed):
    "Rail refresh complete and served (stamp <servedStamp>); the served graph is not reachable through MCP from this session — verify the sidecar before relying on the KG."
