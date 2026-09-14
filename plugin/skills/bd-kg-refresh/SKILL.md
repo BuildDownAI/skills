@@ -61,27 +61,11 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
    - Print: "scope: N mapped projects; the rail adds missing repos and teams on this refresh
      (see the refresh PR's Scope section)."
    - **Base drift.** Check whether the derivative KG repo is behind the base template:
-     1. If `get_tenant_health` returned a row with type `base:drift`, print that row directly
-        and skip the remaining git steps below.
-     2. Otherwise, read `base_repo:` from `sources.yml`. If the field is absent, use
-        `https://github.com/BuildDownAI/bd-knowledge-graph-base.git` as the upstream URL
-        and print "base_repo not set; using the base template". Skip the drift check only
-        if the URL cannot be fetched (e.g., network error or auth failure).
-     3. Ensure the `upstream` remote exists in the KG checkout: run
-        `git remote get-url upstream`. If the remote is missing, add it:
-        `git remote add upstream <base_repo>`.
-     4. Run `git fetch origin` (to bring the derivative's remote refs current), then
-        `git fetch upstream`.
-     5. Determine the derivative's default branch: run
-        `git remote show origin | grep 'HEAD branch'`; fall back to `main` if absent.
-        Read the short SHA: `git rev-parse --short origin/<default-branch>` → `<SHA>`.
-        Count commits the derivative is behind:
-        `git rev-list origin/<default-branch>..upstream/main --count` → N.
-        If N > 0, find the last merge date:
-        `git log --merges --first-parent -1 --format=%cd origin/<default-branch>`
-        (use "never merged" if no merge commit exists). Print:
-        "derivative is N commits behind base (last merge <date>, origin/<default-branch> at <SHA>); run bd-mega-kg-refresh to merge"
-        If N = 0, print: "derivative is current with base (origin/<default-branch> at <SHA>)".
+     1. If `get_tenant_health` returned a row with type `base:drift`, print the row's value and
+        its `hint` field (when present).
+     2. If no `base:drift` row is present, print: "base drift unknown — this orchestrator
+        predates [AII-598](https://linear.app/eudoxus/issue/AII-598/kg-refresh-preflight-advisory-basedrift-row-how-far-the-kg-repo-is);
+        run `bd-mega-kg-refresh` to check and merge the base template" and continue.
      Advisory only — the refresh continues regardless of the result. Do not run
      `git merge upstream`, do not create a `kg-upstream/` branch, and do not open any PR
      in this sub-step.
