@@ -42,6 +42,7 @@ Grouped by skill. One line per landed PR.
 - #85 BDS-53 — issue-body: a new operator setting declares its admin surface.
 - #86, #87 BDS-55 — discovery-driven bd-system-questions and related.
 - #93 — bd-high-plan docs recon.
+- #105 — bd-shared anchor verification: open the file and grep the symbol before naming it in a plan or body (high-plan, build-up, mega-build-up).
 
 **Repo configuration (not shipped in the plugin)**
 - #100 — `CLAUDE.md` binds the testing orchestrator's knowledge graph to this repo, and
