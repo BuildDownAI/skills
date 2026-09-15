@@ -43,6 +43,7 @@ Grouped by skill. One line per landed PR.
 - #86, #87 BDS-55 — discovery-driven bd-system-questions and related.
 - #93 — bd-high-plan docs recon.
 - #105 — bd-shared anchor verification: open the file and grep the symbol before naming it in a plan or body (high-plan, build-up, mega-build-up).
+- #92 — session-state: persistent landing-session state file (`bd-shared/session-state.md`) + Claude Code statusline script (`bd-shared/tools/bd-statusline.sh`) for build-down, super-build-down, smoke-jumper.
 
 **Repo configuration (not shipped in the plugin)**
 - #100 — `CLAUDE.md` binds the testing orchestrator's knowledge graph to this repo, and

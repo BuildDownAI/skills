@@ -359,6 +359,11 @@ The difference between 🟡 data-caveat and 🟡 functional-caveat is load-beari
 
 Post via GitHub MCP (`add_issue_comment`). Post autonomously — this is an informational artifact, not an action on the code.
 
+If a `.bd/session.md` exists with an open phase (`../bd-shared/session-state.md`) and has a row for
+this PR, put the verdict in that row's Last action (state stays as the driving session set it — the
+verdict informs the next state, the driving session chooses it). Do not create the file; smoke-jumper
+runs standalone too.
+
 ```
 ## 🔥 Smoke-Jumper Report — PR #{number}
 
