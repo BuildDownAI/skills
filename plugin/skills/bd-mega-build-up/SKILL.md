@@ -52,6 +52,7 @@ Load each when its phase reaches it:
 | [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md) | The issue body template and the machine-read `## Files` contract |
 | [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md) | Pickup, waves, feature-node designation order, pilot-first |
 | [`../bd-shared/overlap-scan.md`](../bd-shared/overlap-scan.md) | Backlog overlap scan and reconciliation |
+| [`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md) | Every path, symbol, route, table, or key named in a body is opened and grepped before it is written |
 | `../bd-shared/trackers/{{TRACKER}}.md` | The tracker adapter — every tracker-touching step follows its matching section |
 
 ## Environment and tracker
@@ -184,6 +185,12 @@ Three branches carry a hard requirement:
   settings, with the env var as the seed on first boot. A flag with no admin surface is not
   a finished setting — the operator would need a deploy or `fly secrets set` to change it at
   runtime, with no UI path.
+- **Emitter change in a KG source repo (KGB/KGA scope)** — if the plan touches a KG repo's
+  classifier rules, node types, `doc_exclude`, or `sources.yml` scope, ask *"What is the
+  expected change per snapshot part, and does it need accept-new-baseline?"* before Gate 1
+  and record the answer as `Snapshot delta:` in the affected issue's `## Shape` block.
+  `"None"` is accepted only with explicit user confirmation that the change cannot alter any
+  part. A KG-repo emitter-change issue with no `Snapshot delta:` value is not ready to file.
 - **Every Overlap Inventory row** gets a committed action from the user, not from you.
 
 ### Adversarial principles
@@ -220,7 +227,10 @@ One unit of parallelizable work = one issue. Every issue passes
 Use [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md) for the body. Declare the
 surface — exact paths, contracts, acceptance criteria, pattern anchors — and do not script the
 work. Link the ADR as design reference for the human reviewer, and inline anything the agent
-needs, because the pipeline reads the body cold and does not follow links.
+needs, because the pipeline reads the body cold and does not follow links. Every anchor in the
+body — path, symbol, route, table, key — is opened and grepped before it is written
+([`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md)); the file linter
+checks paths only.
 
 Mega-specific: write the title as one short STE statement of the work. Do not reuse a
 decision's phrasing verbatim as a title.
@@ -255,12 +265,17 @@ Work through the committed actions from the Overlap Inventory **before** filing 
 Present the manifest before filing. Never file and then ask.
 
 ```
-| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing |
+| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing | Snapshot delta |
 ```
 
 **Files overlap** carries the Step 2 verdict per issue: `∅`, or `sibling-key: paths` with the
 `Blocked by:` that resolves it. `UNPARSEABLE` means the audit failed — fix the `## Files`
 block before filing.
+
+**Snapshot delta** — for KG-repo emitter-change issues, carries the `Snapshot delta:` value
+from the issue's `## Shape` block. Leave blank for issues that are not emitter changes. **The
+gate refuses any emitter-change issue whose `Snapshot delta` column is blank** — fill it
+before filing.
 
 ### Step 5 — file
 
@@ -357,6 +372,9 @@ decision from issue bodies.
 - **A file described without being opened.** → The path existing is not evidence it is the
   file you think it is. Run `tools/verify-issue-files.py` and read the inventory, not just the
   exit code.
+- **A function, route, or module named from a doc, a memory, a KG hit, or a handoff without
+  opening the file.** → Anchor-verification violation. Docs go stale: a deleted vending module
+  stayed in a reference doc for a week. Grep the symbol; correct or drop the name.
 - **Branching logic specified with some of its states.** → Hard rule 11. Write the state
   table; a three-state model specified as two states fails silently in the third.
 - **A shared value's shape changed with no reader census.** → Hard rule 10. Search the

@@ -28,6 +28,21 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
   `ai-implement/feature/<key>`, internal roll-ups vs the top-of-tree human-gate PR): see
   `plugin/skills/bd-shared/feature-branch-grouping.md`.
 
+## Knowledge graph (optional)
+
+- kg.present:      true
+- kg.orchestrator: https://ai-implement-testing-orchestrator.fly.dev
+- kg.mcp_server:   orch-ai-implement-testing
+- kg.search_tool:  mcp__orch-ai-implement-testing__kg_hybrid_search
+- kg.source_repo:  BuildDownAI/knowledge-graph-ai-implement
+
+The graph is the AI-Implement testing orchestrator's, served from its OAuth-protected `/mcp`
+(format: `plugin/skills/bd-shared/kg-binding.md`). Its scope already includes this repo and team
+BDS, so KG-aware skills run here with real data, and `bd-kg-refresh` / `bd-mega-kg-refresh` can be
+exercised end to end from this checkout (admin role on the orchestrator required). The server entry
+lives in `.mcp.json` and is pre-approved in `.claude/settings.json`; the name is per-orchestrator
+because Claude Code ties the OAuth token to the server name.
+
 ## GitHub repo — `{{REPO}}`
 
 - **`{{REPO}}`:** `BuildDownAI/skills`

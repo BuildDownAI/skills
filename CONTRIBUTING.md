@@ -37,7 +37,10 @@ Then open a Claude Code session in a project you want to use the skills with and
 
 ## Before opening a PR
 
-1. **Bump the plugin version when you change shipped plugin content.** Any change under `plugin/skills/**` (or other shipped plugin content) **must** bump `version` in [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR — it's the only signal that tells `/plugin update` and the marketplace to pull new content. Use **minor** (`0.x.0`) for additive / backward-compatible changes and **patch** (`0.0.x`) for fixes and wording.
+1. **Bump the plugin version when you change shipped plugin content.** Any change under `plugin/skills/**` (or other shipped plugin content) **must** bump `version` in [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR — it's the only signal that tells `/plugin update` and the marketplace to pull new content. **Compute the new version from `main`, not from the previous `testing` value** (`git fetch origin main --depth=1 && git show origin/main:plugin/.claude-plugin/plugin.json`):
+   - **Release target, set once per cycle.** If `testing` still carries `main`'s version, set `main` + `0.1.0` for additive or backward-compatible work, or `main` + `1.0.0` for a breaking change. This happens once between releases, however many PRs land.
+   - **Patch per PR.** Every later PR that changes shipped content adds `0.0.1`. A PR that touches no shipped content leaves the version alone.
+   Worked example: `main` is `1.4.0`; the first content PR sets `1.5.0`; the next two set `1.5.1` and `1.5.2`; the release is tagged `v1.5.2`. `testing` never reaches `1.6.0` before a release. The full rule, including how a release is cut, is `CLAUDE.md` → *Releasing*.
 2. **Keep skill frontmatter valid.** Every BuildDown `SKILL.md` carries `metadata.suite: builddown` in its frontmatter; follow the shape of the existing skills for `name`, `description`, and trigger phrasing.
 3. **Lint any shell you touch.** If you change `install.sh` or another script, run `shellcheck` on it if you have it installed.
 4. **No secrets, no client-specific data** — the skills are generic and tooling-agnostic; service names appear as `{{PLACEHOLDER}}` tokens, not hardcoded workspaces, repos, or client names. Double-check before pushing.

@@ -174,6 +174,7 @@ Cross-reference every issue against the full Blindspot Table (see Conventions be
 | **Security/RLS gap** | Touches tenant-scoped tables without mentioning row-level security | Add security context note; route policy changes to the architect |
 | **Too large** | Touches 5+ files across multiple concerns | Split into smaller issues with clear boundaries |
 | **Turn-budget overload** | Wide-and-shallow issue with >~12–15 files — at ~2–4 turns/file, risks exhausting the runner's per-pass turn budget (a project Max-Turns setting, commonly ~50) before the agent finishes and pushes; silent failure: `result=max_turns`, nothing pushed, no partial PR | Split (deep core + wide propagation blocked by it) OR raise the project's Max Turns before dispatch and note it on the issue; flag in High-Risk Items |
+| **Snapshot delta — needs accept-new-baseline** | KG-repo issue whose `Snapshot delta:` value includes "needs accept-new-baseline" | Flag in High-Risk Items; note that bd-build-down must sequence the guard dry-run and the acceptance step before the issue merges |
 | **Missing test requirements** | No verification specified | Add `{{BUILD_CMD}}` passes + specific UI/API verification |
 | **Mock data confusion** | Criteria imply real data is available when only mock data exists | Note "empty state acceptable" or specify data wiring |
 | **Storage bypass** | File upload issue without referencing the project's blob/file storage convention | Specify the storage layer explicitly |

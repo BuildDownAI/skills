@@ -52,6 +52,7 @@ Load each when its phase reaches it:
 | [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md) | The issue body template, routing, and the machine-read `## Files` contract |
 | [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md) | Pickup, waves, feature-node designation order, pilot-first |
 | [`../bd-shared/overlap-scan.md`](../bd-shared/overlap-scan.md) | Backlog overlap scan and reconciliation |
+| [`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md) | Every path, symbol, route, table, or key named in a body is opened and grepped before it is written |
 | `../bd-shared/trackers/{{TRACKER}}.md` | The tracker adapter — every tracker-touching step follows its matching section |
 
 ## Environment and tracker
@@ -150,6 +151,10 @@ native sub-issues, with `Blocked by:` relations mirroring the parent's step orde
 
 - **Scope is the step, verbatim.** The parent's step line is the objective, and its settled
   decisions are binding context. Do not re-open what the high-plan dialogue already settled.
+- **The step's doc drafts travel with it.** When the parent's `## Subsystem documentation`
+  section holds drafts the step names, list each as `Create:` or `Modify:` in the child's
+  `## Files` with the draft's target path, and add an acceptance line that the landed file
+  matches the code. The parent's copy stays as the historical draft.
 - **Output shape:** a child issue of the parent by default. When the work outgrows child shape
   — its own tree, a different repo, a mega candidate — file it standalone and link it to the
   parent instead. Same content rules.
@@ -267,6 +272,15 @@ whose action it affects, stored in settings, with the env var as the seed on fir
 Record the answer as the `Setting surface:` value in that issue's `## Shape` block. A plan
 with a surfaceless flag is not ready for approval.
 
+**Snapshot delta check (required for KG-repo emitter changes).** If the repo's `CLAUDE.md`
+has a `## Knowledge graph` block and any issue's `## Files` list touches `sources.yml`,
+classifier rules, node types, or `doc_exclude`, that issue must carry a `Snapshot delta:`
+value in its `## Shape` block before the plan is presented. Ask: *"What is the expected
+change per snapshot part, and does it need accept-new-baseline?"* `"None"` is accepted
+only with explicit user confirmation that the change cannot alter any part. **Refuse to file
+an emitter-change issue whose `Snapshot delta:` is absent.** A plan with a missing delta
+is not ready for approval.
+
 **Plan header:** build-up name, one-sentence objective, mode, issue count, and the critical
 path — the longest dependency chain, so the user sees the minimum time to complete.
 
@@ -302,6 +316,11 @@ demands on top of the template.
 
 Declare the surface; do not script the work. Exact paths, contracts, and testable acceptance
 criteria — not a step-by-step edit sequence for a capable implementer.
+
+**Every anchor is verified before it is written.** Open the file, grep the symbol, cite the path —
+[`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md). Docs, memories, KG
+hits, handoffs, and earlier issues are leads, not verification. `tools/verify-issue-files.py`
+checks the paths in `## Files` only; symbols and routes in prose are checked by hand.
 
 ### Stage the waves
 
