@@ -56,9 +56,8 @@ Search this project's knowledge graph directly via hybrid search. The **orchestr
 
 5. **Scope note.** Hybrid-search only — deeper graph walks are out of scope here. Results
    reflect the **deployed** orchestrator graph; a completed `bd-kg-refresh` appears with no
-   client restart. An orchestrator auth failure means the 1-hour token expired —
-   re-authenticate via `/mcp` in an interactive session (with refresh tokens live, this
-   should be rare).
+   client restart. On an orchestrator auth failure the recovery hint from
+   `../bd-shared/orchestrator-auth.md` fires at Step 2 and stops the skill.
 
 ---
 
