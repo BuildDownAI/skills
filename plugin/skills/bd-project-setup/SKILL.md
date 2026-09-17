@@ -89,7 +89,7 @@ bullet keys, or inline text):
 | Tracker team | team short-code (e.g. `BDS`) |
 | `{{IMPLEMENT_LABEL}}` | label the coding-agent pickup trigger |
 | `enabledMcpjsonServers` / server-approval state | whether servers are pre-approved in `.claude/settings.json` |
-| `## Knowledge graph` block | `kg.present`, `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`, `kg.source_repo` (see Phase K; legacy blocks may still carry retired `kg.repo`/`kg.path`/`kg.branch`) |
+| `## Knowledge graph` block | `kg.present`, `kg.mcp_server` (canonical two-key shape; legacy blocks may also carry additional keys — see `../bd-shared/kg-binding.md` and Phase K) |
 
 If `CLAUDE.md` is absent or contains none of these, record: *no CLAUDE.md bindings found*.
 
@@ -457,10 +457,30 @@ operator confirms its removal, remove the old stdio entry and its pre-approval i
 
 ### Step K.4 — Bind
 
-Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonical format in
-`../bd-shared/kg-binding.md` (orchestrator fields: `kg.orchestrator`, `kg.mcp_server`, `kg.search_tool`,
-`kg.source_repo`). Merge into any existing block rather than overwriting it — preserve values the user
-has already customized, and drop any retired fields (`kg.path`, `kg.branch`, and the former transition-mode fields `kg.`: `local_mcp_server`, `local_search_tool`, `prefer`) when migrating a legacy block.
+Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonical two-key format in
+`../bd-shared/kg-binding.md`:
+
+```
+## Knowledge graph (optional)
+- kg.present:    true
+- kg.mcp_server: orch-<app-slug>
+```
+
+Merge into any existing block rather than overwriting it — preserve any legacy keys already present
+(they become the fallback path when `get_project_binding` is absent from the session). Drop retired
+fields (`kg.path`, `kg.branch`, and the former transition-mode fields `kg.`: `local_mcp_server`,
+`local_search_tool`, `prefer`) when migrating a legacy block.
+
+> **Legacy note:** Legacy blocks may carry `kg.orchestrator`, `kg.search_tool`, and `kg.source_repo` —
+> preserve these if present; see `../bd-shared/kg-binding.md` for the legacy block format.
+
+**Orchestrator confirmation (run after writing the block).** If
+`mcp__<kg.mcp_server>__get_project_binding` is present in the current tool list, call it with the repo
+slug and print the returned binding beside the two keys you just wrote, e.g.:
+
+> `kg binding: kg.present=true, kg.mcp_server=orch-ai-implement-testing (CLAUDE.md) | orchestrator: orchestratorUrl=https://..., sourceRepo=..., searchTool=kg_hybrid_search`
+
+If `get_project_binding` is absent, skip this step silently — the two written keys stand as-is.
 
 ### Step K.5a — Provider redirect-URI preflight (automated — run BEFORE asking anyone to sign in)
 
@@ -514,12 +534,13 @@ an expired token means a quick re-auth, not a broken binding.
 ### Step K.6 — Restart + verify
 
 A Claude Code restart is required before a newly-wired server is available (MCP servers load once at
-session start). Then **verify with a real query, not just a connection**: call the bound
-`kg.search_tool` with a domain term and confirm non-empty results — a sidecar can be up, authed, and
-listing tools while serving an empty or wrong-namespace graph (boots ≠ serves).
+session start). Then **verify with a real query, not just a connection**: resolve the search tool via
+`get_project_binding` (or the legacy block — see `../bd-shared/kg-binding.md`) and call it with a
+domain term to confirm non-empty results — a sidecar can be up, authed, and listing tools while
+serving an empty or wrong-namespace graph (boots ≠ serves).
 
 > Refreshing the graph's *content* is not part of setup: the orchestrator KG refreshes by
-> **ingest → commit snapshot → redeploy** in the KG source repo (`kg.source_repo`) — that is
+> **ingest → commit snapshot → redeploy** in the KG source repo (`sourceRepo` from the binding call) — that is
 > `bd-kg-refresh`'s job, run when the graph is stale, not when a project binds.
 
 ---

@@ -12,7 +12,12 @@ When the block is present and `kg.present: true`, continue to the query step.
 
 Derive **1–3 short queries** from the work at hand — e.g. the objective's key nouns, or an issue key + title + gap topics from its gap analysis. These queries are brief and direct (2–4 words), surfacing the core concept(s) the operator needs orientation on.
 
-Call the orchestrator's hybrid-search tool (`kg.search_tool`) with `{query, limit: 8}`. Repeat for each derived query. **Open the recon output with the one-line target announce** (`KG: orchestrator (graph as of <date>)`) so the operator knows which graph oriented them.
+**Resolve the search tool before querying:**
+
+1. If `mcp__<kg.mcp_server>__get_project_binding` is present in the current tool list, call it with the repo slug and read `kg.searchTool` from the response. Resolve the search tool as `mcp__<kg.mcp_server>__<searchTool>` (print: "orchestrator binding").
+2. If `get_project_binding` is absent, fall back to `kg.search_tool` from CLAUDE.md (print: "legacy binding").
+
+Call the resolved search tool with `{query, limit: 8}`. Repeat for each derived query. **Open the recon output with the one-line target announce** (`KG: orchestrator (graph as of <date>)`) so the operator knows which graph oriented them.
 
 ## Use the results
 
