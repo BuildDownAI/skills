@@ -15,6 +15,8 @@ At session start, confirm the Linear MCP is available and state it in the openin
 
 ## Issue scan & states
 
+**Resolve `{{IMPLEMENT_LABEL}}`:** Per `../bd-shared/pickup-label.md` — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source. Use the resolved value for all `list_issues` label filters and `save_issue` label assignments in this session.
+
 Pull current board state using three parallel `list_issues` calls:
 
 1. `list_issues` filtered by `state: "In Progress"` — agent is actively working; pipeline is running

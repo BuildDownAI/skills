@@ -34,8 +34,8 @@ the orchestrator mapping), not the display name.
 ## Pickup trigger
 To release an issue for pickup: set `AI-Implement-Status = Ready`, set the Repo
 field to the mapping's `repoFieldValue`, and ensure the issue satisfies the
-mapping's scope JQL. The `AI-Implement` label alone does **not** trigger pickup —
-the Status field does.
+mapping's scope JQL. The {{IMPLEMENT_LABEL}} alone does **not** trigger pickup —
+the Status field does. (Jira pickup is field-driven; labels are not the signal — see `../bd-shared/pickup-label.md` rule 5.)
 
 ## Post-merge completion
 After build-down merges a PR, complete the linked Jira issue explicitly:
@@ -67,7 +67,7 @@ that now has all its blockers in a `done` status category: release it via **Pick
 once `isBlockedByIncomplete` returns false.
 
 ## Follow-up filing
-File a new Jira issue with the Repo field set and the `AI-Implement` label. If
+File a new Jira issue with the Repo field set and the {{IMPLEMENT_LABEL}}. If
 this session has a build-up epic, parent the issue to it (`parent = <epic>`);
 a standalone build-down with no epic skips the parent. For a scoped fix that should be
 picked up now, set `AI-Implement-Status = Ready` (Pickup trigger). For planning
