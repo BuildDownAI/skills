@@ -49,8 +49,10 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
        tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
        Update the orchestrator, then retry."
      - Stop.
-   - Call `mcp__<kg.mcp_server>__get_session_identity`. Read `role` from the result. If `role`
-     is not `admin`:
+   - Call `mcp__<kg.mcp_server>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
+     (expiry warning; 401 recovery applies to every subsequent orchestrator call in this skill,
+     across all phases).
+     Read `role` from the result. If `role` is not `admin`:
      - Print: "This skill needs an admin account on the orchestrator. Your MCP session is signed
        in as `<email>` with role `<role>`. Ask an admin to change your allowlist entry, or ask
        them to run the refresh."
