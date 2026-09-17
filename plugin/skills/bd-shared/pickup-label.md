@@ -30,7 +30,7 @@ default `AI-Implement` and print once:
 > `pickup label: AI-Implement (label from default)`
 
 **Rule 3 — Re-resolve before assignment.** Re-resolve the pickup label immediately before every
-action that assigns it to an issue (rule 1 → 2 → 2b in order). Read-only scans and status
+action that assigns it to an issue (rule 1 → 2, including the no-binding sub-case, in order). Read-only scans and status
 checks use the session value resolved at session start — no extra call needed.
 
 **Rule 4 — Use verbatim.** Use the resolved value exactly as returned. Never change its case,
