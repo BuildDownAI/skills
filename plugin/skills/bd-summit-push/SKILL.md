@@ -97,10 +97,10 @@ For each issue, capture: title, description/body, labels, dependencies (`blocked
 
 Before sequencing, consult the project's knowledge graph for prior learnings, decisions, and
 issues touching this plan's surfaces. Follow `../bd-shared/kg-recon.md`: derive 1–3 queries from **the
-plan's key nouns + the issue set's shared files/components**, call **only** `kg.search_tool`
-(hybrid-search), and cite any hit that changes a sequencing or one-shot-quality call (e.g. a
-prior failure class on a surface an issue touches lowers its confidence score). Advisory and
-non-blocking; silent skip when no KG is bound.
+plan's key nouns + the issue set's shared files/components**, call **only** `mcp__<kg.mcp_server>__<searchTool>`
+(the resolved hybrid-search tool from `../bd-shared/kg-recon.md`), and cite any hit that changes
+a sequencing or one-shot-quality call (e.g. a prior failure class on a surface an issue touches
+lowers its confidence score). Advisory and non-blocking; silent skip when no KG is bound.
 
 ### Phase 2: Dependency Graph Analysis
 
