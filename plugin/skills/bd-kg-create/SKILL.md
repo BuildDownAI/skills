@@ -11,6 +11,8 @@ Builds a **new KG repo** for a project from the base template, then routes throu
 the existing rails (`bd-kg-refresh` to build, `bd-project-setup` Phase K to bind).
 After this skill, the project has a working, queryable KG.
 
+**Needs clone: this skill clones the KG repo and edits it locally (Step 2 and beyond require the checkout).**
+
 ## Inputs (gather up front; ask only for what can't be derived)
 
 | Input | Default |
@@ -85,9 +87,15 @@ After this skill, the project has a working, queryable KG.
    **4c. Snapshot before deploy (sequencing rule).** Step 5's ingest must commit and push
    the snapshot to the KG repo's default branch **before** triggering the deploy — the image
    build clones that branch, and a deploy against an empty or stale branch serves an empty
-   graph with no build error. Confirm the push LANDED (`git log origin/<default>`) before
-   triggering the deploy. Chaining push and deploy in one command lets the remote builder
-   clone the pre-push tree; 4e's unchanged stamp is how you find out.
+   graph with no build error. After Steps 4a and 4b, call
+   `mcp__<kg.mcp_server>__get_tenant_health` and confirm the `kgRefreshPreflight` rows show
+   `ok: true` for the new repo's GitHub App access row and the `KG_SOURCE_REPO` row — this
+   confirms the orchestrator can see the new repo before triggering the deploy (stronger gate
+   than a local `git log`). If any preflight row fails, stop and resolve the issue before
+   Step 5. If `get_tenant_health` returns no `kgRefreshPreflight` rows (orchestrator predates
+   AII-594), note "preflight rows absent — proceeding" and continue. Chaining push and deploy
+   in one command lets the remote builder clone the pre-push tree; 4e's unchanged stamp is how
+   you find out.
 
    **4d. The bake deploy.** Step 5 triggers one orchestrator deploy after 4a–4c complete.
    This deploy bakes the KG namespace from `sources.yml` into the image; the namespace cannot
