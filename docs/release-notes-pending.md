@@ -43,11 +43,15 @@ Grouped by skill. One line per landed PR.
 - #86, #87 BDS-55 — discovery-driven bd-system-questions and related.
 - #93 — bd-high-plan docs recon.
 - #105 — bd-shared anchor verification: open the file and grep the symbol before naming it in a plan or body (high-plan, build-up, mega-build-up).
+- #106, #107, #108, #109, #110 BDS-75 — every skill resolves the pickup label from the orchestrator
+  (`bd-shared/pickup-label.md`); shared adapters and grouping docs name `{{IMPLEMENT_LABEL}}`.
 - #92 — session-state: persistent landing-session state file (`bd-shared/session-state.md`) + Claude Code statusline script (`bd-shared/tools/bd-statusline.sh`) for build-down, super-build-down, smoke-jumper.
 
 **Repo configuration (not shipped in the plugin)**
 - #100 — `CLAUDE.md` binds the testing orchestrator's knowledge graph to this repo, and
   `.mcp.json` gains the `orch-ai-implement-testing` server.
+- ADR 0001 (`docs/adr/`) and the first `CONTEXT.md` glossary: the project binding is one
+  orchestrator call. Repo docs, not shipped in the plugin.
 - #77 — sync from AI-Implement. #59 — release instructions fix.
 
 ## Decisions to make at release time
@@ -68,3 +72,4 @@ Grouped by skill. One line per landed PR.
 Add a dated line here whenever `testing` gains something the release will need.
 
 - 2026-09-14 — initial list, written after BDS-67 landed on `testing` at `1.5.4`.
+- 2026-09-17 — BDS-75 tree landed on `testing` at `1.5.11` (#110). ADR 0001 and `CONTEXT.md` added. BDS-69 tree next; its four children take `testing` to `1.5.15` or `1.5.16`.
