@@ -17,7 +17,8 @@ Search this project's knowledge graph directly via hybrid search. The **orchestr
    `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
    - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
      session's tool list.
-   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` and take
+   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
+     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block — and take
      `present` and `searchTool` from the response's `kg` sub-object. Resolve the search tool
      as `mcp__<kg.mcp_server>__<searchTool>`. Print: "binding: get_project_binding".
    - If absent: read `kg.present` and `kg.search_tool` from the legacy block in `CLAUDE.md` and
