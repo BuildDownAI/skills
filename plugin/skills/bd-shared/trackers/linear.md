@@ -9,6 +9,7 @@ Everything else applies to both.
 
 ## MCP & discovery
 
+- **Resolve pickup label:** Follow `../pickup-label.md` — if the orchestrator MCP is bound and `get_project_binding` is in the tool list, call it and take `pickupLabel`; otherwise read `{{IMPLEMENT_LABEL}}` from the project binding or use the default `AI-Implement`. Print the value and its source once before any filing action.
 - **Chat (web/mobile):** Linear MCP, GitHub MCP, conversation memory. Lacks local FS / bash. bd-belay-on to a code-reading agent for codebase reads.
 - **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads and — in bd-mega-build-up — for writing ADRs and glossary entries into the repo, then hand back to chat for filing.
 - **Pair pattern (mega only):** Write the ADRs to `{{ADR_DIR}}` in the repo during the grill, then link them into Linear from chat as a Project Document.
@@ -57,24 +58,24 @@ goal is to surface every overlap and force a decision before any new issue gets 
 
 ## Pickup trigger
 
-- **Wave 1** (no `Blocked by`) → `state: Todo` + label `AI-Implement`. Pipeline picks up within minutes.
+- **Wave 1** (no `Blocked by`) → `state: Todo` + label `{{IMPLEMENT_LABEL}}` (resolved per `../pickup-label.md`). Pipeline picks up within minutes.
 
 **Linear MCP patterns:**
-- `state: Todo` + `AI-Implement` label = pipeline pickup.
+- `state: Todo` + `{{IMPLEMENT_LABEL}}` label = pipeline pickup.
 
 ## Wave staging
 
 The shared wave model (`../pipeline.md`), in Linear terms:
 
-- **Wave 1** (no `Blocked by`) → `state: Todo` + label `AI-Implement`. Pipeline picks up within minutes.
+- **Wave 1** (no `Blocked by`) → `state: Todo` + label `{{IMPLEMENT_LABEL}}` (resolved per `../pickup-label.md`). Pipeline picks up within minutes.
 - **Wave 2+** (has `Blocked by`) → `state: Backlog`. Promote to `Todo` during bd-build-down as blockers merge.
-- **Architect-routed** (schema, security, infra) → `state: Todo`, assigned to `{{ARCHITECT_NAME}}`, **no** `AI-Implement` label.
+- **Architect-routed** (schema, security, infra) → `state: Todo`, assigned to `{{ARCHITECT_NAME}}`, **no** `{{IMPLEMENT_LABEL}}` label.
 
 File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
 ## Architect routing
 
-**Architect-routed** (schema, security, infra) → `state: Todo`, assigned to `{{ARCHITECT_NAME}}`, **no** `AI-Implement` label.
+**Architect-routed** (schema, security, infra) → `state: Todo`, assigned to `{{ARCHITECT_NAME}}`, **no** `{{IMPLEMENT_LABEL}}` label.
 
 ## Dependencies
 
@@ -89,7 +90,7 @@ The issue body itself follows the shared template in `../issue-body.md`.
 **Linear MCP patterns:**
 - `save_issue` handles create + update (pass `id` to update).
 - Label arrays replace — always pass the full desired list.
-- `state: Todo` + `AI-Implement` label = pipeline pickup.
+- `state: Todo` + `{{IMPLEMENT_LABEL}}` label = pipeline pickup.
 - Documents attach to projects, not to individual issues. One project per bd-build-up.
 
 File via `save_issue` (or Linear MCP equivalent) after explicit approval of the issue manifest.
@@ -119,7 +120,7 @@ and follow it to the ADRs. Don't reconstruct the design from issue bodies.
 
 ## Feature-node grouping
 
-A **feature node** is a parent issue carrying the `AI-Implement` label with ≥1 `AI-Implement`-labelled
+A **feature node** is a parent issue carrying the `{{IMPLEMENT_LABEL}}` label (resolved per `../pickup-label.md`) with ≥1 `{{IMPLEMENT_LABEL}}`-labelled
 child. It owns `ai-implement/feature/<key>`; its labelled **children PR into that feature branch**, not the
 Default Branch. The parent's own closing work is `Blocked by:` **all** its labelled children and runs
 **last**, on the parent's own feature branch. Recursive: a child that is itself a labelled parent gets its
@@ -133,7 +134,7 @@ via a direct `git merge`, the top of the tree as a human-reviewed `feature → b
 branch path segment. The selector lives in the description, not a label; write examples as
 `# ai-implement.yml (example)` (a bare marker is stripped from that issue's spec).
 
-**Designation = the `AI-Implement` label.** Terminal = the issue is Done or Cancelled.
+**Designation = the `{{IMPLEMENT_LABEL}}` label.** Terminal = the issue is Done or Cancelled.
 
 **Build the whole tree first, then label the parent BEFORE the children.** Create children + parent, set
 every `parent` relationship and every `Blocked by:` relation — then label the parent, then the children.
