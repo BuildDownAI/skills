@@ -24,7 +24,7 @@ This skill assumes some setup the user has wired up. Names of services and roles
 - `{{PREVIEW_HOST}}` — the preview deploy URL pattern, typically `pr-{N}-{app}.{provider}.dev` or similar.
 - `{{AGENT_MENTION}}` — how the AI coding agent listens for follow-up requests on PRs (e.g., `@claude`, `@copilot`, an explicit command). The skill uses `@agent` as a placeholder — substitute the real mention.
 - `{{ARCHITECT_NAME}}` — the human who owns risky changes (migrations, auth, infrastructure). Optional — single-operator setups skip the routing rules.
-- `{{IMPLEMENT_LABEL}}` — the label on issues that triggers the AI coding agent pipeline (e.g., `ai-implement`, `agent-build`).
+- `{{IMPLEMENT_LABEL}}` — the label on issues that triggers the AI coding agent pipeline (e.g., `ai-implement`, `agent-build`). Resolved at session start per `../bd-shared/pickup-label.md`.
 - `{{BUILD_CMD}}` — the verification command for type-checked code (e.g., `next build`, `tsc --noEmit`, `cargo check`).
 
 The skill is written assuming an AI coding agent that opens PRs in response to labeled issues and posts a gap-analysis comment when the PR is ready for review. The pattern works with any agent that does this — the workflow is the contract, not the specific tool.
@@ -94,6 +94,8 @@ If the agent in use doesn't produce a structured gap analysis, build the equival
 
 **Check for an unfinished session first.** If `.bd/session.md` exists with an open `phase`, follow
 the resume rule in `../bd-shared/session-state.md` before scanning anything.
+
+**Resolve `{{IMPLEMENT_LABEL}}` (per `../bd-shared/pickup-label.md`):** Follow the procedure to resolve the pickup label — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source before proceeding.
 
 Pull current state before assessing anything. Use tracker MCP and GitHub MCP in parallel.
 
@@ -404,7 +406,7 @@ branch), fix labels in the order above, and re-release — retargeting after the
   the old so dependents are never transiently unblocked. Symptom: `Found N needing planning`
   repeating across polls with no run starting.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
@@ -540,6 +542,7 @@ Merge via GitHub MCP using squash merge as the default method. After merging:
   landing surfaced. Mirror any learnings-worthy smoke/review finding from the PR thread into
   it: the KG ingests issue comments but **never PR comment threads**, so the PR copy alone is
   invisible to the graph. An uneventful merge gets one short outcome line, not silence.
+- Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before assigning the label to unblocked issues.
 - Release any issues the merge unblocks, per the active adapter's **Unblock dependents** section.
 
 ### Post-merge sweep
@@ -566,6 +569,8 @@ File a new tracker issue when:
 3. A pattern of failures points to a root cause needing architectural attention (→ parked, route to the architect)
 
 ### Filing context matters
+
+**Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md`** immediately before assigning the label to any filed issue.
 
 The filing context determines whether the issue is pickup-ready or parked — set state and labels per the active adapter's **Follow-up filing** section:
 

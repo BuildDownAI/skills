@@ -33,7 +33,7 @@ This mapping is the contract between bd-smoke-jumper and the host skills. Verdic
 - `{{TRACKER}}` — the issue tracker
 - `{{REPO}}` — the GitHub repo, owner/name format
 - `{{PREVIEW_HOST}}` — preview deploy URL pattern (e.g., `pr-{N}-{app}.{provider}.dev`)
-- `{{IMPLEMENT_LABEL}}` — the label that triggers the AI coding agent pipeline
+- `{{IMPLEMENT_LABEL}}` — the label that triggers the AI coding agent pipeline. Resolved at session start per `../bd-shared/pickup-label.md`.
 - `{{AUTH_PROVIDER}}` — the auth provider (e.g., Supabase Auth, Auth0, Clerk). Affects cookie/session handling in Phase 3.
 - `{{INTERNAL_API_MCP}}` — optional MCP that allows direct API verification of the project's backend, more reliable than browser navigation
 - The skill assumes a Workstream Profile Table (below) populated with the project's surfaces. Update per project.
@@ -75,6 +75,8 @@ Same as bd-build-down: the AI coding agent's gap analysis comment is the primary
 ---
 
 ## Phase 1: Target Acquisition
+
+**Resolve `{{IMPLEMENT_LABEL}}` (per `../bd-shared/pickup-label.md`):** Follow the procedure to resolve the pickup label — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source before proceeding.
 
 Determine which PRs to smoke-test.
 
@@ -198,7 +200,7 @@ targets a feature branch, not the repo base. Two implications for what you're ac
   for review`) is the highest-value smoke target: smoke-test the **whole integrated feature branch** before
   a human merges it. bd-super-build-down dispatches exactly this before surfacing that PR for human merge.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
@@ -392,6 +394,8 @@ runs standalone too.
 ### 5c. Tracker issues for failures
 
 For each ❌ FAIL (whether 🔴 verdict or 🟡 functional-caveat with a specific broken feature):
+
+Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before assigning the label to any filed issue.
 
 - **Title:** `Smoke test failure: {description} (PR #{N})`
 - **State:** `Todo` with `{{IMPLEMENT_LABEL}}` if the fix is well-scoped; `Backlog` if it needs planning

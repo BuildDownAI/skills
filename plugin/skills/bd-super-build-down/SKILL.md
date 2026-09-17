@@ -38,7 +38,7 @@ Same as bd-build-down. The skill assumes the user has these set up:
 - `{{TRACKER}}` — issue tracker (Linear, Jira, GitHub Issues)
 - `{{REPO}}` — GitHub repo, owner/name format
 - `{{PREVIEW_HOST}}` — preview deploy URL pattern
-- `{{IMPLEMENT_LABEL}}` — label that triggers the AI coding agent pipeline
+- `{{IMPLEMENT_LABEL}}` — label that triggers the AI coding agent pipeline. Resolved at session start per `../bd-shared/pickup-label.md`.
 - `{{ARCHITECT_NAME}}` — human who owns risky changes (migrations, auth, infra). Optional.
 - `{{BUILD_CMD}}` — verification command for typed code
 
@@ -77,6 +77,8 @@ Faster than bd-build-down's orient because bd-super-build-down trusts pipeline s
 
 **Check for an unfinished session first.** If `.bd/session.md` exists with an open `phase`, follow
 the resume rule in `../bd-shared/session-state.md` — this is the one question Phase 1 may ask.
+
+**Resolve `{{IMPLEMENT_LABEL}}` (per `../bd-shared/pickup-label.md`):** Follow the procedure to resolve the pickup label — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source before proceeding.
 
 **Tracker board scan (one batch):**
 - `list_issues`: states `In Progress`, `In Review`, and `Todo` with `{{IMPLEMENT_LABEL}}`
@@ -229,6 +231,8 @@ Check remaining open PRs for new conflicts via `get_pull_request` mergeable stat
 
 ### 4d. Follow-up filing (mid-session)
 
+Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before assigning the label to any filed issue.
+
 bd-super-build-down files follow-up issues same as bd-build-down. Discovery of a scoped fix mid-session → new issue → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Backlog only if the fix needs planning.
 
 Do not drop gaps silently. If a gap is not agent-fixable and not escalatable, file it. Silence is never the default.
@@ -285,7 +289,7 @@ PR (`ai-implement/<mode>/<key> → base`) is open + green:
    top-of-tree PR for human review, and wait for explicit confirmation — in addition to the existing "never
    auto-merge" guardrail.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
