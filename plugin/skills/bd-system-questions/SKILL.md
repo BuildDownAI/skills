@@ -21,6 +21,18 @@ server, e.g. `orch-ai-implement-testing`). If no orchestrator server is bound, p
 
 and stop.
 
+Confirm the KG binding via `get_project_binding` before discovery:
+- Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
+  session's tool list.
+- If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")`, where
+  `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block, and
+  check `present` from the response's `kg` sub-object. Print: "binding: get_project_binding".
+- If absent: read `kg.present` from the legacy block in `CLAUDE.md`. Print: "legacy binding".
+
+This step confirms the server is live and the session can make authenticated calls before
+the tool enumeration in Step 1 begins. Proceed to Step 1 regardless — the tool discovery
+list is the authority on what is available.
+
 ## Step 1 — Discover
 
 At session start, use ToolSearch with the query `mcp__<server>__` and `max_results: 50`
@@ -39,6 +51,11 @@ authority.
 **If N = 0** (server bound but no tools returned — typically an auth error): tell the user
 to re-authenticate via `/mcp` in an interactive session and stop. Do not fall through to
 the prior sections.
+
+**Auth health check (N > 0 only).** If `mcp__<kg.mcp_server>__get_session_identity` is among
+the N discovered tools, call it (health only — this step does not gate on role). Apply
+`../bd-shared/orchestrator-auth.md`; the 401 recovery applies to every subsequent orchestrator
+call in this skill. If the tool is absent from the discovery list, skip this check.
 
 ## Step 2 — Route by description
 

@@ -24,6 +24,7 @@ does **not** reach an installed skill.
 | `tools/bd-statusline.sh` | Claude Code statusline renderer for `session-state.md` | (installed once per machine, see `session-state.md`) |
 | `pickup-label.md` | The pickup-label resolution procedure — three-tier chain (orchestrator → project binding → default), re-resolve rule, Jira carve-out | build-up, mega-build-up (landing skills added by BDS-77/78) |
 | `kg-binding.md` | The `## Knowledge graph` CLAUDE.md contract and dual-target resolution | kg-create, kg-refresh, kg-search, project-setup |
+| `orchestrator-auth.md` | Orchestrator auth health — the 48-hour refresh-expiry warning after `get_session_identity`, and the one-line 401 recovery hint per client path | kg-refresh, mega-kg-refresh, kg-search, system-questions |
 | `kg-recon.md` | The shared KG recon procedure — guard, query, staleness, silent skip | every KG-aware skill |
 | `kg-learnings-loop.md` | Feeding base-relevant patterns back to the KG template | kg-create, kg-refresh |
 | `trackers/linear.md`<br>`trackers/jira.md` | The tracker adapters — container, overlap search, pickup trigger, wave staging, create fields, dependencies, status check, feature-node designation | build-up, mega-build-up |

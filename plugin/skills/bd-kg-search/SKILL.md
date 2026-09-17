@@ -8,19 +8,34 @@ metadata:
 # bd-kg-search Skill
 
 Search this project's knowledge graph directly via hybrid search. The **orchestrator MCP**
-(`/mcp`, OAuth) is the single source of truth (AII-324); `kg.search_tool` is the only tool
-this skill calls.
+(`/mcp`, OAuth) is the single source of truth (AII-324); `mcp__<kg.mcp_server>__<searchTool>`
+(the resolved hybrid-search tool) is the only tool this skill calls.
 
 ## Steps
 
-1. **Read the binding.** Open `CLAUDE.md` and find the `## Knowledge graph` block. Parse
-   `kg.present` and the orchestrator fields (format: `../bd-shared/kg-binding.md`).
+1. **Read the binding.** Open `CLAUDE.md` and find the `## Knowledge graph` block (format:
+   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
+   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
+     session's tool list.
+   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
+     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block — and take
+     `present` and `searchTool` from the response's `kg` sub-object. Resolve the search tool
+     as `mcp__<kg.mcp_server>__<searchTool>`. Print: "binding: get_project_binding".
+   - If absent: read `kg.present` and `kg.search_tool` from the legacy block in `CLAUDE.md` and
+     resolve the search tool from `kg.search_tool` directly. Print: "legacy binding".
    If `kg.present` is `false` or the block is absent:
    - Print: "This project has no KG bound — run bd-project-setup to add one."
    - Stop. No tool call.
 
-2. **Resolve the target.** Call the orchestrator's `kg.search_tool` — the single KG target.
-   If the tool is unavailable or errors (token expired, 503), report it and stop.
+2. **Resolve the target.** The resolved search tool (`mcp__<kg.mcp_server>__<searchTool>` from
+   Step 1) is the single KG target.
+
+   **Auth health check.** If `mcp__<kg.mcp_server>__get_session_identity` is in the session's
+   tool list, call it (health only — this step does not gate on role). Apply
+   `../bd-shared/orchestrator-auth.md`; the 401 recovery applies to the search call in Step 3
+   and to any other orchestrator call in this skill. If the tool is absent, skip this check.
+
+   If the search tool is unavailable or errors (503 or other non-401 error), report it and stop.
 
 3. **Run the search** with `{query, limit: 10}` on the resolved tool. Call **only** the
    hybrid-search tool — never other KG tools (the one exception, spine-stamp staleness via
@@ -41,9 +56,8 @@ this skill calls.
 
 5. **Scope note.** Hybrid-search only — deeper graph walks are out of scope here. Results
    reflect the **deployed** orchestrator graph; a completed `bd-kg-refresh` appears with no
-   client restart. An orchestrator auth failure means the 1-hour token expired —
-   re-authenticate via `/mcp` in an interactive session (with refresh tokens live, this
-   should be rare).
+   client restart. On an orchestrator auth failure the recovery hint from
+   `../bd-shared/orchestrator-auth.md` fires at Step 2 and stops the skill.
 
 ---
 

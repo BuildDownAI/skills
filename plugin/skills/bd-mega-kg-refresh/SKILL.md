@@ -20,15 +20,27 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 ### Phase 1 — Bind and orient
 
 1. **Read the binding.** Open `CLAUDE.md` → `## Knowledge graph` block (format:
-   `../bd-shared/kg-binding.md`). Parse all fields:
+   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
+   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
+     session's tool list.
+   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
+     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block. Take
+     `present`, `orchestratorUrl`, `sourceRepo`, and `searchTool` from the response's
+     `kg` sub-object. Resolve the search tool as `mcp__<kg.mcp_server>__<searchTool>`. Print:
+     "binding: get_project_binding".
+   - If absent: read the legacy five-key block from `CLAUDE.md` (`kg.present`, `kg.source_repo`,
+     `kg.orchestrator`, `kg.search_tool`, `kg.mcp_server`) and resolve values from it. Print:
+     "legacy binding".
 
-   | Field | Required for this skill | Notes |
+   Fields resolved for this skill:
+
+   | Field | Source | Notes |
    |---|---|---|
-   | `kg.present` | required | Stop with "This project has no KG bound" if `false` or absent |
-   | `kg.source_repo` | required | The KG source repo (`owner/name`) |
-   | `kg.orchestrator` | required | Orchestrator URL for the rail handoff |
-   | `kg.mcp_server` | required | Remote orchestrator MCP server name |
-   | `kg.search_tool` | required | Orchestrator hybrid-search tool |
+   | `kg.mcp_server` | CLAUDE.md | Remote orchestrator MCP server name |
+   | `present` (in `kg` sub-object) | CLAUDE.md or `get_project_binding` | Stop with "This project has no KG bound" if `false` or absent |
+   | `orchestratorUrl` (in `kg` sub-object) | `get_project_binding` | Orchestrator URL for the rail handoff |
+   | `sourceRepo` (in `kg` sub-object) | `get_project_binding` | The KG source repo (`owner/name`) |
+   | `mcp__<kg.mcp_server>__<searchTool>` | resolved from `get_project_binding` `searchTool` | Orchestrator hybrid-search tool (the resolved composite name) |
 
 2. **Check your role.** Before any orchestrator call, confirm the session has admin access.
    - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_session_identity` is in the
@@ -37,8 +49,10 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
        tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
        Update the orchestrator, then retry."
      - Stop.
-   - Call `mcp__<kg.mcp_server>__get_session_identity`. Read `role` from the result. If `role`
-     is not `admin`:
+   - Call `mcp__<kg.mcp_server>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
+     (expiry warning; 401 recovery applies to every subsequent orchestrator call in this skill,
+     across all phases).
+     Read `role` from the result. If `role` is not `admin`:
      - Print: "This skill needs an admin account on the orchestrator. Your MCP session is signed
        in as `<email>` with role `<role>`. Ask an admin to change your allowlist entry, or ask
        them to run the refresh."
@@ -47,7 +61,7 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 3. **Establish the KG source checkout.** This skill runs in the KG source checkout. Confirm
    the working directory contains `sources.yml` and the Python ingest package. If the checkout
    does not exist locally:
-   - Clone: `gh repo clone <kg.source_repo> <local-path>`
+   - Clone: `gh repo clone <sourceRepo> <local-path>`
    - Set up the venv and install dependencies:
      ```bash
      cd <local-path>
@@ -59,45 +73,18 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    classifier rules, and namespace. State counts: "N sources, M docs sites, classifier has K
    rules." This is the baseline for Phase 3 decisions.
 
-5. **Check upstream base drift.** Determine how far the derivative has drifted from the base
-   template before touching the manifest.
+5. **Check upstream base drift.** Call `mcp__<kg.mcp_server>__get_tenant_health` and read the
+   `base:drift` row to determine how far the derivative has drifted from the base template.
 
-   a. **Resolve the base URL.** Read `sources.yml` for a `base_repo:` field. If present, use
-      that value. Otherwise fall back to `https://github.com/BuildDownAI/bd-knowledge-graph-base.git`.
+   1. If `get_tenant_health` returns a row with type `base:drift`, print the row's value and
+      its `hint` field (when present). Carry the drift count forward to Q0 in Phase 3.
+   2. If no `base:drift` row is present, print: "base drift unknown — this orchestrator
+      predates [AII-598](https://linear.app/eudoxus/issue/AII-598/kg-refresh-preflight-advisory-basedrift-row-how-far-the-kg-repo-is);
+      upgrade the orchestrator to obtain the `base:drift` advisory row." and continue.
 
-   b. **Ensure the remote exists (idempotent):**
-      ```bash
-      git remote get-url upstream 2>/dev/null || git remote add upstream <base-url>
-      ```
-
-   c. **Fetch:**
-      ```bash
-      git fetch upstream
-      ```
-
-   d. **Count drift:**
-      ```bash
-      git rev-list --count HEAD..upstream/main
-      ```
-
-   e. **Announce:**
-      - If N = 0: "Derivative is current with base — no upstream commits to merge."
-      - If N > 0: "Derivative is **N commits behind base.**"
-
-      When N > 0, run `git log --oneline HEAD..upstream/main` and group commits by path prefix:
-
-      | Bucket | Path prefix |
-      |---|---|
-      | Learnings | `learnings/` |
-      | Ingest | `kg_ingest/` |
-      | Query / serve | `kg_query/` |
-      | Ontology and shapes | `ontology/`, `shapes/` |
-      | Docs | `docs/`, `README` |
-      | Other | *(everything else)* |
-
-      Omit any bucket with no commits. If no commits fall into a recognised bucket, show the
-      full raw `--oneline` log. This grouped summary is carried forward to Q0 in Phase 3 and
-      to the PR body when the merge is accepted.
+   Advisory only — the drift count is used by Q0 in Phase 3 to decide whether to offer the
+   upstream merge flow. Do not run `git merge upstream`, do not create a `kg-upstream/` branch,
+   and do not open any PR in this step.
 
 ---
 
@@ -115,9 +102,8 @@ Goal: understand what the graph currently contains and what is missing, stale, o
      for?"), or
    - Recent tracker or PR activity from `mcp__<kg.mcp_server>__list_projects`.
 
-   For each search: call `mcp__<kg.mcp_server>__<kg.search_tool>` (i.e., `kg.search_tool` =
-   `mcp__<kg.mcp_server>__kg_hybrid_search`) with the term. Record what was found and what
-   was absent.
+   For each search: call `mcp__<kg.mcp_server>__<searchTool>` (the resolved search tool from
+   Step 1) with the term. Record what was found and what was absent.
 
 3. **Produce a gap table.** Synthesize the searches and spine inspection into one table:
 
@@ -133,6 +119,8 @@ Goal: understand what the graph currently contains and what is missing, stale, o
 ---
 
 ### Phase 3 — Propose ingest changes with the user
+
+**Needs clone: this phase edits and pushes the KG repo.**
 
 Work through the gap table from Phase 2. Gather the facts (read `sources.yml`, the ingest code,
 the served graph) first — each question gives the user a single decision.
@@ -152,12 +140,13 @@ user something the code already answers.
 **Decision domains — one question per domain that the gap table flags:**
 
 ❓ **Q0** — **Upstream base merge**: The base template has N new commits since this derivative's
-last merge (see Phase 1 drift summary). Should those changes be merged now before adjusting the
-ingest manifest?
+last merge (N comes from the Phase 1 Step 5 drift count). Should those changes be merged now
+before adjusting the ingest manifest?
 
 **Options:**
-- **Merge now** — creates branch `kg-upstream/<YYYY-MM-DD>`, merges `upstream/main`, runs the
-  Phase 4 fast loop and proof loop, then opens a `kg-upstream` PR before continuing to Q3.
+- **Merge now** — resolves the base URL, fetches upstream, produces a grouped commit summary,
+  creates branch `kg-upstream/<YYYY-MM-DD>`, merges `upstream/main`, runs the Phase 4 fast loop
+  and proof loop, then opens a `kg-upstream` PR before continuing to Q3.
 - **Skip** — proceed directly to Q3; the upstream drift remains unaddressed this session.
 
 ➡️ Merge now when N > 0 — base changes may include accepted learnings, classifier updates, KGB
@@ -166,17 +155,40 @@ you explicitly defer to a later session.
 
 **On yes — upstream merge flow:**
 
-1. Create the branch from the derivative's current default branch:
+1. **Resolve the base URL, set up the upstream remote, and fetch.** Read `sources.yml` for a
+   `base_repo:` field. If present, use that value; otherwise fall back to
+   `https://github.com/BuildDownAI/bd-knowledge-graph-base.git`. Ensure the remote exists
+   (idempotent) and fetch:
+   ```bash
+   git remote get-url upstream 2>/dev/null || git remote add upstream <base-url>
+   git fetch upstream
+   ```
+   Then run `git log --oneline HEAD..upstream/main` and group commits by path prefix.
+   *(Note: `upstream/main` is the hardcoded base target; [BDS-54](https://linear.app/eudoxus/issue/BDS-54/bd-kg-refresh-and-bd-mega-kg-refresh-track-the-base-branch-from) will replace it with the value from `sources.yml base_repo.branch`.)*
+
+   | Bucket | Path prefix |
+   |---|---|
+   | Learnings | `learnings/` |
+   | Ingest | `kg_ingest/` |
+   | Query / serve | `kg_query/` |
+   | Ontology and shapes | `ontology/`, `shapes/` |
+   | Docs | `docs/`, `README` |
+   | Other | *(everything else)* |
+
+   Omit any bucket with no commits. If no commits fall into a recognised bucket, show the full
+   raw `--oneline` log. This grouped summary is used in the PR body (step 6 below).
+
+2. Create the branch from the derivative's current default branch:
    ```bash
    git checkout -b kg-upstream/<YYYY-MM-DD>
    ```
 
-2. Merge:
+3. Merge:
    ```bash
    git merge upstream/main
    ```
 
-3. **If there are conflicts:** Run `git status` to list every conflicting file. Stop with:
+4. **If there are conflicts:** Run `git status` to list every conflicting file. Stop with:
    > "Merge conflicts in: `<file-list>`. Resolve these by hand, then run
    > `git merge --continue`. **Never resolve `sources.yml` or `snapshot/` conflicts by taking
    > the upstream version** — `sources.yml` encodes this derivative's scope and must not be
@@ -184,11 +196,11 @@ you explicitly defer to a later session.
    > and must never be staged."
    Do not auto-resolve any conflict.
 
-4. **On clean merge:** Run the full Phase 4 fast loop and then the proof loop on the
+5. **On clean merge:** Run the full Phase 4 fast loop and then the proof loop on the
    `kg-upstream/<YYYY-MM-DD>` branch exactly as described in Phase 4. `snapshot/` is never
    staged at any point.
 
-5. **Open the upstream PR** (Phase 5 flow, adapted for this branch):
+6. **Open the upstream PR** (Phase 5 flow, adapted for this branch):
    - Capture the short SHA of `upstream/main`:
      ```bash
      git rev-parse --short upstream/main
@@ -206,11 +218,11 @@ you explicitly defer to a later session.
      ```
    - Open PR (body must include the `### Guard table` section from the Phase 4 dry-run):
      ```bash
-     gh pr create --repo <kg.source_repo> \
+     gh pr create --repo <sourceRepo> \
        --base <default-branch> \
        --title "kg-upstream: merge base <short-sha> (<N> commits)" \
        --body "$(cat <<'EOF'
-     <grouped base-change summary from Phase 1 drift analysis>
+     <grouped base-change summary from step 1 above>
 
      ### Guard table
 
@@ -234,7 +246,7 @@ EOF
      **Guard table:** <verdict>; accept-new-baseline needed: yes/no
      ```
 
-6. **Wait for merge.** Announce the PR URL, then say:
+7. **Wait for merge.** Announce the PR URL, then say:
    > "Merge the `kg-upstream/<YYYY-MM-DD>` PR, then confirm here. After it merges, run
    > `git pull` on the default branch so Q3–Q5 decisions are based on the post-merge state."
    Do not continue to Q3 until the user confirms the upstream PR is merged.
@@ -274,6 +286,8 @@ After all decisions are settled, summarize the agreed changes: "I will make thes
 ---
 
 ### Phase 4 — Test locally
+
+**Needs clone: this phase edits and pushes the KG repo.**
 
 Two loops, in order. The proof loop is the gate before Phase 5.
 
@@ -367,6 +381,8 @@ Do not open a PR until the gate rule is satisfied.
 
 ### Phase 5 — PR the change
 
+**Needs clone: this phase edits and pushes the KG repo.**
+
 Branch, commit only the manifest/ingest changes, open the PR, post the learnings comment.
 
 1. **Branch.** In the KG source checkout:
@@ -396,7 +412,7 @@ Branch, commit only the manifest/ingest changes, open the PR, post the learnings
 4. **Open the PR** against the KG repo's default branch (body must include the `### Guard table`
    section from the Phase 4 dry-run):
    ```bash
-   gh pr create --repo <kg.source_repo> \
+   gh pr create --repo <sourceRepo> \
      --base <default-branch> \
      --title "kg-ingest: <short description>" \
      --body "$(cat <<'EOF'

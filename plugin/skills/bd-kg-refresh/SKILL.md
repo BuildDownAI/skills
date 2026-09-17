@@ -14,8 +14,18 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
 ## Steps
 
 1. **Read the binding.** Open `CLAUDE.md` → `## Knowledge graph` block (format:
-   `../bd-shared/kg-binding.md`). Parse `kg.present`, `kg.source_repo`, `kg.orchestrator`,
-   `kg.search_tool`, `kg.mcp_server`. If `kg.present` is `false` or the block is absent:
+   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
+   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
+     session's tool list.
+   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
+     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block. Take
+     `present`, `orchestratorUrl`, `sourceRepo`, and `searchTool` from the response's
+     `kg` sub-object. Resolve the search tool as `mcp__<kg.mcp_server>__<searchTool>`. Print:
+     "binding: get_project_binding".
+   - If absent: read the legacy five-key block from `CLAUDE.md` (`kg.present`, `kg.source_repo`,
+     `kg.orchestrator`, `kg.search_tool`, `kg.mcp_server`) and resolve values from it. Print:
+     "legacy binding".
+   If `kg.present` is `false` or the block is absent:
    - Print: "This project has no KG bound — run bd-project-setup to add one."
    - Stop.
 
@@ -26,15 +36,16 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
        tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
        Update the orchestrator, then retry."
      - Stop.
-   - Call `mcp__<kg.mcp_server>__get_session_identity`. Read `role` from the result. If `role`
-     is not `admin`:
+   - Call `mcp__<kg.mcp_server>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
+     (expiry warning; 401 recovery applies to every subsequent orchestrator call in this skill).
+     Read `role` from the result. If `role` is not `admin`:
      - Print: "This skill needs an admin account on the orchestrator. Your MCP session is signed
        in as `<email>` with role `<role>`. Ask an admin to change your allowlist entry, or ask
        them to run the refresh."
      - Stop.
 
-**2b. Check search tool availability.** Use ToolSearch to confirm `kg.search_tool` (the
-   fully-qualified name from the binding, e.g. `mcp__orch-ai-implement-testing__kg_hybrid_search`)
+**2b. Check search tool availability.** Use ToolSearch to confirm `mcp__<kg.mcp_server>__<searchTool>`
+   (the resolved search tool name from Step 1, e.g. `mcp__orch-ai-implement-testing__kg_hybrid_search`)
    is present in the session's tool list. Query for that exact tool name.
    - If present: proceed normally; Step 7 will run the full verification including the live query.
    - If absent: print "The bound server lists no KG search tools this session — the sidecar is not
@@ -147,7 +158,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
    **7a. Stamp-vs-PR check (always required).** Using the `servedStamp` from Step 6:
    - Find the refresh PR the rail opened. If `get_kg_status` returns `lastRefresh.prUrl`, use
      that directly; otherwise run `gh pr list --search "kg-refresh: snapshot @"` on the
-     `kg.source_repo` to locate the PR.
+     `sourceRepo` (from the binding) to locate the PR.
    - Confirm the PR title is `kg-refresh: snapshot @ <stamp>` where `<stamp>` is `servedStamp`
      in compact form (`YYYYMMDDTHHMMSSZ`, e.g. `2026-09-13T22:54:43+00:00` → `20260913T225443Z`).
      (This check assumes the rail's PR title format is stable; if the format changes, the lookup
@@ -159,7 +170,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
 
    **7b. Live query (requires search tool; skip if search-tool-absent = true).** If the search
    tool is present and operational (flag from Step 2b is not set):
-   - Call `kg.search_tool` with a domain query and confirm it returns non-empty,
+   - Call `mcp__<kg.mcp_server>__<searchTool>` (the resolved search tool from Step 1) with a domain query and confirm it returns non-empty,
      `degraded: false` results.
    - Confirm the graph's spine stamp (via `kg_neighbors` on the spine IRI —
      `../bd-shared/kg-recon.md`) equals `servedStamp` from Step 6.
