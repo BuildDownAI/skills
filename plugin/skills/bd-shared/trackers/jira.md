@@ -62,6 +62,8 @@ Run the shared Backlog Overlap Scan (`../overlap-scan.md`) with JQL:
 Feed every hit into the core's classification table.
 
 ## Pickup trigger
+On Jira, the pickup signal is the `AI-Implement-Status` field, not a label — see `../pickup-label.md` rule 5.
+
 To make Wave-1 issues get picked up, every one must satisfy the orchestrator
 mapping's poll: `(<mapping JQL>) AND cf[AI-Implement-Status] in (Ready, "Plan
 Approved")` **and** the Repo field equals the mapping's `repoFieldValue`.
