@@ -111,7 +111,7 @@ row per PR. In an unattended run this file is the only live progress indicator t
 it on every tier assignment, smoke verdict, comment, merge, escalation, and phase boundary. Mirror
 the queue into the harness plan tool if one exists.
 
-**KG recon (advisory if a KG is bound):** For each PR, run one quiet `kg.search_tool` query on the issue key + title per `../bd-shared/kg-recon.md`, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
+**KG recon (advisory if a KG is bound):** For each PR, run one quiet `mcp__<kg.mcp_server>__<searchTool>` query (resolved per `../bd-shared/kg-recon.md`) on the issue key + title, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
 
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 

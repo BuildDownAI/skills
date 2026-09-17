@@ -21,6 +21,17 @@ server, e.g. `orch-ai-implement-testing`). If no orchestrator server is bound, p
 
 and stop.
 
+Confirm the KG binding via `get_project_binding` before discovery:
+- Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
+  session's tool list.
+- If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` and check
+  `present` from the response's `kg` sub-object. Print: "binding: get_project_binding".
+- If absent: read `kg.present` from the legacy block in `CLAUDE.md`. Print: "legacy binding".
+
+This step confirms the server is live and the session can make authenticated calls before
+the tool enumeration in Step 1 begins. Proceed to Step 1 regardless — the tool discovery
+list is the authority on what is available.
+
 ## Step 1 — Discover
 
 At session start, use ToolSearch with the query `mcp__<server>__` and `max_results: 50`

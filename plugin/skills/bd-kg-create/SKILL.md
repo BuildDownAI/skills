@@ -21,7 +21,7 @@ After this skill, the project has a working, queryable KG.
 | Namespace | `https://kg.<org>.dev/` (convention; confirm with the operator) |
 | Tracker | from the project's `CLAUDE.md` (`tracker.kind` + team), if bound |
 | Docs URL | two-part ask (BDS-38): (a) "What is the published docs root for this project? Skip if none." (b) for a versioned site (stable/latest areas): "Which docs version/area documents the branch this KG ingests?" — the answer selects the crawl root and is recorded as `documents_branch:` |
-| Orchestrator | the project's `kg.orchestrator` binding (the app whose projects define scope) |
+| Orchestrator | the orchestrator URL — the app whose projects define scope (confirmed by `get_project_binding` after Step 6 binds it) |
 | Visibility | private |
 
 ## Steps
@@ -37,8 +37,8 @@ After this skill, the project has a working, queryable KG.
    git -C ../<kg-name> remote add upstream https://github.com/BuildDownAI/bd-knowledge-graph-base.git
    ```
    The sibling path `../<kg-name>` (relative to the project root) is the
-   source-repo checkout convention `bd-kg-refresh` expects (the `kg.source_repo`
-   binding names the origin). The `upstream` remote is how base improvements arrive
+   source-repo checkout convention `bd-kg-refresh` expects (the `sourceRepo` binding
+   from `get_project_binding` names the origin). The `upstream` remote is how base improvements arrive
    later (`git fetch upstream && git merge upstream/main`) — template copies have
    no fork relationship, and forks of a public base would have to be public.
    Fallback when template access fails: clone the base directly, `git remote

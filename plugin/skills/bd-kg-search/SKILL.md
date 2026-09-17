@@ -8,18 +8,26 @@ metadata:
 # bd-kg-search Skill
 
 Search this project's knowledge graph directly via hybrid search. The **orchestrator MCP**
-(`/mcp`, OAuth) is the single source of truth (AII-324); `kg.search_tool` is the only tool
-this skill calls.
+(`/mcp`, OAuth) is the single source of truth (AII-324); `mcp__<kg.mcp_server>__<searchTool>`
+(the resolved hybrid-search tool) is the only tool this skill calls.
 
 ## Steps
 
-1. **Read the binding.** Open `CLAUDE.md` and find the `## Knowledge graph` block. Parse
-   `kg.present` and the orchestrator fields (format: `../bd-shared/kg-binding.md`).
+1. **Read the binding.** Open `CLAUDE.md` and find the `## Knowledge graph` block (format:
+   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
+   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
+     session's tool list.
+   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` and take
+     `present` and `searchTool` from the response's `kg` sub-object. Resolve the search tool
+     as `mcp__<kg.mcp_server>__<searchTool>`. Print: "binding: get_project_binding".
+   - If absent: read `kg.present` and `kg.search_tool` from the legacy block in `CLAUDE.md` and
+     resolve the search tool from `kg.search_tool` directly. Print: "legacy binding".
    If `kg.present` is `false` or the block is absent:
    - Print: "This project has no KG bound — run bd-project-setup to add one."
    - Stop. No tool call.
 
-2. **Resolve the target.** Call the orchestrator's `kg.search_tool` — the single KG target.
+2. **Resolve the target.** The resolved search tool (`mcp__<kg.mcp_server>__<searchTool>` from
+   Step 1) is the single KG target.
    If the tool is unavailable or errors (token expired, 503), report it and stop.
 
 3. **Run the search** with `{query, limit: 10}` on the resolved tool. Call **only** the

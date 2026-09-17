@@ -20,15 +20,27 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 ### Phase 1 — Bind and orient
 
 1. **Read the binding.** Open `CLAUDE.md` → `## Knowledge graph` block (format:
-   `../bd-shared/kg-binding.md`). Parse all fields:
+   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
+   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
+     session's tool list.
+   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
+     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block. Take
+     `present`, `orchestratorUrl`, `sourceRepo`, and `searchTool` from the response's
+     `kg` sub-object. Resolve the search tool as `mcp__<kg.mcp_server>__<searchTool>`. Print:
+     "binding: get_project_binding".
+   - If absent: read the legacy five-key block from `CLAUDE.md` (`kg.present`, `kg.source_repo`,
+     `kg.orchestrator`, `kg.search_tool`, `kg.mcp_server`) and resolve values from it. Print:
+     "legacy binding".
 
-   | Field | Required for this skill | Notes |
+   Fields resolved for this skill:
+
+   | Field | Source | Notes |
    |---|---|---|
-   | `kg.present` | required | Stop with "This project has no KG bound" if `false` or absent |
-   | `kg.source_repo` | required | The KG source repo (`owner/name`) |
-   | `kg.orchestrator` | required | Orchestrator URL for the rail handoff |
-   | `kg.mcp_server` | required | Remote orchestrator MCP server name |
-   | `kg.search_tool` | required | Orchestrator hybrid-search tool |
+   | `kg.mcp_server` | CLAUDE.md | Remote orchestrator MCP server name |
+   | `present` (in `kg` sub-object) | CLAUDE.md or `get_project_binding` | Stop with "This project has no KG bound" if `false` or absent |
+   | `orchestratorUrl` (in `kg` sub-object) | `get_project_binding` | Orchestrator URL for the rail handoff |
+   | `sourceRepo` (in `kg` sub-object) | `get_project_binding` | The KG source repo (`owner/name`) |
+   | `mcp__<kg.mcp_server>__<searchTool>` | resolved from `get_project_binding` `searchTool` | Orchestrator hybrid-search tool (the resolved composite name) |
 
 2. **Check your role.** Before any orchestrator call, confirm the session has admin access.
    - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_session_identity` is in the
@@ -47,7 +59,7 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 3. **Establish the KG source checkout.** This skill runs in the KG source checkout. Confirm
    the working directory contains `sources.yml` and the Python ingest package. If the checkout
    does not exist locally:
-   - Clone: `gh repo clone <kg.source_repo> <local-path>`
+   - Clone: `gh repo clone <sourceRepo> <local-path>`
    - Set up the venv and install dependencies:
      ```bash
      cd <local-path>
@@ -115,9 +127,8 @@ Goal: understand what the graph currently contains and what is missing, stale, o
      for?"), or
    - Recent tracker or PR activity from `mcp__<kg.mcp_server>__list_projects`.
 
-   For each search: call `mcp__<kg.mcp_server>__<kg.search_tool>` (i.e., `kg.search_tool` =
-   `mcp__<kg.mcp_server>__kg_hybrid_search`) with the term. Record what was found and what
-   was absent.
+   For each search: call `mcp__<kg.mcp_server>__<searchTool>` (the resolved search tool from
+   Step 1) with the term. Record what was found and what was absent.
 
 3. **Produce a gap table.** Synthesize the searches and spine inspection into one table:
 
@@ -206,7 +217,7 @@ you explicitly defer to a later session.
      ```
    - Open PR (body must include the `### Guard table` section from the Phase 4 dry-run):
      ```bash
-     gh pr create --repo <kg.source_repo> \
+     gh pr create --repo <sourceRepo> \
        --base <default-branch> \
        --title "kg-upstream: merge base <short-sha> (<N> commits)" \
        --body "$(cat <<'EOF'
@@ -396,7 +407,7 @@ Branch, commit only the manifest/ingest changes, open the PR, post the learnings
 4. **Open the PR** against the KG repo's default branch (body must include the `### Guard table`
    section from the Phase 4 dry-run):
    ```bash
-   gh pr create --repo <kg.source_repo> \
+   gh pr create --repo <sourceRepo> \
      --base <default-branch> \
      --title "kg-ingest: <short description>" \
      --body "$(cat <<'EOF'

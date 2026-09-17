@@ -144,7 +144,8 @@ Before triaging gaps, consult the project's knowledge graph for prior learnings
 and decisions about the work — derive queries per PR being triaged (or for the
 session's PR set), not just a single PR. Follow `../bd-shared/kg-recon.md`: derive 1–3
 queries per PR from **its linked issue key + title + the gap topics from its
-gap-analysis**, call **only** `kg.search_tool` (hybrid-search), surface the top
+gap-analysis**, call **only** `mcp__<kg.mcp_server>__<searchTool>` (the resolved
+hybrid-search tool from `../bd-shared/kg-recon.md`), surface the top
 relevant hits and cite any that change a gap decision, and note KG staleness.
 Advisory and non-blocking. If the project has no KG bound, skip this step
 silently.
