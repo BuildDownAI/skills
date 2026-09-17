@@ -44,7 +44,7 @@ Response shape:
 ```
 
 `pickupLabel` is `null` when the tracker is not Linear. It is consumed by pickup-label resolution
-(BDS-72), not by KG-aware search skills.
+(`./pickup-label.md`, rule 1), not by KG-aware search skills.
 
 Resolve the hybrid-search tool as `mcp__<kg.mcp_server>__<kg.searchTool>` from the response.
 
