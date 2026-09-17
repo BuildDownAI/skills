@@ -19,7 +19,7 @@ New issues and projects created by bd-build-up / bd-mega-build-up go into team B
 
 The skills don't run inside AI-Implement; they file issues that it later picks up. This binds that handoff.
 
-- **`{{IMPLEMENT_LABEL}}`:** `AI-Implement` (the label a finished issue gets so the orchestrator implements it)
+- **`{{IMPLEMENT_LABEL}}`:** `AI-Implement` (the label a finished issue gets so the orchestrator implements it; the orchestrator's value wins when the orchestrator MCP is bound)
 - **Pickup target:** AI-Implement **testing** instance (not production) — admin UI at
   `https://ai-implement-testing-orchestrator.fly.dev/admin#projects`
 - **Team it polls:** `BDS` — so labeled BDS issues are safe to experiment with; they do not touch the
