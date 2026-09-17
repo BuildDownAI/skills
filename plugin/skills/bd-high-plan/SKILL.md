@@ -182,7 +182,8 @@ now lives. bd-high-plan's job ends at the reviewed parent; it never writes child
 
 The parent must be visible to the pipeline's tracker but invisible to its pickup trigger:
 
-- **Linear:** file the parent with **no `AI-Implement` label**. Children created later by
+- **Linear:** file the parent with **no `{{IMPLEMENT_LABEL}}` label** (resolve per
+  [`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md)). Children created later by
   extraction are native sub-issues of the parent; they get the label only when actually ready
   for the pipeline. The grouping rule (a labelled parent + labelled children becomes a feature
   node) is the *later opt-in*, not a planning-time action: never label the planning parent to

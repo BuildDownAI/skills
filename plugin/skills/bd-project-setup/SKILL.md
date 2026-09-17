@@ -235,7 +235,7 @@ start; the rest can be filled in later as the project needs them.
 | `tracker.kind` | "Linear or Jira?" | `linear` (default) |
 | `{{TRACKER}}` workspace + team | "Which Linear workspace and team?" | workspace `eudoxus`, team `BDS` |
 | `{{REPO}}` | "Which GitHub repo do PRs land in?" | `org/product-repo` |
-| `{{IMPLEMENT_LABEL}}` | "What label does the coding agent pick up?" | `AI-Implement` |
+| `{{IMPLEMENT_LABEL}}` | "What label does the coding agent pick up?" (the orchestrator's value wins when the orchestrator MCP is bound) | `AI-Implement` |
 | `{{AGENT_MENTION}}` | "What PR-comment mention re-triggers the agent?" | `/ai-implement` |
 | `{{PREVIEW_HOST}}` | "Where do preview deploys live?" | `https://pr-{n}.preview.app` |
 | `{{AUTH_PROVIDER}}` | "How do you log into previews?" | Google SSO |
@@ -316,6 +316,19 @@ server in `.mcp.json` at once.)
 
 Record the placeholder → value mapping at the project level so every skill resolves the same tools. At
 minimum, the tracker workspace + **team** must be explicit, because issues get filed there.
+
+**Orchestrator label check (run after writing the `{{IMPLEMENT_LABEL}}` line).** If
+`get_project_binding` is present in the current tool list (the orchestrator MCP is bound and
+authenticated), call it with the repo slug and read `pickupLabel` from the response. Print the
+orchestrator's current value beside the `{{IMPLEMENT_LABEL}}` line you just wrote, e.g.:
+
+> `Implement label: AI-Implement (CLAUDE.md) | AI-Implement (orchestrator — matches)`
+
+or, if they differ:
+
+> `Implement label: WrongLabel (CLAUDE.md) | AI-Implement (orchestrator — orchestrator value wins at runtime)`
+
+If `get_project_binding` is absent, skip this step silently — the CLAUDE.md value stands as-is.
 
 **Linear:**
 

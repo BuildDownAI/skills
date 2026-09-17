@@ -57,3 +57,8 @@ coupling loose.
 A skill that calls a declared MCP write tool checks `get_session_identity` first and stops for
 any role but the tool's declared role. Today the admin-only skills are `bd-kg-refresh` and
 `bd-mega-kg-refresh`. Read-only skills never call a write tool.
+
+## Pickup-label field (BDS-70 coordination)
+
+Once BDS-70 adds the `get_project_binding` call to this file, include `pickupLabel` in its
+field list — the skill uses this value as the pickup label (see `./pickup-label.md`).

@@ -33,7 +33,7 @@ the pushback.
 - `{{TRACKER}}` — `linear` or `jira`. Selects the tracker adapter that every tracker-touching
   step follows.
 - `{{REPO}}` — the GitHub repo, `owner/name`
-- `{{IMPLEMENT_LABEL}}` — the label or field that signals pipeline pickup
+- `{{IMPLEMENT_LABEL}}` — the label or field that signals pipeline pickup. Resolve per [`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md).
 - `{{ARCHITECT_NAME}}` — the human who owns migrations, auth, and infrastructure. Optional.
 - `{{BUILD_CMD}}` — the verification command (`next build`, `tsc --noEmit`)
 - `{{CODE_PROTOTYPE_TOOL}}` — a code-first prototyping tool producing its own repo (Lovable,
@@ -181,6 +181,10 @@ All other phases apply normally.
 
 Understand the current state. What exists, what is in flight, what depends on what.
 
+**Resolve `{{IMPLEMENT_LABEL}}`** — follow [`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md)
+rules 1–2 at session start. Print the resolved value and its source once, e.g.:
+`pickup label: AI-Implement (label from orchestrator)` or `pickup label: AI-Implement (label from project binding)`.
+
 **Ask at most two clarifying questions** before drafting. If something critical is still
 missing, draft with stated assumptions and let the user correct. A user with a clear vision
 wants translation, not debate.
@@ -324,6 +328,11 @@ checks the paths in `## Files` only; symbols and routes in prose are checked by 
 
 ### Stage the waves
 
+**Re-resolve `{{IMPLEMENT_LABEL}}`** — immediately before labelling Wave 1 issues and immediately
+before designating a feature node, re-resolve the pickup label per
+[`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md) rule 3 (rules 1–2 in order). Use
+the freshly resolved value for both the label assignment and the feature-node designation call.
+
 The wave model, feature-node designation order, and pilot-first sequencing are in
 [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md); the concrete mechanics are the
 adapter's **Pickup trigger**, **Wave staging**, **Architect routing**, **Dependencies**, and
@@ -350,8 +359,9 @@ directly. bd-build-up launches a coordinated wave.
 
 ### After filing
 
-Present a manifest: `Issue # | Title | Labels | Dependencies | Priority | State`. This is the
-reference point for later status checks and bd-build-down sessions.
+Present a manifest: `Issue # | Title | Labels | Dependencies | Priority | State | Label used`.
+The `Label used` column shows the resolved `{{IMPLEMENT_LABEL}}` value actually applied to Wave 1
+issues. This is the reference point for later status checks and bd-build-down sessions.
 
 ### Closing step — the learnings comment (required)
 

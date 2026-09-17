@@ -70,8 +70,8 @@ puts an issue into a group differs.
 
 | | **Linear** | **Jira** |
 |---|---|---|
-| **Group designation** (counts toward grouping: gates its parent, joins the ancestor chain, rolls up, can be an auto-merge parent) | carries the `AI-Implement` **label** | `AI-Implement-Status` **set to any non-empty value** *and* Repo field = the mapping's `repoFieldValue` |
-| **Candidate dispatch** (worked *this* poll) | `state: Todo` + `AI-Implement` label | `AI-Implement-Status` ∈ {`Ready`, `Plan Approved`} + Repo match |
+| **Group designation** (counts toward grouping: gates its parent, joins the ancestor chain, rolls up, can be an auto-merge parent) | carries the `{{IMPLEMENT_LABEL}}` **label** (resolved per `trackers/linear.md` → `pickup-label.md`) | `AI-Implement-Status` **set to any non-empty value** *and* Repo field = the mapping's `repoFieldValue` |
+| **Candidate dispatch** (worked *this* poll) | `state: Todo` + `{{IMPLEMENT_LABEL}}` label | `AI-Implement-Status` ∈ {`Ready`, `Plan Approved`} + Repo match |
 | **Hierarchy source** | native parent / children | `effectiveParentKey = native parent ?? Epic Link` |
 | **Terminal** | issue is Done or Cancelled | `fields.status.statusCategory.key === 'done'` (Done/Closed + Won't-Do/Cancelled) |
 
@@ -92,7 +92,7 @@ doing so collapses the entire epic into one feature branch (anti-pattern).
 
 ## 2. What changes vs the flat model
 
-The skills were written for a **flat** model: every `AI-Implement` issue PRs to the Default Branch and is
+The skills were written for a **flat** model: every `{{IMPLEMENT_LABEL}}` issue PRs to the Default Branch and is
 independently mergeable, ordered only by `Blocked by:`. Under grouping:
 
 - **Children no longer PR to the Default Branch.** A child PR's base is its parent's feature branch. Diff,
@@ -105,7 +105,7 @@ independently mergeable, ordered only by `Blocked by:`. Under grouping:
 ## 3. Classification & the race guard
 
 Each poll, AI-Implement classifies every **designated**, non-terminal issue (designation per the table
-above — the `AI-Implement` label on Linear, a non-empty `AI-Implement-Status` + Repo match on Jira):
+above — the `{{IMPLEMENT_LABEL}}` label on Linear, a non-empty `AI-Implement-Status` + Repo match on Jira):
 
 - **Leaf** (no children) → dispatched; its PR targets the nearest feature-node ancestor branch (or base).
 - **Feature node, children not all terminal** → skipped; its branch is cut lazily when the first child
@@ -113,7 +113,7 @@ above — the `AI-Implement` label on Linear, a non-empty `AI-Implement-Status` 
 - **Feature node, all children terminal** → its own closing work dispatches onto its feature branch.
 - **Parent with children but none *designated* yet** → **race guard**: skipped, *not* worked as a leaf.
   This is why you can designate a whole tree at once (or top-down) without the parent being implemented
-  prematurely. ("Designate" = apply the `AI-Implement` label on Linear, or set `AI-Implement-Status` + Repo
+  prematurely. ("Designate" = apply the `{{IMPLEMENT_LABEL}}` label on Linear, or set `AI-Implement-Status` + Repo
   on Jira.)
 
 "Terminal" means **Done or Cancelled** (on Jira, any status whose `statusCategory` is `done`) — a cancelled

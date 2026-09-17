@@ -35,7 +35,7 @@ unclear, ask once and default to `bd-build-up`.
 - `{{TRACKER}}` — `linear` or `jira`. Selects the `trackers/<id>.md` adapter that every
   tracker-touching step follows.
 - `{{REPO}}` — GitHub repo, `owner/name`.
-- `{{IMPLEMENT_LABEL}}` — the label or field value that signals pipeline pickup.
+- `{{IMPLEMENT_LABEL}}` — the label or field value that signals pipeline pickup. Resolve per [`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md).
 - `{{ARCHITECT_NAME}}` — the human who owns migrations, auth, and infrastructure. Optional.
 - `{{BUILD_CMD}}` — the verification command (`next build`, `tsc --noEmit`, `pytest`).
 - `{{ADR_DIR}}` — where the grill's decision records land. Defaults to `docs/adr/`.
@@ -93,6 +93,10 @@ high-plan decision.
 
 Understand the current state. Produce a working understanding, not a plan. Draft no issues
 yet.
+
+**Resolve `{{IMPLEMENT_LABEL}}`** — follow [`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md)
+rules 1–2 at session start. Print the resolved value and its source once, e.g.:
+`pickup label: AI-Implement (label from orchestrator)` or `pickup label: AI-Implement (label from project binding)`.
 
 1. **Read the codebase** for adjacent patterns, or for the prototype-versus-production delta
    in Mode 1.
@@ -279,6 +283,11 @@ before filing.
 
 ### Step 5 — file
 
+**Re-resolve `{{IMPLEMENT_LABEL}}`** — immediately before labelling Wave 1 issues and immediately
+before designating a feature node, re-resolve the pickup label per
+[`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md) rule 3 (rules 1–2 in order). Use
+the freshly resolved value for both the label assignment and the feature-node designation call.
+
 File in dependency order so each `Blocked by:` resolves to a real ID. Wave staging, feature-node
 designation order, and pilot-first sequencing all follow
 [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md), with the concrete mechanics in the
@@ -286,9 +295,10 @@ adapter's **Pickup trigger**, **Wave staging**, and **Feature-node grouping** se
 
 ### Step 6 — the post-filing manifest
 
-Container URL, ADR paths, the manifest with real issue IDs, which issues are in Wave 1 and
-running, and the critical path — the longest dependency chain, so the user sees the minimum
-time to complete.
+Container URL, ADR paths, the manifest with real issue IDs (`# | Title | Wave | Label used |
+Blocked by | State`), which issues are in Wave 1 and running, and the critical path — the
+longest dependency chain, so the user sees the minimum time to complete. The `Label used`
+column shows the resolved `{{IMPLEMENT_LABEL}}` value actually applied to Wave 1 issues.
 
 ### Step 7 — the learnings comment (required capstone)
 

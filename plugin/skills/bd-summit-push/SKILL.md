@@ -23,7 +23,7 @@ bd-summit-push is the strategic layer between bd-build-up and bd-build-down. bd-
 
 - `{{TRACKER}}` — the issue tracker (Linear, Jira, GitHub Issues)
 - `{{REPO}}` — the GitHub repo, owner/name format
-- `{{IMPLEMENT_LABEL}}` — label that triggers the AI coding agent pipeline
+- `{{IMPLEMENT_LABEL}}` — label that triggers the AI coding agent pipeline. Resolved at session start per `../bd-shared/pickup-label.md`.
 - `{{ARCHITECT_NAME}}` — the human who owns risky changes (migrations, auth, infra). Optional.
 - `{{BUILD_CMD}}` — verification command for typed code
 - The skill assumes a Blindspot Table (below) populated with the project's known failure modes. Update it as the codebase evolves.
@@ -50,7 +50,7 @@ Same as bd-build-up and bd-build-down.
 - Useful for: cross-file pattern verification when an issue references patterns that need to be confirmed
 - Return findings to chat for manifest generation
 
-**Opening declaration:** State the environment, the input (plan vs. filed issues vs. open PRs), and the mode (pre-push vs. mid-push).
+**Opening declaration:** State the environment, the input (plan vs. filed issues vs. open PRs), and the mode (pre-push vs. mid-push). Resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` — query the orchestrator MCP if bound, fall back to the project binding — and print the resolved value and its source.
 
 ### Relationship to other skills
 
@@ -154,7 +154,7 @@ graph is not "all PRs → base." Model the **cascade**:
   before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
   before its children.
 
-(Applies on **both** trackers — Linear via the `AI-Implement` label, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ### Phase 3: One-Shot Quality Audit
 
@@ -326,6 +326,7 @@ After the user approves the manifest:
 
 **If pre-filing (bd-build-up hasn't filed yet):**
 - Update the in-session plan with hardened descriptions and optimized sequencing
+- Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before handing back.
 - Hand back to bd-build-up Phase 3 for filing (with the bd-build-up default: Wave 1 → Todo + `{{IMPLEMENT_LABEL}}`, Wave 2+ → Backlog)
 
 **If post-filing (issues already in tracker):**

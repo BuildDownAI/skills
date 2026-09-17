@@ -63,7 +63,8 @@ Children on a shared feature branch are **more** parallel-safe than free-standin
 less — they never collide on base. Normal file-overlap rules still apply between them.
 
 **Designation** means the pipeline label on Linear, and a non-empty `AI-Implement-Status` plus
-a matching Repo field on Jira. See the active adapter's **Feature-node grouping** section.
+a matching Repo field on Jira. See the active adapter's **Feature-node grouping** section. The
+Linear pipeline label is resolved at session start — see `./pickup-label.md`.
 
 ### Designation order (two observed races)
 
