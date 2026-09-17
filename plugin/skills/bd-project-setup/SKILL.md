@@ -89,7 +89,7 @@ bullet keys, or inline text):
 | Tracker team | team short-code (e.g. `BDS`) |
 | `{{IMPLEMENT_LABEL}}` | label the coding-agent pickup trigger |
 | `enabledMcpjsonServers` / server-approval state | whether servers are pre-approved in `.claude/settings.json` |
-| `## Knowledge graph` block | `kg.present`, `kg.mcp_server` (canonical two-key shape; legacy blocks may also carry `kg.orchestrator`, `kg.search_tool`, `kg.source_repo` — see Phase K) |
+| `## Knowledge graph` block | `kg.present`, `kg.mcp_server` (canonical two-key shape; legacy blocks may also carry additional keys — see `../bd-shared/kg-binding.md` and Phase K) |
 
 If `CLAUDE.md` is absent or contains none of these, record: *no CLAUDE.md bindings found*.
 
@@ -466,11 +466,13 @@ Write or merge the `## Knowledge graph` block into `CLAUDE.md`, per the canonica
 - kg.mcp_server: orch-<app-slug>
 ```
 
-Merge into any existing block rather than overwriting it — **preserve legacy keys** (`kg.orchestrator`,
-`kg.search_tool`, `kg.source_repo`) already present (they become the fallback path when
-`get_project_binding` is absent from the session). Drop retired fields (`kg.path`, `kg.branch`, and the
-former transition-mode fields `kg.`: `local_mcp_server`, `local_search_tool`, `prefer`) when migrating a
-legacy block.
+Merge into any existing block rather than overwriting it — preserve any legacy keys already present
+(they become the fallback path when `get_project_binding` is absent from the session). Drop retired
+fields (`kg.path`, `kg.branch`, and the former transition-mode fields `kg.`: `local_mcp_server`,
+`local_search_tool`, `prefer`) when migrating a legacy block.
+
+> **Legacy note:** Legacy blocks may carry `kg.orchestrator`, `kg.search_tool`, and `kg.source_repo` —
+> preserve these if present; see `../bd-shared/kg-binding.md` for the legacy block format.
 
 **Orchestrator confirmation (run after writing the block).** If
 `mcp__<kg.mcp_server>__get_project_binding` is present in the current tool list, call it with the repo
