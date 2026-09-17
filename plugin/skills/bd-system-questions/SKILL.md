@@ -24,8 +24,9 @@ and stop.
 Confirm the KG binding via `get_project_binding` before discovery:
 - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
   session's tool list.
-- If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` and check
-  `present` from the response's `kg` sub-object. Print: "binding: get_project_binding".
+- If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")`, where
+  `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block, and
+  check `present` from the response's `kg` sub-object. Print: "binding: get_project_binding".
 - If absent: read `kg.present` from the legacy block in `CLAUDE.md`. Print: "legacy binding".
 
 This step confirms the server is live and the session can make authenticated calls before
