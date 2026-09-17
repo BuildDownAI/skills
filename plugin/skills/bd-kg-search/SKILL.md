@@ -29,7 +29,13 @@ Search this project's knowledge graph directly via hybrid search. The **orchestr
 
 2. **Resolve the target.** The resolved search tool (`mcp__<kg.mcp_server>__<searchTool>` from
    Step 1) is the single KG target.
-   If the tool is unavailable or errors (token expired, 503), report it and stop.
+
+   **Auth health check.** If `mcp__<kg.mcp_server>__get_session_identity` is in the session's
+   tool list, call it (health only — this step does not gate on role). Apply
+   `../bd-shared/orchestrator-auth.md`; the 401 recovery applies to the search call in Step 3
+   and to any other orchestrator call in this skill. If the tool is absent, skip this check.
+
+   If the search tool is unavailable or errors (503 or other non-401 error), report it and stop.
 
 3. **Run the search** with `{query, limit: 10}` on the resolved tool. Call **only** the
    hybrid-search tool — never other KG tools (the one exception, spine-stamp staleness via

@@ -52,6 +52,11 @@ authority.
 to re-authenticate via `/mcp` in an interactive session and stop. Do not fall through to
 the prior sections.
 
+**Auth health check (N > 0 only).** If `mcp__<kg.mcp_server>__get_session_identity` is among
+the N discovered tools, call it (health only — this step does not gate on role). Apply
+`../bd-shared/orchestrator-auth.md`; the 401 recovery applies to every subsequent orchestrator
+call in this skill. If the tool is absent from the discovery list, skip this check.
+
 ## Step 2 — Route by description
 
 For each user question:
