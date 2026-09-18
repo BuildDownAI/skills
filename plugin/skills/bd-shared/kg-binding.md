@@ -64,10 +64,10 @@ config lives in git, MCP access lives in the session.
 
 ## Semantics
 
-When `kg.present: false` or the entire `## Knowledge graph` block is absent from CLAUDE.md, KG-aware behavior degrades gracefully, but the shape of that degradation depends on how the step is invoked:
+When the step-3 binding has `kg.present: false` (or the binding call has not yet been made), KG-aware behavior degrades gracefully, but the shape of that degradation depends on how the step is invoked:
 
 - **Incidental KG-aware steps** — a KG-aware step embedded inside another skill's flow (e.g. a future recon step that consults the graph as one input among several) is a **silent no-op**: no error, no warning, the rest of the skill proceeds unaffected. This keeps projects without a knowledge graph running unmodified through skills that only *optionally* touch the KG.
-- **Skills invoked directly for the KG** — a skill the user runs specifically to work with the graph (`bd-kg-search`, `bd-kg-refresh`) instead responds with a clear, non-silent message — e.g. "This project has no KG bound — run bd-project-setup to add one." — and stops. Failing silently here would leave the user wondering why a KG-specific command did nothing.
+- **Skills invoked directly for the KG** — a skill the user runs specifically to work with the graph (`bd-kg-search`, `bd-kg-refresh`) instead responds with a clear, non-silent message — e.g. the session-start "no orchestrator connector" line — and stops. Failing silently here would leave the user wondering why a KG-specific command did nothing.
 
 ## Tool usage
 
@@ -79,8 +79,6 @@ coupling loose.
 
 ## Setup and maintenance
 
-- `bd-project-setup` (Phase K) writes the two-key block into a project's CLAUDE.md during
-  onboarding and wires the remote MCP server entry.
 - `bd-kg-refresh` keeps the **orchestrator's** graph current: it triggers the refresh rail
   through the `trigger_kg_refresh` MCP tool (the rail clones, ingests, guards, and serves the
   updated graph). The laptop never pushes `snapshot/`. For local iteration on the ingest, use

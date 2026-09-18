@@ -50,7 +50,7 @@ Same as bd-build-up and bd-build-down.
 - Useful for: cross-file pattern verification when an issue references patterns that need to be confirmed
 - Return findings to chat for manifest generation
 
-**Opening declaration:** State the environment, the input (plan vs. filed issues vs. open PRs), and the mode (pre-push vs. mid-push). Resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` — query the orchestrator MCP if bound, fall back to the project binding — and print the resolved value and its source.
+**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state: the environment, the input (plan vs. filed issues vs. open PRs), and the mode (pre-push vs. mid-push). Print the resolved `{{IMPLEMENT_LABEL}}` and its source (from session-start binding).
 
 ### Relationship to other skills
 
@@ -97,8 +97,8 @@ For each issue, capture: title, description/body, labels, dependencies (`blocked
 
 Before sequencing, consult the project's knowledge graph for prior learnings, decisions, and
 issues touching this plan's surfaces. Follow `../bd-shared/kg-recon.md`: derive 1–3 queries from **the
-plan's key nouns + the issue set's shared files/components**, call **only** `mcp__<kg.mcp_server>__<searchTool>`
-(the resolved hybrid-search tool from `../bd-shared/kg-recon.md`), and cite any hit that changes
+plan's key nouns + the issue set's shared files/components**, call **only** `mcp__<prefix>__<kg.searchTool>`
+(the resolved hybrid-search tool from `../bd-shared/kg-recon.md`, where `<prefix>` is the orchestrator server from `../bd-shared/session-start.md` step 1), and cite any hit that changes
 a sequencing or one-shot-quality call (e.g. a prior failure class on a surface an issue touches
 lowers its confidence score). Advisory and non-blocking; silent skip when no KG is bound.
 
@@ -454,7 +454,7 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 - `relatedTo` accepts arrays of issue ID strings
 
 **Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
-- MCP binding: Atlassian MCP (`atlassian-<workspace>` → `jira`); `tracker.kind: jira` in `CLAUDE.md`
+- MCP binding: the Atlassian connector found by session-start step 4 (`tracker.kind: jira` in the binding)
 - Description updates: `update_issue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
 - Wave state: no direct `state` field — use `transition_issue` + `AI-Implement-Status` custom field for pipeline gating. Human-set values are exactly two: `Ready` (dispatch now) or **unset** (held). `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting them hides the issue from pickup and burns a concurrency slot
 

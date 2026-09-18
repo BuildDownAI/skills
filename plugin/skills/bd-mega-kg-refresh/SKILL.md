@@ -29,7 +29,7 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    |---|---|---|
    | `<prefix>` | session-start step 1 | Orchestrator connector prefix for all `mcp__<prefix>__*` calls |
    | `kg.present` | binding (step 3) | Stop if `false` or absent |
-   | `kg.orchestratorUrl` | binding (step 3) | Orchestrator URL for the rail handoff |
+   | `orchestratorUrl` | binding (step 3) `kg` | Orchestrator URL for the rail handoff |
    | `kg.sourceRepo` | binding (step 3) | The KG source repo (`owner/name`) |
    | `mcp__<prefix>__<kg.searchTool>` | prefix + binding `kg.searchTool` | Orchestrator hybrid-search tool (the resolved composite name) |
 

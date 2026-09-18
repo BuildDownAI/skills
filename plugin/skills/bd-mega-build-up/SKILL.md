@@ -65,13 +65,11 @@ State both at session start.
 - **Code execution** — bash, filesystem, git. Write ADRs and glossary entries directly; hand
   back to chat for filing when the tracker MCP lives there.
 
-Infer `{{TRACKER}}` from the connected MCP (`linear-<workspace>` → linear,
-`atlassian-<workspace>` → jira), or from `tracker.kind` in `CLAUDE.md`. Ask once if it is
-ambiguous. Read [`../bd-shared/trackers/{{TRACKER}}.md`](../bd-shared/trackers/); every
+`{{TRACKER}}` is `tracker.kind` from the binding resolved by `../bd-shared/session-start.md` step 3. Ask once if it is ambiguous. Read [`../bd-shared/trackers/{{TRACKER}}.md`](../bd-shared/trackers/); every
 tracker-touching step follows its matching section. The adapters are shared with
 `bd-build-up`; sections marked **(mega only)** are the ones plain build-up skips.
 
-**Opening declaration:** environment, tracker and container, and mode. *"Running in chat.
+**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state: environment, tracker and container, and mode. *"Running in chat.
 Tracker: Linear, team BDS. Mode 2, new design."*
 
 ## Modes
