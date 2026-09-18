@@ -61,9 +61,7 @@ State both at session start.
 
 ### Tracker selection
 
-Infer `{{TRACKER}}` from the connected MCP (`linear-<workspace>` → linear,
-`atlassian-<workspace>` → jira), or from `tracker.kind` in `CLAUDE.md`. Ask once if it is
-ambiguous.
+`{{TRACKER}}` is `tracker.kind` from the binding resolved by `../bd-shared/session-start.md` step 3. Ask once if it is ambiguous.
 
 Read [`../bd-shared/trackers/{{TRACKER}}.md`](../bd-shared/trackers/). Every tracker-touching
 step below — container, overlap scan, pickup trigger, wave staging, architect routing,
@@ -85,7 +83,7 @@ State the tracker in the opening declaration.
 - **Code-reading agent** — deep reads and grep. No tracker or GitHub MCP, so it returns
   findings for chat to file.
 
-**Opening declaration:** state the environment and primary tools. *"Running in chat. Tracker
+**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state the environment and primary tools. *"Running in chat. Tracker
 MCP for filing, bd-belay-on to a code-reading agent if we need to verify prototype
 structure."*
 

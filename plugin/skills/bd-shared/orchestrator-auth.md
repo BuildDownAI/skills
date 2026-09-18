@@ -1,12 +1,13 @@
 # Orchestrator Auth Health Check
 
-Shared auth-health procedure for orchestrator-calling skills. Apply this procedure immediately after calling `mcp__<kg.mcp_server>__get_session_identity` — whether that call is for role-checking (admin-only skills) or for health-only (read-only skills).
+Shared auth-health procedure for orchestrator-calling skills. Apply this procedure immediately after calling `mcp__<prefix>__get_session_identity` — whether that call is for role-checking (admin-only skills) or for health-only (read-only skills).
 
 **Warned-once invariant:** The expiry warning fires at most once per session. If a skill calls `get_session_identity` more than once, apply this procedure only at the first call.
 
 ## Precondition
 
-The orchestrator MCP server name (`kg.mcp_server`) must already be resolved (from `get_project_binding` or the legacy CLAUDE.md block) before this procedure runs. The tool name is `mcp__<kg.mcp_server>__get_session_identity`.
+The orchestrator connector prefix (`<prefix>`) must already be resolved from `./session-start.md`
+step 1 before this procedure runs. The tool name is `mcp__<prefix>__get_session_identity`.
 
 ## Expiry check
 

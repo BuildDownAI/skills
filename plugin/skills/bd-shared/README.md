@@ -22,8 +22,9 @@ does **not** reach an installed skill.
 | `learnings-comments.md` | The `# ai-implement-*-learnings` comment convention | build-up, mega-build-up, build-down, super-build-down, belay-on |
 | `session-state.md` | The `.bd/session.md` landing-session state file — shape, state vocabulary, write points, resume, renderers | build-down, super-build-down, smoke-jumper |
 | `tools/bd-statusline.sh` | Claude Code statusline renderer for `session-state.md` | (installed once per machine, see `session-state.md`) |
+| `session-start.md` | Session start — orchestrator discovery by tool suffix, repo slug, binding, tracker workspace check, per-repo facts; every skill runs it first | all skills |
 | `pickup-label.md` | The pickup-label resolution procedure — three-tier chain (orchestrator → project binding → default), re-resolve rule, Jira carve-out | build-up, mega-build-up (landing skills added by BDS-77/78) |
-| `kg-binding.md` | The `## Knowledge graph` CLAUDE.md contract and dual-target resolution | kg-create, kg-refresh, kg-search, project-setup |
+| `kg-binding.md` | The `get_project_binding` response shape; discovery lives in `session-start.md` | kg-create, kg-refresh, kg-search |
 | `orchestrator-auth.md` | Orchestrator auth health — the 48-hour refresh-expiry warning after `get_session_identity`, and the one-line 401 recovery hint per client path | kg-refresh, mega-kg-refresh, kg-search, system-questions |
 | `kg-recon.md` | The shared KG recon procedure — guard, query, staleness, silent skip | every KG-aware skill |
 | `kg-learnings-loop.md` | Feeding base-relevant patterns back to the KG template | kg-create, kg-refresh |

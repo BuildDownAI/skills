@@ -5,13 +5,9 @@ Called at session start by planning and landing skills.
 
 ## Resolution (rules 1–4)
 
-**Rule 1 — Orchestrator (primary).** At session start, check whether the orchestrator MCP is
-bound **and** `get_project_binding` is in the current tool list. A session whose tool list was
-cached without the orchestrator MCP must fall through to rule 2 rather than attempt the call
-and error (BDS-67 pattern: check tool-list presence first, call second).
-
-If both conditions hold, call `get_project_binding` with the repo slug and read `pickupLabel`
-from the response. Store the value for this session and print once:
+**Rule 1 — Orchestrator (primary).** At session start, `./session-start.md` calls
+`get_project_binding` and stores `pickupLabel` from the response. Read that stored session
+value. Print once:
 
 > `pickup label: <value> (label from orchestrator)`
 

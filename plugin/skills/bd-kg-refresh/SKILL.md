@@ -13,30 +13,20 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
 
 ## Steps
 
-1. **Read the binding.** Open `CLAUDE.md` → `## Knowledge graph` block (format:
-   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
-   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
-     session's tool list.
-   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
-     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block. Take
-     `present`, `orchestratorUrl`, `sourceRepo`, and `searchTool` from the response's
-     `kg` sub-object. Resolve the search tool as `mcp__<kg.mcp_server>__<searchTool>`. Print:
-     "binding: get_project_binding".
-   - If absent: read the legacy five-key block from `CLAUDE.md` (`kg.present`, `kg.source_repo`,
-     `kg.orchestrator`, `kg.search_tool`, `kg.mcp_server`) and resolve values from it. Print:
-     "legacy binding".
-   If `kg.present` is `false` or the block is absent:
-   - Print: "This project has no KG bound — run bd-project-setup to add one."
+1. **Session start.** Run `../bd-shared/session-start.md`. This resolves the orchestrator
+   connector prefix (`<prefix>`), the repo slug, and the full binding (including `kg`).
+   If `kg.present` is `false` or absent from the binding:
+   - Print: "This project has no KG bound."
    - Stop.
 
 2. **Check your role.** Before any orchestrator call, confirm the session has admin access.
-   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_session_identity` is in the
+   - Use ToolSearch to check whether `mcp__<prefix>__get_session_identity` is in the
      session's tool list. If the tool is absent:
      - Print: "This orchestrator has no `get_session_identity` tool; it predates the MCP write
        tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
        Update the orchestrator, then retry."
      - Stop.
-   - Call `mcp__<kg.mcp_server>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
+   - Call `mcp__<prefix>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
      (expiry warning; 401 recovery applies to every subsequent orchestrator call in this skill).
      Read `role` from the result. If `role` is not `admin`:
      - Print: "This skill needs an admin account on the orchestrator. Your MCP session is signed
@@ -44,7 +34,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
        them to run the refresh."
      - Stop.
 
-**2b. Check search tool availability.** Use ToolSearch to confirm `mcp__<kg.mcp_server>__<searchTool>`
+**2b. Check search tool availability.** Use ToolSearch to confirm `mcp__<prefix>__<searchTool>`
    (the resolved search tool name from Step 1, e.g. `mcp__orch-ai-implement-testing__kg_hybrid_search`)
    is present in the session's tool list. Query for that exact tool name.
    - If present: proceed normally; Step 7 will run the full verification including the live query.
@@ -55,7 +45,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
      Step 7 will be limited to stamp verification only.
 
 3. **Preflight.** Call `get_tenant_health` on the bound orchestrator MCP server
-   (`mcp__<kg.mcp_server>__get_tenant_health`). Every row under `kgRefreshPreflight` must have
+   (`mcp__<prefix>__get_tenant_health`). Every row under `kgRefreshPreflight` must have
    `ok: true`. If any row fails:
    - Print: "Preflight failed: <row.repo> <row.grant> — <row.hint>"
    - Stop. Do not trigger the rail against a known-broken orchestrator.
@@ -66,7 +56,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
 4. **Report scope.** The rail reconciles `sources.yml` automatically on every refresh —
    adding any repo or team from the orchestrator's project list that is not yet in the manifest.
    - Call `list_projects` on the bound orchestrator MCP
-     (`mcp__<kg.mcp_server>__list_projects`) to obtain a project count. If `list_projects`
+     (`mcp__<prefix>__list_projects`) to obtain a project count. If `list_projects`
      is unreachable, note "project count unavailable" and continue — this report is
      informational, not a gate.
    - Print: "scope: N mapped projects; the rail adds missing repos and teams on this refresh
@@ -81,7 +71,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
      `git merge upstream`, do not create a `kg-upstream/` branch, and do not open any PR
      in this sub-step.
 
-5. **Trigger the rail.** Call `mcp__<kg.mcp_server>__trigger_kg_refresh` (no arguments).
+5. **Trigger the rail.** Call `mcp__<prefix>__trigger_kg_refresh` (no arguments).
    Read `status` from the result:
    - `202` — refresh accepted and running; proceed to Step 6.
    - `409` — a refresh is already running; proceed to Step 6 to poll the in-flight run;
@@ -95,7 +85,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
      run the refresh." and stop.
 
 6. **Poll.** Every 60 seconds, check the rail status via
-   `mcp__<kg.mcp_server>__get_kg_status`.
+   `mcp__<prefix>__get_kg_status`.
 
    Report the stage each minute. The five rail stages are:
 
@@ -120,7 +110,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
           the orchestrator attaches it only for dry-runs, pending AII-638):
           - Print: "The refusal carries no part table (this orchestrator reports it only
             for dry-runs). Running a dry-run to fetch it."
-          - Call `mcp__<kg.mcp_server>__trigger_kg_refresh { dryRun: true }`.
+          - Call `mcp__<prefix>__trigger_kg_refresh { dryRun: true }`.
           - Poll `get_kg_status` every 60 s until `running === false` **and**
             `lastRefresh.dryRun === true` **and** `lastRefresh.at` is newer than the
             dry-run trigger time.
@@ -170,7 +160,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
 
    **7b. Live query (requires search tool; skip if search-tool-absent = true).** If the search
    tool is present and operational (flag from Step 2b is not set):
-   - Call `mcp__<kg.mcp_server>__<searchTool>` (the resolved search tool from Step 1) with a domain query and confirm it returns non-empty,
+   - Call `mcp__<prefix>__<searchTool>` (the resolved search tool from Step 1) with a domain query and confirm it returns non-empty,
      `degraded: false` results.
    - Confirm the graph's spine stamp (via `kg_neighbors` on the spine IRI —
      `../bd-shared/kg-recon.md`) equals `servedStamp` from Step 6.
