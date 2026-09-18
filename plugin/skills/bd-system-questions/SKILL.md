@@ -3,6 +3,8 @@ name: bd-system-questions
 description: "Ask the orchestrator direct questions about the system: why a ticket isn't running, whether a pipeline is stuck, overall health, the project list, the runner mode, or the KG refresh status. Discovers the bound orchestrator MCP's tools at session start and routes questions by their descriptions — new capabilities are askable the day they ship. Trigger when the user says 'bd-system-questions', 'why isn't <ticket> running', 'why wasn't my ticket picked up', 'is the pipeline stuck', 'what's running right now', 'system health', 'orchestrator health', 'list the projects', 'what runner mode are we in', 'what is the KG refresh doing', or 'did the last refresh work'. No-op with a clear message if no orchestrator MCP is bound."
 metadata:
   suite: builddown
+  client: any
+  requires: [orchestrator]
 ---
 
 # bd-system-questions Skill
@@ -14,29 +16,18 @@ do not block unknown questions from reaching step 2.
 
 ## Binding
 
-Read `CLAUDE.md` → `## Knowledge graph` block → `kg.mcp_server` (the orchestrator MCP
-server, e.g. `orch-ai-implement-testing`). If no orchestrator server is bound, print:
+Run `../bd-shared/session-start.md`. If no orchestrator connector is found (step 1 prints the
+no-connector line), stop. Otherwise `<prefix>` (the orchestrator connector prefix) and the
+binding are resolved for the session.
 
-> No orchestrator MCP bound — run bd-project-setup (Phase K).
-
-and stop.
-
-Confirm the KG binding via `get_project_binding` before discovery:
-- Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
-  session's tool list.
-- If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")`, where
-  `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block, and
-  check `present` from the response's `kg` sub-object. Print: "binding: get_project_binding".
-- If absent: read `kg.present` from the legacy block in `CLAUDE.md`. Print: "legacy binding".
-
-This step confirms the server is live and the session can make authenticated calls before
-the tool enumeration in Step 1 begins. Proceed to Step 1 regardless — the tool discovery
-list is the authority on what is available.
+Proceed to Step 1 regardless of the binding result — the tool discovery list is the authority
+on what is available.
 
 ## Step 1 — Discover
 
-At session start, use ToolSearch with the query `mcp__<server>__` and `max_results: 50`
-(the bound server's prefix) to list all tools the server exposes along with their
+At session start, use ToolSearch with the query `mcp__<prefix>__` and `max_results: 50`
+(the orchestrator connector prefix from session-start step 1) to list all tools the server
+exposes along with their
 descriptions. The `max_results: 50` value gives headroom well beyond any plausible tool
 count and does not need updating as new tools are added.
 
@@ -52,7 +43,7 @@ authority.
 to re-authenticate via `/mcp` in an interactive session and stop. Do not fall through to
 the prior sections.
 
-**Auth health check (N > 0 only).** If `mcp__<kg.mcp_server>__get_session_identity` is among
+**Auth health check (N > 0 only).** If `mcp__<prefix>__get_session_identity` is among
 the N discovered tools, call it (health only — this step does not gate on role). Apply
 `../bd-shared/orchestrator-auth.md`; the 401 recovery applies to every subsequent orchestrator
 call in this skill. If the tool is absent from the discovery list, skip this check.

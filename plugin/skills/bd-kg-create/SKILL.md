@@ -1,14 +1,17 @@
 ---
 name: bd-kg-create
-description: "BUILD a project's knowledge-graph (KG) repo from the BuildDownAI/bd-knowledge-graph-base template — the missing first step before bd-project-setup can bind it and bd-kg-refresh can build it. Trigger when the user says 'bd-kg-create', 'create a KG', 'build a knowledge graph repo', 'stand up a KG for this project', or when bd-project-setup's Phase K finds no KG repo and the user wants one. Creates the repo from the template (gh --template, private), clones it as a sibling, wires the upstream remote, fills sources.yml (namespace, code_repo, trackers), then hands off to bd-kg-refresh (first build) and bd-project-setup Phase K (MCP + CLAUDE.md binding). Closes with the KG learnings-loop step."
+description: "BUILD a project's knowledge-graph (KG) repo from the BuildDownAI/bd-knowledge-graph-base template — the first step before bd-kg-refresh can build it. Trigger when the user says 'bd-kg-create', 'create a KG', 'build a knowledge graph repo', 'stand up a KG for this project', or when no KG repo exists yet. Creates the repo from the template (gh --template, private), clones it as a sibling, wires the upstream remote, fills sources.yml (namespace, code_repo, trackers), then hands off to bd-kg-refresh (first build) and verifies with session-start. Closes with the KG learnings-loop step."
 metadata:
   suite: builddown
+  client: claude-code
+  claude-code-reason: "clones and edits the KG repo (Step 2 onwards require a local checkout)"
+  requires: [github]
 ---
 
 # BD KG Create Skill
 
 Builds a **new KG repo** for a project from the base template, then routes through
-the existing rails (`bd-kg-refresh` to build, `bd-project-setup` Phase K to bind).
+the existing rails (`bd-kg-refresh` to build and verify).
 After this skill, the project has a working, queryable KG.
 
 **Needs clone: this skill clones the KG repo and edits it locally (Step 2 and beyond require the checkout).**
@@ -28,9 +31,10 @@ After this skill, the project has a working, queryable KG.
 
 ## Steps
 
-1. **Preflight.** If the project's `CLAUDE.md` already has `kg.present: true`, or
-   `gh repo view <org>/<kg-name>` finds an existing repo, stop and point at
-   `bd-project-setup` (Phase K binds existing KGs — never create a duplicate).
+1. **Preflight.** If `kg repo view <org>/<kg-name>` finds an existing repo, or if running
+   `../bd-shared/session-start.md` returns `kg.present: true` in the binding (i.e. a KG is
+   already bound for this project), stop — never create a duplicate (use bd-kg-refresh to
+   rebuild an existing KG).
 
 2. **Create from the template.**
    ```bash
@@ -87,8 +91,10 @@ After this skill, the project has a working, queryable KG.
    **4c. Snapshot before deploy (sequencing rule).** Step 5's ingest must commit and push
    the snapshot to the KG repo's default branch **before** triggering the deploy — the image
    build clones that branch, and a deploy against an empty or stale branch serves an empty
-   graph with no build error. After Steps 4a and 4b, call
-   `mcp__<kg.mcp_server>__get_tenant_health` and confirm the `kgRefreshPreflight` rows show
+   graph with no build error. After Steps 4a and 4b, resolve the orchestrator connector prefix
+   via ToolSearch suffix `__get_tenant_health` (session-start has not yet run for a brand-new
+   project with no binding — resolve the prefix directly here). Call
+   `mcp__<prefix>__get_tenant_health` and confirm the `kgRefreshPreflight` rows show
    `ok: true` for the new repo's GitHub App access row and the `KG_SOURCE_REPO` row — this
    confirms the orchestrator can see the new repo before triggering the deploy (stronger gate
    than a local `git log`). If any preflight row fails, stop and resolve the issue before
@@ -121,11 +127,12 @@ After this skill, the project has a working, queryable KG.
    successful refresh ends with the graph queryable from `/mcp`. This skill never
    duplicates ingest or deploy logic.
 
-6. **Bind.** Run **`bd-project-setup`'s Phase K**: registers the remote
-   `orch-<app-slug>` MCP server (OAuth), pre-approves it, writes the
-   `## Knowledge graph` block into the project's `CLAUDE.md` (format:
-   `../bd-shared/kg-binding.md`), runs the K.5a redirect-URI preflight, and verifies with
-   a real query.
+6. **Verify binding.** Run `../bd-shared/session-start.md`. The orchestrator connector
+   (discovered via ToolSearch suffix `__get_project_binding`) must now return `kg.present:
+   true` for this project's repo slug. If the orchestrator connector is not yet enabled in
+   this session, add or enable it at claude.ai connectors, then re-run session-start to
+   confirm the binding resolves. Verify with a live search (`mcp__<prefix>__<kg.searchTool>`)
+   that the graph is queryable and non-empty.
 
 7. **Close — learnings loop (required check, usually a no-op).** Follow
    `../bd-shared/kg-learnings-loop.md`: if this create surfaced a base-relevant pattern

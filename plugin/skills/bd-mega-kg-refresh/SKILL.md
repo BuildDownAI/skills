@@ -3,6 +3,10 @@ name: bd-mega-kg-refresh
 description: "Local, interactive KG refresh: interrogate the served graph, propose and test ingest changes with the user, open a PR on the KG repo with manifest/ingest changes, then hand off to bd-kg-refresh (the rail) to produce the snapshot. Trigger when the user says 'bd-mega-kg-refresh', 'change the ingest', 'why is X not in the KG', or 'interactive KG refresh'. Use plain bd-kg-refresh when local iteration is not needed."
 metadata:
   suite: builddown
+  client: any
+  claude-code-phases: [3, 4, 5]
+  claude-code-reason: "phases 3–5 edit and push the KG repo from a local checkout"
+  requires: [orchestrator, github]
 ---
 
 # bd-mega-kg-refresh Skill
@@ -19,37 +23,28 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 
 ### Phase 1 — Bind and orient
 
-1. **Read the binding.** Open `CLAUDE.md` → `## Knowledge graph` block (format:
-   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
-   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
-     session's tool list.
-   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
-     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block. Take
-     `present`, `orchestratorUrl`, `sourceRepo`, and `searchTool` from the response's
-     `kg` sub-object. Resolve the search tool as `mcp__<kg.mcp_server>__<searchTool>`. Print:
-     "binding: get_project_binding".
-   - If absent: read the legacy five-key block from `CLAUDE.md` (`kg.present`, `kg.source_repo`,
-     `kg.orchestrator`, `kg.search_tool`, `kg.mcp_server`) and resolve values from it. Print:
-     "legacy binding".
+1. **Session start.** Run `../bd-shared/session-start.md`. This resolves the orchestrator
+   connector prefix (`<prefix>`), the repo slug, and the full binding (including `kg`).
+   Stop with "This project has no KG bound." if `kg.present` is `false` or absent.
 
    Fields resolved for this skill:
 
    | Field | Source | Notes |
    |---|---|---|
-   | `kg.mcp_server` | CLAUDE.md | Remote orchestrator MCP server name |
-   | `present` (in `kg` sub-object) | CLAUDE.md or `get_project_binding` | Stop with "This project has no KG bound" if `false` or absent |
-   | `orchestratorUrl` (in `kg` sub-object) | `get_project_binding` | Orchestrator URL for the rail handoff |
-   | `sourceRepo` (in `kg` sub-object) | `get_project_binding` | The KG source repo (`owner/name`) |
-   | `mcp__<kg.mcp_server>__<searchTool>` | resolved from `get_project_binding` `searchTool` | Orchestrator hybrid-search tool (the resolved composite name) |
+   | `<prefix>` | session-start step 1 | Orchestrator connector prefix for all `mcp__<prefix>__*` calls |
+   | `kg.present` | binding (step 3) | Stop if `false` or absent |
+   | `orchestratorUrl` | binding (step 3) `kg` | Orchestrator URL for the rail handoff |
+   | `kg.sourceRepo` | binding (step 3) | The KG source repo (`owner/name`) |
+   | `mcp__<prefix>__<kg.searchTool>` | prefix + binding `kg.searchTool` | Orchestrator hybrid-search tool (the resolved composite name) |
 
 2. **Check your role.** Before any orchestrator call, confirm the session has admin access.
-   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_session_identity` is in the
+   - Use ToolSearch to check whether `mcp__<prefix>__get_session_identity` is in the
      session's tool list. If the tool is absent:
      - Print: "This orchestrator has no `get_session_identity` tool; it predates the MCP write
        tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
        Update the orchestrator, then retry."
      - Stop.
-   - Call `mcp__<kg.mcp_server>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
+   - Call `mcp__<prefix>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
      (expiry warning; 401 recovery applies to every subsequent orchestrator call in this skill,
      across all phases).
      Read `role` from the result. If `role` is not `admin`:
@@ -73,7 +68,7 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    classifier rules, and namespace. State counts: "N sources, M docs sites, classifier has K
    rules." This is the baseline for Phase 3 decisions.
 
-5. **Check upstream base drift.** Call `mcp__<kg.mcp_server>__get_tenant_health` and read the
+5. **Check upstream base drift.** Call `mcp__<prefix>__get_tenant_health` and read the
    `base:drift` row to determine how far the derivative has drifted from the base template.
 
    1. If `get_tenant_health` returns a row with type `base:drift`, print the row's value and
@@ -93,16 +88,16 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 Goal: understand what the graph currently contains and what is missing, stale, or wrong.
 
 1. **Read the spine stamp.** Call `kg_neighbors` on the spine IRI (as defined in
-   `../bd-shared/kg-recon.md`) via `mcp__<kg.mcp_server>__kg_neighbors`. Record the
+   `../bd-shared/kg-recon.md`) via `mcp__<prefix>__kg_neighbors`. Record the
    `dcterms:modified` stamp and per-part triple counts. Announce:
    "Served graph as of `<stamp>`. Parts: `<counts>`."
 
 2. **Run 3–5 hybrid searches.** Derive search terms from:
    - The user's named topics (ask: "What concepts or recent tracker activity should I search
      for?"), or
-   - Recent tracker or PR activity from `mcp__<kg.mcp_server>__list_projects`.
+   - Recent tracker or PR activity from `mcp__<prefix>__list_projects`.
 
-   For each search: call `mcp__<kg.mcp_server>__<searchTool>` (the resolved search tool from
+   For each search: call `mcp__<prefix>__<searchTool>` (the resolved search tool from
    Step 1) with the term. Record what was found and what was absent.
 
 3. **Produce a gap table.** Synthesize the searches and spine inspection into one table:
@@ -120,7 +115,7 @@ Goal: understand what the graph currently contains and what is missing, stale, o
 
 ### Phase 3 — Propose ingest changes with the user
 
-**Needs clone: this phase edits and pushes the KG repo.**
+**Needs clone: this phase edits and pushes the KG repo.** Run `../bd-shared/session-start.md` step 0 — if in a chat session, it prints the needs-Claude-Code line and stops.
 
 Work through the gap table from Phase 2. Gather the facts (read `sources.yml`, the ingest code,
 the served graph) first — each question gives the user a single decision.
@@ -287,7 +282,7 @@ After all decisions are settled, summarize the agreed changes: "I will make thes
 
 ### Phase 4 — Test locally
 
-**Needs clone: this phase edits and pushes the KG repo.**
+**Needs clone: this phase edits and pushes the KG repo.** Run `../bd-shared/session-start.md` step 0 — if in a chat session, it prints the needs-Claude-Code line and stops.
 
 Two loops, in order. The proof loop is the gate before Phase 5.
 
@@ -336,12 +331,12 @@ Goal: prove the changes pass the rail's own dry-run before opening a PR.
 
    Call:
    ```
-   mcp__<kg.mcp_server>__trigger_kg_refresh { dryRun: true, ref: "<branch>" }
+   mcp__<prefix>__trigger_kg_refresh { dryRun: true, ref: "<branch>" }
    ```
    The dry-run runs the same job as a live refresh but does **not** write to `snapshot/`.
    Record the time of this call as the trigger time.
 
-3. **Poll to a terminal state.** Call `mcp__<kg.mcp_server>__get_kg_status` every 60 s.
+3. **Poll to a terminal state.** Call `mcp__<prefix>__get_kg_status` every 60 s.
    Stop when all three conditions hold:
    - `running === false`
    - `lastRefresh.dryRun === true`
@@ -381,7 +376,7 @@ Do not open a PR until the gate rule is satisfied.
 
 ### Phase 5 — PR the change
 
-**Needs clone: this phase edits and pushes the KG repo.**
+**Needs clone: this phase edits and pushes the KG repo.** Run `../bd-shared/session-start.md` step 0 — if in a chat session, it prints the needs-Claude-Code line and stops.
 
 Branch, commit only the manifest/ingest changes, open the PR, post the learnings comment.
 
@@ -467,7 +462,7 @@ merges — the rail clones the KG source repo and will pick up merged changes on
 
 3. **Report the served stamp.** After bd-kg-refresh completes, read the `servedStamp` it
    reports. Announce: "Rail complete. Served graph as of `<stamp>`."
-   - If `mcp__<kg.mcp_server>__get_kg_status` is available (AII-595), use it to confirm the
+   - If `mcp__<prefix>__get_kg_status` is available (AII-595), use it to confirm the
      stamp. If it is not available, the stamp from bd-kg-refresh's poll output is sufficient.
 
 ---

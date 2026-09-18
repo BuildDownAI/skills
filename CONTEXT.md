@@ -24,8 +24,8 @@ value; skills resolve it before they read or assign it.
 The five-key `## Knowledge graph` block in `CLAUDE.md` that skills read before the project
 binding existed. Read-only for one release, then retired.
 
-**Not to be confused with:** the two keys that stay in `CLAUDE.md`, `kg.present` and
-`kg.mcp_server`.
+**Not to be confused with:** `kg.present` and `kg.mcp_server`, which were retired from
+`CLAUDE.md` by ADR 0002 along with the block itself.
 
 ## Orchestrator MCP server name
 
@@ -41,3 +41,24 @@ one feature branch; the branch's pull request into the base branch is the human 
 
 **Not to be confused with:** a planning parent from bd-high-plan, which is never labelled
 during planning.
+
+## Repo folder
+
+The directory a Claude Code session runs in, with its own `CLAUDE.md`. Claude Code calls this a
+project; these skills say repo folder. A repo folder carries no orchestrator or tracker binding.
+
+**Not to be confused with:** the orchestrator mapping for the same repository.
+
+## Orchestrator mapping
+
+One row per repository in the orchestrator: team key, repo, default branch, tracker, pickup label
+and knowledge-graph binding. `get_project_binding` returns one. The origin indicator fires when a
+repo folder's git origin has no mapping on the enabled orchestrator.
+
+**Not to be confused with:** a chat project, which is a claude.ai container.
+
+## Chat project
+
+A claude.ai container holding instructions, knowledge files and connectors. A chat project needs the skill bundle and one line, `repo: <owner>/<name>`.
+
+**Not to be confused with:** a Linear project, the tracker container bd-build-up files issues into.

@@ -3,6 +3,8 @@ name: bd-super-build-down
 description: "Autonomous, lean-back bd-build-down. Trigger this skill when the user says 'bd-super-build-down', 'super bd-build-down', 'autonomous bd-build-down', 'lean-back bd-build-down', 'just land everything', 'overnight bd-build-down', or asks for a bd-build-down that runs at speed without narration. bd-super-build-down is bd-build-down's faster cousin — same autonomy defaults, same rules, but optimized for throughput: batch escalations, minimal narration, mandatory bd-smoke-jumper dispatch, session-abort triggers for unattended runs. Use when there are many PRs to process, when the user won't be watching every step, or when speed matters more than step-by-step visibility."
 metadata:
   suite: builddown
+  client: any
+  requires: [tracker, github]
 ---
 
 # Super-Build-Down Skill
@@ -63,7 +65,7 @@ Same as bd-build-down. State at session start and adapt.
 **Code-reading agent:**
 - Rarely used. If it's needed for something, that something is probably a pattern break that should escalate.
 
-**Opening declaration at session start:** Environment, tool availability, PR count, target completion time.
+**Opening declaration at session start:** Run `../bd-shared/session-start.md` first. Then state: environment, tool availability, PR count, target completion time.
 
 ### The AI coding agent pipeline
 
@@ -111,7 +113,7 @@ row per PR. In an unattended run this file is the only live progress indicator t
 it on every tier assignment, smoke verdict, comment, merge, escalation, and phase boundary. Mirror
 the queue into the harness plan tool if one exists.
 
-**KG recon (advisory if a KG is bound):** For each PR, run one quiet `mcp__<kg.mcp_server>__<searchTool>` query (resolved per `../bd-shared/kg-recon.md`) on the issue key + title, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
+**KG recon (advisory if a KG is bound):** For each PR, run one quiet `mcp__<prefix>__<kg.searchTool>` query (resolved per `../bd-shared/kg-recon.md`, where `<prefix>` is the orchestrator server found by `../bd-shared/session-start.md` step 1) on the issue key + title, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
 
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 

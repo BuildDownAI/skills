@@ -5,13 +5,17 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 
 ## MCP & discovery
 
-Use the configured Linear MCP server (named `linear-<workspace>` in your MCP config). The three operations this skill relies on are:
+The Linear connector is the one found by `../../bd-shared/session-start.md` step 4
+(ToolSearch suffix `__list_teams`); the team is `tracker.team` from the binding. The three
+operations this skill relies on are:
 
 - `list_issues` — query issues by state and/or label
 - `get_issue` — fetch a single issue (acceptance criteria, body, blockedBy)
 - `save_issue` — create or update an issue (pass `id` to update; omit to create)
 
-At session start, confirm the Linear MCP is available and state it in the opening declaration. All tracker reads and writes go through these three calls — no direct API calls or browser-based Linear access.
+At session start, confirm the Linear connector is available (session-start step 4) and state
+it in the opening declaration. All tracker reads and writes go through these three calls —
+no direct API calls or browser-based Linear access.
 
 ## Issue scan & states
 

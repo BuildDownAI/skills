@@ -5,7 +5,6 @@ instructions are in each skill's `SKILL.md`.
 
 | Skill | What it does |
 |---|---|
-| `bd-project-setup` | Wire a project's MCP servers, OAuth flows, and `CLAUDE.md` bindings once per project. |
 | `bd-build-up` | Plan and file a milestone's worth of tracker issues from a product objective or design handoff. |
 | `bd-mega-build-up` | `bd-build-up` with an adversarial design-review phase and repo ADR/glossary output. |
 | `bd-high-plan` | Settle the high-level shape of a new capability as a small set of discrete steps before decomposing; the parent carries reference-doc drafts for any subsystem the repo has not documented yet. |
