@@ -1,6 +1,6 @@
 {
   "enabledMcpjsonServers": [
     "linear-eudoxus",
-    "orch-ai-implement-testing"
+    "builddown-aii-orchestrator"
   ]
 }

@@ -58,6 +58,8 @@ Grouped by skill. One line per landed PR.
   `.mcp.json` gains the `orch-ai-implement-testing` server.
 - ADR 0001 (`docs/adr/`) and the first `CONTEXT.md` glossary: the project binding is one
   orchestrator call. Repo docs, not shipped in the plugin.
+- Orchestrator server renamed `orch-ai-implement-testing` → `builddown-aii-orchestrator` in `.mcp.json`,
+  `.claude/settings.json` and `CLAUDE.md` (BDS-80 decision 4). Not shipped; each session re-authenticates once.
 - #77 — sync from AI-Implement. #59 — release instructions fix.
 
 ## Decisions to make at release time
