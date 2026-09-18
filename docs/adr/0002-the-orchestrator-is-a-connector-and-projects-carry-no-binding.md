@@ -15,9 +15,8 @@ that account" (Claude Code MCP docs). A Claude Code session held the Linear conn
 to the `eudoxus` workspace) and an orchestrator connector alongside this repo's own `.mcp.json`
 servers simultaneously. `get_project_binding` returned `tracker: { kind, team }`,
 `pickupLabel`, `defaultBranch`, and `kg` — everything a skill needs to start. A repo folder
-therefore needs no server entry, no pre-approval, and no binding block. The `kg.mcp_server` key
-(which the OAuth token was tied to) is no longer needed when the connector is account-level and
-its server name is stable. The `kg.present` key collapses into the orchestrator answer.
+therefore needs no server entry, no pre-approval, and no binding block. The `kg.mcp_server` key is no longer needed: Claude Code stores an OAuth sign-in per endpoint,
+not per server name, and skills find the connector by its tool suffix rather than by name. The `kg.present` key collapses into the orchestrator answer.
 
 `bd-project-setup` wrote the per-project server entry, drove OAuth from inside the session, and
 populated the binding blocks. With connectors handling server enrollment once at the account

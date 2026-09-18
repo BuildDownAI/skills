@@ -131,7 +131,7 @@ Two one-time steps before you use the skills:
 
 1. **Add the connectors at [claude.ai/settings/connectors](https://claude.ai/settings/connectors).** Add your orchestrator (e.g. the AI-Implement testing instance) and your tracker (e.g. Linear) as custom connectors — each added once per account, from the web UI. See DOC-21 for the `MCP_ALLOWED_REDIRECT_ORIGINS` prerequisite your server must meet before a custom connector will authenticate. New connectors are added and removed from the web; they are enabled and disabled per-session from the mobile app. The connectors load automatically in Claude Code when you sign in with that account — no project `.mcp.json` entry needed. One tracker connector is bound to one workspace at a time; if a repo's mapping expects a different workspace, the session-start check will name the one to reconnect to.
 
-2. **Install the plugin in Claude Code, or load the chat bundle.** In Claude Code: run `/plugin marketplace add BuildDownAI/skills && /plugin install builddown@builddown`. In a chat project: add `repo: BuildDownAI/skills` to the project context.
+2. **Install the plugin in Claude Code, or load the chat bundle.** In Claude Code: run `/plugin marketplace add BuildDownAI/skills && /plugin install builddown@builddown`. In a chat project: add `repo: <owner>/<name>` to the project context.
 
 **Switching orchestrators:** enable the connector for the orchestrator you want and disable the other. The session-start check uses whichever `get_project_binding` tool is present.
 
