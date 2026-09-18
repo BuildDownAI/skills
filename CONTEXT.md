@@ -24,8 +24,8 @@ value; skills resolve it before they read or assign it.
 The five-key `## Knowledge graph` block in `CLAUDE.md` that skills read before the project
 binding existed. Read-only for one release, then retired.
 
-**Not to be confused with:** the two keys that stay in `CLAUDE.md`, `kg.present` and
-`kg.mcp_server`.
+**Not to be confused with:** `kg.present` and `kg.mcp_server`, which were retired from
+`CLAUDE.md` by ADR 0002 along with the block itself.
 
 ## Orchestrator MCP server name
 
@@ -44,25 +44,21 @@ during planning.
 
 ## Repo folder
 
-A local checkout of a repository. Under the connector model, a repo folder carries no MCP
-server entries and no binding blocks — the connectors supply the servers, and `get_project_binding`
-supplies the binding at session start.
+The directory a Claude Code session runs in, with its own `CLAUDE.md`. Claude Code calls this a
+project; these skills say repo folder. A repo folder carries no orchestrator or tracker binding.
 
-**Not to be confused with:** the orchestrator mapping, which is the orchestrator's record of
-what a repo's binding is.
+**Not to be confused with:** the orchestrator mapping for the same repository.
 
 ## Orchestrator mapping
 
-The orchestrator's record of a repo's project binding: repo slug, default branch, tracker,
-pickup label, and KG config. Returned by `get_project_binding`. Set once in the orchestrator's
-admin UI; skills read it at session start.
+One row per repository in the orchestrator: team key, repo, default branch, tracker, pickup label
+and knowledge-graph binding. `get_project_binding` returns one. The origin indicator fires when a
+repo folder's git origin has no mapping on the enabled orchestrator.
 
-**Not to be confused with:** the legacy `CLAUDE.md` binding blocks, which are retired by ADR 0002.
+**Not to be confused with:** a chat project, which is a claude.ai container.
 
 ## Chat project
 
-A claude.ai project that holds a skill bundle (via `repo: <owner>/<name>`) instead of a local
-checkout. Chat projects use the same account-level connectors as CLI sessions and therefore gain
-the same `get_project_binding` access without any per-project MCP configuration.
+A claude.ai container holding instructions, knowledge files and connectors. A chat project needs the skill bundle and one line, `repo: <owner>/<name>`.
 
-**Not to be confused with:** a Claude Code project (a local directory opened in the CLI or IDE).
+**Not to be confused with:** a Linear project, the tracker container bd-build-up files issues into.
