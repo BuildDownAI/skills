@@ -3,6 +3,8 @@ name: bd-build-up
 description: "Plan and file a milestone's worth of tracker issues. Trigger this skill when the user says 'bd-build-up', 'let's do a bd-build-up', 'plan the issues', 'break this down into issues', 'convergence plan', 'design brief', 'build from this design', or describes a product objective and wants it decomposed into sequenced, dependency-aware tracker issues ready for an AI coding agent or a design prototyping tool. Also trigger when the user hands over a design handoff bundle and wants it turned into issues, asks to extract or break out a step of a bd-high-plan planning parent into its own issue, or asks to status-check an existing bd-build-up. A bd-build-up is the creative counterpart to bd-build-down — it turns a product objective (or a prototype handoff) into a concrete issue plan, reviews it, then files it."
 metadata:
   suite: builddown
+  client: any
+  requires: [tracker]
 ---
 
 # Build-Up Skill

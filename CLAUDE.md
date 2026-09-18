@@ -35,6 +35,10 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
   into a root `CONTEXT.md`. These are committed; they are canonical reference, not session
   working notes. (The old `{{PLAN_DIR}}` binding retired with the implementation-plan phase.)
 
+## Skill authoring rule
+
+Every new or changed `SKILL.md` must declare `metadata.client` and `metadata.requires` in its frontmatter and call `../bd-shared/session-start.md` first; a change that moves a step onto the shell, git, a local checkout, or a browser must update the declaration in the same PR (see `docs/adr/0003-every-skill-declares-its-client-and-required-tools.md`).
+
 ## Build verification — `{{BUILD_CMD}}`
 
 - **`{{BUILD_CMD}}`:** *(not applicable — this repo contains skill definitions and shell scripts only; no compile or test step)*

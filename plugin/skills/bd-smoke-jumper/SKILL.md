@@ -3,6 +3,8 @@ name: bd-smoke-jumper
 description: "Autonomous smoke-testing agent for PRs. Trigger this skill when the user says 'smoke-jump', 'smoke test', 'bd-smoke-jumper', 'test this PR', 'test these PRs', 'verify the preview', 'does this PR actually work', or asks to validate a preview deploy before merge. bd-smoke-jumper parachutes onto one or more PRs, reads the gap analysis and issue context to figure out what to test, logs into the preview deploy, runs adaptive smoke tests (baseline health + PR-specific verification), posts results as a PR comment, and files tracker issues for any failures. It runs independently or in parallel with bd-build-down, bd-super-build-down, and bd-summit-push — those skills can invoke it per-PR or consume its reports if already run."
 metadata:
   suite: builddown
+  client: any
+  requires: [tracker, github, browser]
 ---
 
 # Smoke-Jumper Skill
@@ -58,7 +60,7 @@ bd-smoke-jumper is chat-primary — browser MCP is load-bearing. State at sessio
   real client handshake). Browser MCP being unavailable does NOT block these PRs.
 - For browser-surface PRs: used only if the test requires running the build command or a local script that browser MCP can't invoke.
 
-**Opening declaration:** State the environment, target PRs, and invocation context (standalone / invoked from bd-build-down / invoked from bd-super-build-down — this determines the autonomy posture).
+**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state the environment, target PRs, and invocation context (standalone / invoked from bd-build-down / invoked from bd-super-build-down — this determines the autonomy posture).
 
 ### Invocation context (determines autonomy)
 

@@ -3,6 +3,8 @@ name: bd-kg-refresh
 description: "Refresh a project's knowledge graph (KG) via the orchestrator's refresh rail (admin role). Preflights the orchestrator, reports scope from the rail's manifest reconcile, triggers the refresh rail through the orchestrator MCP (admin role), polls the five rail stages to serving, then verifies the deployed graph. For local ingest iteration, use bd-mega-kg-refresh. No-op with a clear message if this project has no KG bound."
 metadata:
   suite: builddown
+  client: any
+  requires: [orchestrator]
 ---
 
 # bd-kg-refresh Skill

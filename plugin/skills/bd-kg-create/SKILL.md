@@ -3,6 +3,9 @@ name: bd-kg-create
 description: "BUILD a project's knowledge-graph (KG) repo from the BuildDownAI/bd-knowledge-graph-base template — the first step before bd-kg-refresh can build it. Trigger when the user says 'bd-kg-create', 'create a KG', 'build a knowledge graph repo', 'stand up a KG for this project', or when no KG repo exists yet. Creates the repo from the template (gh --template, private), clones it as a sibling, wires the upstream remote, fills sources.yml (namespace, code_repo, trackers), then hands off to bd-kg-refresh (first build) and verifies with session-start. Closes with the KG learnings-loop step."
 metadata:
   suite: builddown
+  client: claude-code
+  claude-code-reason: "clones and edits the KG repo (Step 2 onwards require a local checkout)"
+  requires: [github]
 ---
 
 # BD KG Create Skill

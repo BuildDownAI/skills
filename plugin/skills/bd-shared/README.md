@@ -22,7 +22,7 @@ does **not** reach an installed skill.
 | `learnings-comments.md` | The `# ai-implement-*-learnings` comment convention | build-up, mega-build-up, build-down, super-build-down, belay-on |
 | `session-state.md` | The `.bd/session.md` landing-session state file — shape, state vocabulary, write points, resume, renderers | build-down, super-build-down, smoke-jumper |
 | `tools/bd-statusline.sh` | Claude Code statusline renderer for `session-state.md` | (installed once per machine, see `session-state.md`) |
-| `session-start.md` | Session start — orchestrator discovery by tool suffix, repo slug, binding, tracker workspace check, per-repo facts; every skill runs it first | all skills |
+| `session-start.md` | Session start — Step 0 client and required-tool check (stops with a named message if `client: claude-code` in chat or a required tool is absent), then orchestrator discovery by tool suffix, repo slug, binding, tracker workspace check, per-repo facts; every skill except bd-belay-on runs it first | all skills except bd-belay-on |
 | `pickup-label.md` | The pickup-label resolution procedure — three-tier chain (orchestrator → project binding → default), re-resolve rule, Jira carve-out | build-up, mega-build-up (landing skills added by BDS-77/78) |
 | `kg-binding.md` | The `get_project_binding` response shape; discovery lives in `session-start.md` | kg-create, kg-refresh, kg-search |
 | `orchestrator-auth.md` | Orchestrator auth health — the 48-hour refresh-expiry warning after `get_session_identity`, and the one-line 401 recovery hint per client path | kg-refresh, mega-kg-refresh, kg-search, system-questions |

@@ -3,6 +3,8 @@ name: bd-kg-search
 description: "Search this project's knowledge graph (KG) directly via hybrid search — the fast way to ask what past issues, PRs, decisions, and build-up/build-down learnings already exist, without running a full build-up/build-down session. Trigger when the user says 'bd-kg-search', 'kg search', 'search the KG for …', 'ask the knowledge graph', or asks whether the KG already knows about something. No-op with a clear message if this project has no KG bound."
 metadata:
   suite: builddown
+  client: any
+  requires: [orchestrator]
 ---
 
 # bd-kg-search Skill
