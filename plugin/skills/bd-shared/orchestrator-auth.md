@@ -31,11 +31,11 @@ If **any** orchestrator tool call in the skill returns a 401 or an `isError` res
 1. Use `token.clientPath` from the `get_session_identity` result already in session context.
 
 2. Print exactly one line:
-   - If `token.clientPath` starts with `http://` (loopback — desktop or CLI session):
+   - If `token.clientPath` is `loopback` (desktop or CLI session):
      > Orchestrator MCP token expired — re-authenticate via `/mcp` in an interactive session and retry.
-   - If `token.clientPath` starts with `https://` (connector — claude.ai session):
+   - If `token.clientPath` is `connector` (claude.ai session):
      > Orchestrator MCP token expired — reconnect the connector in [claude.ai](https://claude.ai) settings and retry.
-   - If `token.clientPath` is unknown (e.g. `get_session_identity` itself returned 401):
+   - If `token.clientPath` is empty or absent (e.g. `get_session_identity` itself returned 401):
      > Orchestrator MCP token expired — re-authenticate via `/mcp` in an interactive session (desktop/CLI) or reconnect the connector in [claude.ai](https://claude.ai) settings and retry.
 
 3. Stop the current step immediately. Do not retry the failed call. Do not continue to subsequent steps.
