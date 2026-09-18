@@ -9,7 +9,9 @@ Everything else applies to both.
 
 ## MCP & discovery
 
-- **Resolve pickup label:** Follow `../pickup-label.md` — if the orchestrator MCP is bound and `get_project_binding` is in the tool list, call it and take `pickupLabel`; otherwise read `{{IMPLEMENT_LABEL}}` from the project binding or use the default `AI-Implement`. Print the value and its source once before any filing action.
+- **Session start:** Run `../../bd-shared/session-start.md`. The Linear connector is the one
+  found in step 4 (ToolSearch suffix `__list_teams`); the team is `tracker.team` from the
+  binding. The pickup label is `pickupLabel` from the binding (rule 1 of `../pickup-label.md`).
 - **Chat (web/mobile):** Linear MCP, GitHub MCP, conversation memory. Lacks local FS / bash. bd-belay-on to a code-reading agent for codebase reads.
 - **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads and — in bd-mega-build-up — for writing ADRs and glossary entries into the repo, then hand back to chat for filing.
 - **Pair pattern (mega only):** Write the ADRs to `{{ADR_DIR}}` in the repo during the grill, then link them into Linear from chat as a Project Document.

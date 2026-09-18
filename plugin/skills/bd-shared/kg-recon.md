@@ -4,9 +4,11 @@ Shared recon procedure for the four session-owning skills (`bd-build-up`, `bd-me
 
 ## Guard
 
-Read the project's CLAUDE.md for a `## Knowledge graph` block (format: `./kg-binding.md`). If `kg.present` is false or the block is absent, **skip silently — no output, no warning**. (This is an incidental step, one input among many; projects without a graph proceed unaffected.)
+Check `kg.present` from the session-start binding (`./session-start.md` step 3). If `kg.present`
+is false or absent from the binding, **skip silently — no output, no warning**. (This is an
+incidental step, one input among many; projects without a graph proceed unaffected.)
 
-When the block is present and `kg.present: true`, continue to the query step.
+When `kg.present: true` in the binding, continue to the query step.
 
 ## Query
 
@@ -14,8 +16,9 @@ Derive **1–3 short queries** from the work at hand — e.g. the objective's ke
 
 **Resolve the search tool before querying:**
 
-1. If `mcp__<kg.mcp_server>__get_project_binding` is present in the current tool list, call it with the repo slug and read `kg.searchTool` from the response. Resolve the search tool as `mcp__<kg.mcp_server>__<searchTool>` (print: "orchestrator binding").
-2. If `get_project_binding` is absent, fall back to `kg.search_tool` from CLAUDE.md (print: "legacy binding").
+Use the session values from `./session-start.md`: `<prefix>` (step 1) and `kg.searchTool`
+(step 3 binding). Resolve the search tool as `mcp__<prefix>__<kg.searchTool>`.
+Print: "orchestrator binding".
 
 Call the resolved search tool with `{query, limit: 8}`. Repeat for each derived query. **Open the recon output with the one-line target announce** (`KG: orchestrator (graph as of <date>)`) so the operator knows which graph oriented them.
 
@@ -39,10 +42,12 @@ graph, not the filesystem. Read the stamp from **whichever target served the rec
 (both serve it identically) with `kg_neighbors` on the spine IRI:
 
 ```
-kg_neighbors(iri: "<namespace>resource/graph/spine")   # namespace from the graph's IRIs,
-                                                       # e.g. https://kg.builddown.dev/
+mcp__<prefix>__kg_neighbors(iri: "<namespace>resource/graph/spine")   # namespace from the graph's IRIs,
+                                                                       # e.g. https://kg.builddown.dev/
 → the dcterms:modified edge is the ingest date (ISO, UTC)
 ```
+
+where `<prefix>` is the orchestrator connector prefix from session-start step 1.
 
 This is the **one sanctioned exception** to the hybrid-search-only rule (`./kg-binding.md`),
 scoped strictly to reading the staleness stamp.

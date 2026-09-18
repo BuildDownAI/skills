@@ -1,17 +1,11 @@
 # Knowledge Graph Binding Contract
 
-Canonical CLAUDE.md block format for integrating a project's knowledge graph with BuildDown skills.
-
 The KG is served by an **orchestrator's OAuth-protected `/mcp` endpoint** — the single source of
 truth for every machine (AII-324). Skills never bind a local KG query server.
 
-## Knowledge graph (optional)
-- kg.present:    true
-- kg.mcp_server: orch-<app-slug>   # remote server name in .mcp.json — per-orchestrator (OAuth token ties to the name, BDS-22)
-
-`kg.mcp_server` cannot come from the orchestrator — the server name must be known before any call
-can be made (bootstrap rule, BDS-22). `kg.present` stays in CLAUDE.md so skills can skip silently
-on projects without a KG, without requiring an orchestrator call on every invocation.
+**Discovery:** The orchestrator connector prefix is discovered at session start via
+`./session-start.md` step 1 (ToolSearch for `__get_project_binding`). No CLAUDE.md key is read
+for the server name.
 
 ## Binding call — get_project_binding
 
@@ -19,8 +13,10 @@ When `kg.present: true` and the orchestrator MCP is in the session tool list, re
 binding with one call:
 
 ```
-mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")
+mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")
 ```
+
+where `<prefix>` is the orchestrator connector prefix resolved by `./session-start.md` step 1.
 
 Response shape:
 
@@ -46,29 +42,13 @@ Response shape:
 `pickupLabel` is `null` when the tracker is not Linear. It is consumed by pickup-label resolution
 (`./pickup-label.md`, rule 1), not by KG-aware search skills.
 
-Resolve the hybrid-search tool as `mcp__<kg.mcp_server>__<kg.searchTool>` from the response.
+Resolve the hybrid-search tool as `mcp__<prefix>__<kg.searchTool>` from the response.
 
-## Legacy block (read-only)
-
-Skills fall back to the legacy five-key block when `get_project_binding` is absent from the
-session. Print "legacy binding" so the source is always visible:
-
-```
-## Knowledge graph (optional)
-- kg.present:      true
-- kg.orchestrator: https://<app>.fly.dev
-- kg.mcp_server:   orch-<app-slug>
-- kg.search_tool:  mcp__orch-<app-slug>__kg_hybrid_search
-- kg.source_repo:  <owner>/knowledge-graph-<project-slug>
-```
-
-Both shapes are documented for one release per ADR 0001; deletion of legacy keys is scoped to a
-follow-on issue after one release cycle.
-
-**Retired fields**: `kg.repo`, `kg.path`, `kg.branch`, and the former transition-mode fields
-(namespaced `kg.`: `local_mcp_server`, `local_search_tool`, `prefer` — retired by BDS-56). The
-local `kg-query` CLI (`./.venv/bin/kg-query search --hybrid "<term>"`) is a checkout tool for
-iterating on ingest — it is not a binding and is not configured here.
+**Retired fields**: `kg.mcp_server`, `kg.search_tool`, `kg.orchestrator`, `kg.source_repo`,
+`kg.repo`, `kg.path`, `kg.branch`, and the former transition-mode fields (namespaced `kg.`:
+`local_mcp_server`, `local_search_tool`, `prefer` — retired by BDS-56). The local `kg-query`
+CLI (`./.venv/bin/kg-query search --hybrid "<term>"`) is a checkout tool for iterating on
+ingest — it is not a binding and is not configured here.
 
 ## Scope contract (rail-owned repos and teams, operator-owned docs roots)
 
