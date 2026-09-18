@@ -59,8 +59,6 @@ repo folder's git origin has no mapping on the enabled orchestrator.
 
 ## Chat project
 
-A claude.ai project that holds a skill bundle (via `repo: <owner>/<name>`) instead of a local
-checkout. Chat projects use the same account-level connectors as CLI sessions and therefore gain
-the same `get_project_binding` access without any per-project MCP configuration.
+A claude.ai container holding instructions, knowledge files and connectors. A chat project needs the skill bundle and one line, `repo: <owner>/<name>`.
 
 **Not to be confused with:** a Linear project, the tracker container bd-build-up files issues into.
