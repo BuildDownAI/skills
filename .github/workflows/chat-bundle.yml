@@ -1,0 +1,50 @@
+name: Chat bundle
+
+on:
+  push:
+    branches:
+      - testing
+    paths:
+      - plugin/**
+  pull_request:
+    paths:
+      - plugin/**
+      - .github/workflows/chat-bundle.yml
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(jq -r .version plugin/.claude-plugin/plugin.json)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build zip
+        run: |
+          cd plugin
+          zip -r "../builddown-skills-${{ steps.version.outputs.version }}.zip" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: builddown-skills-${{ steps.version.outputs.version }}
+          path: builddown-skills-${{ steps.version.outputs.version }}.zip
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "builddown-skills-${{ steps.version.outputs.version }}.zip" \
+            --clobber

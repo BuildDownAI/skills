@@ -135,6 +135,18 @@ Two one-time steps before you use the skills:
 
 **Switching orchestrators:** enable the connector for the orchestrator you want and disable the other. The session-start check uses whichever `get_project_binding` tool is present.
 
+### Chat (claude.ai)
+
+Three steps to use BuildDown skills in a claude.ai chat project:
+
+1. **Add the orchestrator connector once for the organisation.** In [claude.ai/settings/connectors](https://claude.ai/settings/connectors), add your orchestrator (e.g. the AI-Implement testing instance) as a custom connector — one addition covers every project in the org. Your server must have `MCP_ALLOWED_REDIRECT_ORIGINS` configured to include the claude.ai connector URL before authentication will succeed (see DOC-21 for the prerequisite and setup steps).
+
+2. **Load the bundle as a skill named `builddown`.** Download the `builddown-skills-<version>.zip` asset from the [latest release](https://github.com/BuildDownAI/skills/releases/latest) and upload it in claude.ai as an organisation skill named `builddown`. The bundle contains the same `skills/` tree and `.claude-plugin/plugin.json` that Claude Code installs — one upload per release, done manually because claude.ai has no documented admin API for skills.
+
+3. **Add `repo: <owner>/<name>` to the chat project's instructions.** Replace `<owner>/<name>` with the GitHub repository the project works against (e.g. `BuildDownAI/skills`). The skills read this line to resolve the repo binding at session start.
+
+At the start of each session the skills print the plugin version and the orchestrator they resolved, so you can confirm the right bundle and connector are active.
+
 This repo is also a **Claude Code plugin marketplace**, so the simplest install is:
 
 ```
