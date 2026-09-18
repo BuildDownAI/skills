@@ -3,6 +3,8 @@ name: bd-high-plan
 description: "Plan a new capability at high altitude — a small set of simple, discrete, separately testable steps (the count agreed with the user) decided one question at a time, captured as a single planning parent issue BEFORE any detailed decomposition. Trigger this skill when the user says 'bd-high-plan', 'high plan', 'plan this at a high level', 'keep the planning very high level', 'just the big pieces', or describes a new capability, integration, or architecture direction and wants the shape of the work settled simply before bd-build-up or bd-mega-build-up breaks any part of it into implementable issues. Also trigger when the user hands over an outside analysis or proposal document and wants it evaluated and turned into a simple plan. When you are working at high altitude, you need a good simple plan."
 metadata:
   suite: builddown
+  client: any
+  requires: [tracker]
 ---
 
 # High-Plan Skill
@@ -38,6 +40,8 @@ ever applied by this skill — see Filing.
   plan → that is bd-mega-build-up. bd-high-plan can precede either.
 
 ## The Process
+
+**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state the environment and primary tools (chat MCP stack vs. code-execution filesystem).
 
 ### Phase 1 — KG recon (before any proposal)
 

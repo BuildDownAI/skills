@@ -7,6 +7,44 @@ needs the orchestrator. Stores session values (`prefix`, `team`, `defaultBranch`
 Pattern anchor: `./pickup-label.md` (tool-presence check first, printed source line) and
 `./kg-recon.md`.
 
+## Step 0 — Client and tool check
+
+Before any discovery, read the calling skill's `metadata.client`, `metadata.claude-code-phases`,
+`metadata.claude-code-reason`, and `metadata.requires` from its frontmatter.
+
+**Client check (chat sessions):**
+
+Determine whether the session is running in **chat** (claude.ai — no bash, no local filesystem)
+or **Claude Code** (terminal, bash available).
+
+- **`client: claude-code`** and session is chat — print exactly:
+  > bd-\<name\> needs Claude Code: \<claude-code-reason\>. Open the repo folder in Claude Code and run it there.
+
+  Stop. No further steps run.
+
+- **`claude-code-phases` is set** and this invocation is at the start of one of those listed
+  phases (i.e., session-start is being called from within a listed phase) and session is chat
+  — print exactly the same line (using `claude-code-reason`) and stop. No further steps run.
+
+**Required-tool check:**
+
+For each entry in the calling skill's `requires` list, check whether the tool is available in
+this session:
+
+| `requires` entry | Availability check |
+|---|---|
+| `orchestrator` | ToolSearch suffix `__get_project_binding` returns at least one result |
+| `tracker` | ToolSearch suffix `__list_teams` (Linear) or `__list_projects` (Jira) returns at least one result |
+| `github` | ToolSearch for `get_pull_request` returns at least one result |
+| `browser` | ToolSearch for a page navigation tool (`navigate`, `read_page`) returns at least one result |
+
+If a required entry is absent, print exactly:
+  > bd-\<name\> needs \<tool\> in this session; it is not enabled.
+
+Stop. No further steps run.
+
+All checks pass — continue to Step 1.
+
 ## Step 1 — Discover the orchestrator connector
 
 Use ToolSearch with the query `__get_project_binding`.
@@ -54,6 +92,12 @@ Call `mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")`.
 - **Success:** store `team`, `defaultBranch`, `tracker`, `pickupLabel`, and `kg` for the
   session. Print one line:
   `binding: <owner>/<repo> → team <tracker.team> (<tracker.kind>)`
+
+  Then read `version` from `.claude-plugin/plugin.json` (the same file in the chat bundle;
+  in Claude Code, from the repo's `plugin/.claude-plugin/plugin.json`). Print:
+  `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<repo>`
+  where `<orchestratorUrl>` is the orchestrator URL from the binding response and
+  `<team>/<repo>` is the resolved slug from Step 2.
 
 ## Step 4 — Tracker connector check
 

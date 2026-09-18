@@ -3,6 +3,10 @@ name: bd-mega-kg-refresh
 description: "Local, interactive KG refresh: interrogate the served graph, propose and test ingest changes with the user, open a PR on the KG repo with manifest/ingest changes, then hand off to bd-kg-refresh (the rail) to produce the snapshot. Trigger when the user says 'bd-mega-kg-refresh', 'change the ingest', 'why is X not in the KG', or 'interactive KG refresh'. Use plain bd-kg-refresh when local iteration is not needed."
 metadata:
   suite: builddown
+  client: any
+  claude-code-phases: [3, 4, 5]
+  claude-code-reason: "phases 3–5 edit and push the KG repo from a local checkout"
+  requires: [orchestrator, github]
 ---
 
 # bd-mega-kg-refresh Skill
@@ -111,7 +115,7 @@ Goal: understand what the graph currently contains and what is missing, stale, o
 
 ### Phase 3 — Propose ingest changes with the user
 
-**Needs clone: this phase edits and pushes the KG repo.**
+**Needs clone: this phase edits and pushes the KG repo.** Run `../bd-shared/session-start.md` step 0 — if in a chat session, it prints the needs-Claude-Code line and stops.
 
 Work through the gap table from Phase 2. Gather the facts (read `sources.yml`, the ingest code,
 the served graph) first — each question gives the user a single decision.
@@ -278,7 +282,7 @@ After all decisions are settled, summarize the agreed changes: "I will make thes
 
 ### Phase 4 — Test locally
 
-**Needs clone: this phase edits and pushes the KG repo.**
+**Needs clone: this phase edits and pushes the KG repo.** Run `../bd-shared/session-start.md` step 0 — if in a chat session, it prints the needs-Claude-Code line and stops.
 
 Two loops, in order. The proof loop is the gate before Phase 5.
 
@@ -372,7 +376,7 @@ Do not open a PR until the gate rule is satisfied.
 
 ### Phase 5 — PR the change
 
-**Needs clone: this phase edits and pushes the KG repo.**
+**Needs clone: this phase edits and pushes the KG repo.** Run `../bd-shared/session-start.md` step 0 — if in a chat session, it prints the needs-Claude-Code line and stops.
 
 Branch, commit only the manifest/ingest changes, open the PR, post the learnings comment.
 

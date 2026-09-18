@@ -3,6 +3,8 @@ name: bd-mega-build-up
 description: "bd-build-up, but it grills you first. Same decomposition rubric, same tracker filing, plus an adversarial design review that works the open questions in rounds until nothing is silently assumed — and captures what survives as repo ADRs and glossary entries. Trigger when the user says 'bd-mega-build-up', 'mega bd-build-up', 'deep bd-build-up', 'grill me on this bd-build-up', asks to run mega on a step of a bd-high-plan planning parent, or describes an objective and wants the design pressure-tested before any issue gets filed. Use plain bd-build-up when the scope is small and the design is already settled."
 metadata:
   suite: builddown
+  client: any
+  requires: [tracker]
 ---
 
 # Mega Build-Up Skill
