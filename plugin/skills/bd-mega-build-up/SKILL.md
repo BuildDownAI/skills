@@ -280,8 +280,7 @@ to the `## Files` block of the child whose work settles that decision:
   highest existing ADR at PR-open time, not from the grill draft.
 - **Glossary update:** `Modify: CONTEXT.md`
 
-Include an acceptance line on each entry: the landed file matches the draft in the parent's
-`## Decision records`.
+Include an acceptance line on each entry: the landed file matches the code.
 
 ### Step 4 — execute the overlap reconciliation
 
