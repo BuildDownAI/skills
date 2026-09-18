@@ -1,19 +1,10 @@
 # Project configuration
 
+The orchestrator and the tracker are claude.ai connectors; the skills resolve this repo's binding from `get_project_binding` at session start.
+
 This repo's skills (bd-build-up, bd-build-down, bd-summit-push, etc.) help a human plan work — decomposing
 objectives into issues and driving them. They reference external services through `{{PLACEHOLDER}}`
 tokens. This file binds those placeholders to the concrete tools for **this** project.
-
-## Issue tracker — Linear
-
-- **tracker.kind:** `linear`
-- **MCP server:** `linear-eudoxus` — this repo's own project-scoped server (`.mcp.json`), endpoint `https://mcp.linear.app/mcp`, pre-approved in `.claude/settings.json`. Named per workspace (not a generic `linear-server`) so its OAuth token stays distinct from other Linear workspaces (e.g. acme) and they never steal each other's auth. The `builddown` plugin bundles no MCP servers; this server is for developing the skills repo itself and is not shipped to plugin users.
-- **Workspace:** `eudoxus` — bound at authentication time (run `/mcp` and authenticate the `linear-eudoxus` server; choose the Eudoxus workspace in the OAuth grant)
-- **Team:** `BDS` — file/list/search issues against this team
-- **Team URL:** https://linear.app/eudoxus/team/BDS/overview
-
-When a skill resolves `{{TRACKER}}`, it means the `linear-eudoxus` MCP, Eudoxus workspace, **team BDS**.
-New issues and projects created by bd-build-up / bd-mega-build-up go into team BDS unless told otherwise.
 
 ## AI-Implement label handoff — testing orchestrator
 
@@ -27,21 +18,6 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 - **Feature-branch grouping behaviour** the skills must respect (parent/child feature nodes, child PRs into
   `ai-implement/feature/<key>`, internal roll-ups vs the top-of-tree human-gate PR): see
   `plugin/skills/bd-shared/feature-branch-grouping.md`.
-
-## Knowledge graph (optional)
-
-- kg.present:      true
-- kg.orchestrator: https://ai-implement-testing-orchestrator.fly.dev
-- kg.mcp_server:   orch-ai-implement-testing
-- kg.search_tool:  mcp__orch-ai-implement-testing__kg_hybrid_search
-- kg.source_repo:  BuildDownAI/knowledge-graph-ai-implement
-
-The graph is the AI-Implement testing orchestrator's, served from its OAuth-protected `/mcp`
-(format: `plugin/skills/bd-shared/kg-binding.md`). Its scope already includes this repo and team
-BDS, so KG-aware skills run here with real data, and `bd-kg-refresh` / `bd-mega-kg-refresh` can be
-exercised end to end from this checkout (admin role on the orchestrator required). The server entry
-lives in `.mcp.json` and is pre-approved in `.claude/settings.json`; the name is per-orchestrator
-because Claude Code ties the OAuth token to the server name.
 
 ## GitHub repo — `{{REPO}}`
 
@@ -103,4 +79,4 @@ because Claude Code ties the OAuth token to the server name.
 2. Create/push annotated tag `vX.Y.Z`, where `X.Y.Z` is the version `testing` carries at merge time. Publish the GitHub release from that tag.
 3. Repoint `main` catalog `ref` to that tag in a `main`-only PR.
 
-After merges between `testing` and `main`, verify the catalog file still matches the branch’s required mode.
+After merges between `testing` and `main`, verify the catalog file still matches the branch's required mode.

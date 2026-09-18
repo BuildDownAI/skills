@@ -1,6 +1,7 @@
 # 0001. The project binding is one orchestrator call
 
 **Status:** Accepted
+**Superseded in part by:** 0002 (the two `CLAUDE.md` keys and the per-project server entry that this ADR still expected to be present are retired)
 **Date:** 2026-09-17
 
 ## Context
