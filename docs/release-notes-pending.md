@@ -43,6 +43,10 @@ Grouped by skill. One line per landed PR.
 - #86, #87 BDS-55 — discovery-driven bd-system-questions and related.
 - #93 — bd-high-plan docs recon.
 - #105 — bd-shared anchor verification: open the file and grep the symbol before naming it in a plan or body (high-plan, build-up, mega-build-up).
+- #112, #113, #114, #115, #116 BDS-69 — the project binding is one `get_project_binding` call (`bd-shared/kg-binding.md`,
+  ADR 0001); KG-aware skills read it with the legacy `CLAUDE.md` block as fallback; new `bd-shared/orchestrator-auth.md`
+  (48-hour refresh warning, one-line 401 recovery); bd-mega-kg-refresh reads base drift from `get_tenant_health`;
+  remaining clone steps labelled "Needs clone".
 - #106, #107, #108, #109, #110 BDS-75 — every skill resolves the pickup label from the orchestrator
   (`bd-shared/pickup-label.md`); shared adapters and grouping docs name `{{IMPLEMENT_LABEL}}`.
 - #92 — session-state: persistent landing-session state file (`bd-shared/session-state.md`) + Claude Code statusline script (`bd-shared/tools/bd-statusline.sh`) for build-down, super-build-down, smoke-jumper.
@@ -73,3 +77,4 @@ Add a dated line here whenever `testing` gains something the release will need.
 
 - 2026-09-14 — initial list, written after BDS-67 landed on `testing` at `1.5.4`.
 - 2026-09-17 — BDS-75 tree landed on `testing` at `1.5.11` (#110). ADR 0001 and `CONTEXT.md` added. BDS-69 tree next; its four children take `testing` to `1.5.15` or `1.5.16`.
+- 2026-09-17 — BDS-69 tree landed on `testing` at `1.5.15` (#116). Release decision to add: the legacy five-key `kg.*` block is read-only for one release; file the retirement issue after `v1.5.x` ships (ADR 0001).
