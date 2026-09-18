@@ -33,7 +33,7 @@ cd builddown-skills
 ./install.sh                 # symlink the skills into ~/.claude/skills so a git pull updates them
 ```
 
-Then open a Claude Code session in a project you want to use the skills with and run `bd-project-setup`. See [README.md](README.md) for the full install matrix (plugin marketplace, script options, channels).
+See [README.md](README.md) for the full install matrix (plugin marketplace, script options, channels).
 
 ## Before opening a PR
 
