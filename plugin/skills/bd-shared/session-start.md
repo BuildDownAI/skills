@@ -33,8 +33,8 @@ this session:
 
 | `requires` entry | Availability check |
 |---|---|
-| `orchestrator` | ToolSearch suffix `__get_project_binding` returns at least one result |
-| `tracker` | ToolSearch suffix `__list_teams` (Linear) or `__list_projects` (Jira) returns at least one result |
+| `orchestrator` | ToolSearch with the query `get_project_binding` returns at least one tool whose name ends in `__get_project_binding` |
+| `tracker` | ToolSearch with the query `list_teams` (Linear) or `list_projects` (Jira) returns at least one tool whose name ends in that suffix, outside the orchestrator prefix |
 | `github` | ToolSearch for `get_pull_request` returns at least one result |
 | `browser` | ToolSearch for a page navigation tool (`navigate`, `read_page`) returns at least one result |
 
@@ -47,7 +47,9 @@ All checks pass — continue to Step 1.
 
 ## Step 1 — Discover the orchestrator connector
 
-Use ToolSearch with the query `__get_project_binding`.
+Use ToolSearch with the query `get_project_binding`. Write the query without leading
+underscores; a query that starts with `__` matches nothing. Count the tools whose name ends in
+`__get_project_binding`.
 
 - **None found:** print exactly —
   > No orchestrator connector is enabled in this session. Add or enable one at claude.ai connectors.
@@ -95,25 +97,33 @@ Call `mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")`.
 
   Then read `version` from `.claude-plugin/plugin.json` (the same file in the chat bundle;
   in Claude Code, from the repo's `plugin/.claude-plugin/plugin.json`). Print:
-  `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<repo>`
-  where `<orchestratorUrl>` is the orchestrator URL from the binding response and
-  `<team>/<repo>` is the resolved slug from Step 2.
+  `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<owner>/<repo>`
+  where `<orchestratorUrl>` is `kg.orchestratorUrl` from the binding response, `<team>` is
+  `tracker.team`, and `<owner>/<repo>` is the slug from Step 2. Example:
+  `builddown 1.5.20 · orchestrator https://ai-implement-testing-orchestrator.fly.dev · project BDS/BuildDownAI/skills`
 
 ## Step 4 — Tracker connector check
 
 For **`tracker.kind = linear`**:
 
-Use ToolSearch for the suffix `__list_teams`.
+Use ToolSearch with the query `list_teams`. Count the tools whose name ends in `__list_teams`.
 
 - **None found — no connector at all:** print exactly —
   > No Linear connector is enabled in this session; this repo's orchestrator mapping expects team \<team\>. Add or enable it at claude.ai connectors.
 
   Stop for skills that write to the tracker. Read-only skills continue.
 
-- **Exactly one found:** call `list_teams`. Check whether a team with key `tracker.team` is
-  present.
+- **Two or more found:** print exactly —
+  > Two Linear connectors are enabled; disable one.
 
-  - **Not found — wrong workspace:** print exactly —
+  Stop. (A repo that still carries a Linear entry in `.mcp.json` next to the connector is the
+  usual cause; remove the entry.)
+
+- **Exactly one found:** its prefix is `<tracker-prefix>`. Call
+  `mcp__<tracker-prefix>__get_team(query: "<tracker.team>")`. `list_teams` returns team names,
+  not keys, so it cannot answer this check.
+
+  - **Empty or error answer — wrong workspace:** print exactly —
     > The Linear connector is signed into a workspace without team \<team\>; this repo's orchestrator mapping expects it. Reconnect the connector to that workspace.
 
     Stop for skills that write to the tracker. Read-only skills continue.
@@ -122,12 +132,19 @@ Use ToolSearch for the suffix `__list_teams`.
 
 For **`tracker.kind = jira`**:
 
-Use ToolSearch for the suffix `__list_projects` (Atlassian connector).
+Use ToolSearch with the query `list_projects`. Count the tools whose name ends in
+`__list_projects` and whose prefix is not `<prefix>` from Step 1; the orchestrator has its own
+`list_projects`, which does not count.
 
 - **None found — no connector at all:** print exactly —
   > No Atlassian connector is enabled in this session; this repo's orchestrator mapping expects project \<team\>. Add or enable it at claude.ai connectors.
 
   Stop for skills that write to the tracker. Read-only skills continue.
+
+- **Two or more found:** print exactly —
+  > Two Atlassian connectors are enabled; disable one.
+
+  Stop.
 
 - **Exactly one found:** call `list_projects`. Check whether a project with key `tracker.team`
   is present.

@@ -88,4 +88,5 @@ workspace if a repo's mapping expects a different one.
 - BDS-82: chat bundle; adds the chat setup section to README alongside this PR's `### Setup`
   subsection.
 - BDS-22: cancelled by this decision (one tracker connector, one workspace at a time).
-- DOC-21: documents the `MCP_ALLOWED_REDIRECT_ORIGINS` prerequisite for claude.ai connector setup.
+- DOC-21 (cancelled, absorbed into DOC-25): the `MCP_ALLOWED_REDIRECT_ORIGINS` prerequisite for
+  claude.ai connector setup. README `### Setup` states the secret inline.

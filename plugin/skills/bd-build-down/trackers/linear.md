@@ -6,7 +6,7 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 ## MCP & discovery
 
 The Linear connector is the one found by `../../bd-shared/session-start.md` step 4
-(ToolSearch suffix `__list_teams`); the team is `tracker.team` from the binding. The three
+(the one tool whose name ends in `__list_teams`); the team is `tracker.team` from the binding. The three
 operations this skill relies on are:
 
 - `list_issues` — query issues by state and/or label

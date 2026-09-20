@@ -68,7 +68,7 @@ This means the stop fires before any MCP tool is called, giving the user a clear
 without a confusing tool error.
 
 **Version line:** On success, after Step 3 binding resolves, session-start prints:
-`builddown <version> · orchestrator <orchestratorUrl> · project <team>/<repo>`
+`builddown <version> · orchestrator <orchestratorUrl> · project <team>/<owner>/<repo>`
 where `<version>` is read from `.claude-plugin/plugin.json` (the same file in the chat bundle).
 In chat, this reflects the installed bundle version; in Claude Code on the repo, it reflects
 the current file. The divergence is intentional and observable.

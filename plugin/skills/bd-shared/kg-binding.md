@@ -4,7 +4,7 @@ The KG is served by an **orchestrator's OAuth-protected `/mcp` endpoint** — th
 truth for every machine (AII-324). Skills never bind a local KG query server.
 
 **Discovery:** The orchestrator connector prefix is discovered at session start via
-`./session-start.md` step 1 (ToolSearch for `__get_project_binding`). No CLAUDE.md key is read
+`./session-start.md` step 1 (ToolSearch with the query `get_project_binding`). No CLAUDE.md key is read
 for the server name.
 
 ## Binding call — get_project_binding

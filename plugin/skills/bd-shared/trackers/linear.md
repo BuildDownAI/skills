@@ -10,7 +10,7 @@ Everything else applies to both.
 ## MCP & discovery
 
 - **Session start:** Run `../../bd-shared/session-start.md`. The Linear connector is the one
-  found in step 4 (ToolSearch suffix `__list_teams`); the team is `tracker.team` from the
+  found in step 4 (the one tool whose name ends in `__list_teams`); the team is `tracker.team` from the
   binding. The pickup label is `pickupLabel` from the binding (rule 1 of `../pickup-label.md`).
 - **Chat (web/mobile):** Linear MCP, GitHub MCP, conversation memory. Lacks local FS / bash. bd-belay-on to a code-reading agent for codebase reads.
 - **Code-execution (terminal):** bash, local FS, git. Lacks project memory. Use for codebase reads and — in bd-mega-build-up — for writing ADRs and glossary entries into the repo, then hand back to chat for filing.
