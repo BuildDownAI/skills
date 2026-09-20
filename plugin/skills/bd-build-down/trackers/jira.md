@@ -13,7 +13,7 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 ## MCP & discovery
 
 The Atlassian connector is the one found by `../../bd-shared/session-start.md` step 4
-(ToolSearch suffix `__list_projects`); the project key is `tracker.team` from the binding.
+(the one tool outside the orchestrator prefix whose name ends in `__list_projects`); the project key is `tracker.team` from the binding.
 Discover the Jira tools at runtime with ToolSearch (`jira search jql`, `jira get issue`,
 `jira transition issue`, `jira edit issue`, `jira add comment`). Two distinct status concepts:
 `AI-Implement-Status` (the orchestrator's custom-field state machine: Ready →

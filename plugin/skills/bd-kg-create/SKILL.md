@@ -92,7 +92,7 @@ After this skill, the project has a working, queryable KG.
    the snapshot to the KG repo's default branch **before** triggering the deploy — the image
    build clones that branch, and a deploy against an empty or stale branch serves an empty
    graph with no build error. After Steps 4a and 4b, resolve the orchestrator connector prefix
-   via ToolSearch suffix `__get_tenant_health` (session-start has not yet run for a brand-new
+   via ToolSearch with the query `get_tenant_health`, taking the tool whose name ends in `__get_tenant_health` (session-start has not yet run for a brand-new
    project with no binding — resolve the prefix directly here). Call
    `mcp__<prefix>__get_tenant_health` and confirm the `kgRefreshPreflight` rows show
    `ok: true` for the new repo's GitHub App access row and the `KG_SOURCE_REPO` row — this
@@ -128,7 +128,7 @@ After this skill, the project has a working, queryable KG.
    duplicates ingest or deploy logic.
 
 6. **Verify binding.** Run `../bd-shared/session-start.md`. The orchestrator connector
-   (discovered via ToolSearch suffix `__get_project_binding`) must now return `kg.present:
+   (discovered via ToolSearch with the query `get_project_binding`) must now return `kg.present:
    true` for this project's repo slug. If the orchestrator connector is not yet enabled in
    this session, add or enable it at claude.ai connectors, then re-run session-start to
    confirm the binding resolves. Verify with a live search (`mcp__<prefix>__<kg.searchTool>`)
