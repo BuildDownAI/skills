@@ -45,6 +45,7 @@ jobs:
         run: |
           bad=0
           for f in plugin/skills/*/SKILL.md; do
+            case "$f" in */bd-shared/*) continue;; esac
             if grep -q 'session-start.md' "$f" && ! grep -q 'its printed lines open the reply' "$f"; then
               echo "::error file=$f::calls session-start.md without 'its printed lines open the reply'"; bad=1
             fi
@@ -56,7 +57,7 @@ jobs:
         # folder named after the plugin, with .claude-plugin/plugin.json and skills/ inside it.
         run: |
           rm -rf builddown && cp -R plugin builddown
-          zip -r "builddown-skills-${{ steps.version.outputs.version }}.zip" builddown
+          zip -r "builddown-skills-${{ steps.version.outputs.version }}.zip" builddown -x '*/__pycache__/*' '*.pyc'
 
       - name: Check zip layout
         run: |
@@ -64,6 +65,7 @@ jobs:
           test "$(unzip -Z1 "$zip" | grep -vc '^builddown/')" = 0
           test "$(unzip -Z1 "$zip" | grep -c '^builddown/.claude-plugin/plugin.json$')" = 1
           test "$(unzip -Z1 "$zip" | grep -c 'SKILL.md$')" = "$(find plugin/skills -name SKILL.md | wc -l | tr -d ' ')"
+          test "$(unzip -Z1 "$zip" | grep -c '^builddown/skills/bd-shared/SKILL.md$')" = 1
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

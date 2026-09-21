@@ -1,8 +1,11 @@
 # bd-shared — cross-skill reference
 
-`bd-shared` is **not a skill**. It has no `SKILL.md` and never triggers on its own. It holds
-the reference material the BuildDown skills point at with `../bd-shared/<file>.md`, so a rule
-that governs several skills has exactly one home.
+`bd-shared` is a library, not a skill a person runs. It holds the reference material the
+BuildDown skills point at with `../bd-shared/<file>.md`, so a rule that governs several skills
+has exactly one home. It carries a minimal `SKILL.md` for one reason: claude.ai loads a plugin's
+`skills/*/` folders only when each has a `SKILL.md`, and a chat session could not read these
+files without it (found live 2026-09-21 on 1.5.23: "session-start.md isn't present in this
+environment"). Invoked directly, it prints one line and stops.
 
 It ships with the skills on every install channel — the marketplace sources `./plugin` whole,
 and `install.sh` copies and removes this directory alongside the skills so those relative
