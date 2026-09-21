@@ -31,15 +31,21 @@ Search this project's knowledge graph directly via hybrid search. The **orchestr
 
    If the search tool is unavailable or errors (503 or other non-401 error), report it and stop.
 
-3. **Run the search** with `{query, limit: 10}` on the resolved tool. Call **only** the
-   hybrid-search tool — never other KG tools (the one exception, spine-stamp staleness via
-   `kg_neighbors`, belongs to recon — `../bd-shared/kg-recon.md` — not this skill).
+3. **Run the search** with `{query, limit: 10}` on the resolved tool, then read the graph's
+   age with one call, `mcp__<prefix>__kg_neighbors(iri: "<namespace>resource/graph/spine")`,
+   where `<namespace>` is the IRI root of the hits (e.g. `https://kg.builddown.dev/`); the
+   `dcterms:modified` edge is the ingest stamp (ISO, UTC). Call no other KG tool. The spine
+   read is the one sanctioned exception to the hybrid-search-only rule (`../bd-shared/kg-recon.md`,
+   Staleness-delta); when it errors, print `graph date unavailable` and continue.
    **Split multi-key queries.** The exact-ID boost matches one issue key per query — a query
    with two keys ("AII-346 AII-340") surfaces neither. When the user's query contains more
    than one issue key, run one search per key, plus one combined search for any remaining
    prose, and merge the results per key in the render. Found live 2026-08-12.
 
-4. **Announce the target, then render results.** After the session-start lines, print `KG: orchestrator (graph as of <date>)`. Then hits ranked by `score`: `title`, `type`, `score`, `matched_by`, a short
+4. **Announce the target, then render results.** After the session-start lines, print
+   `KG: orchestrator (graph as of <stamp>, <age>)`, e.g. `graph as of 2026-09-14T19:06Z, 7 days old`.
+   When the stamp is older than 24 hours, add one line: `Older than a day; run bd-kg-refresh for a
+   fresh graph.` Then hits ranked by `score`: `title`, `type`, `score`, `matched_by`, a short
    `snippet`, the `iri`. **`DocSection` hits render their anchor URL prominently** (BDS-38):
    the IRI encodes `docpage/<url-encoded-page-url>#<anchor>` — decode the page URL, append
    the `#anchor`, and print it as the hit's first line (e.g.
