@@ -85,7 +85,7 @@ State the tracker in the opening declaration.
 - **Code-reading agent** — deep reads and grep. No tracker or GitHub MCP, so it returns
   findings for chat to file.
 
-**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state the environment and primary tools. *"Running in chat. Tracker
+**Opening declaration:** Run `../bd-shared/session-start.md` first; its printed lines open the reply. Then state the environment and primary tools. *"Running in chat. Tracker
 MCP for filing, bd-belay-on to a code-reading agent if we need to verify prototype
 structure."*
 

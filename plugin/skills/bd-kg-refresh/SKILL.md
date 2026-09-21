@@ -15,7 +15,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
 
 ## Steps
 
-1. **Session start.** Run `../bd-shared/session-start.md`. This resolves the orchestrator
+1. **Session start.** Run `../bd-shared/session-start.md`; its printed lines open the reply. This resolves the orchestrator
    connector prefix (`<prefix>`), the repo slug, and the full binding (including `kg`).
    If `kg.present` is `false` or absent from the binding:
    - Print: "This project has no KG bound."

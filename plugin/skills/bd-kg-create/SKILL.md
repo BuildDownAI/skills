@@ -127,7 +127,7 @@ After this skill, the project has a working, queryable KG.
    successful refresh ends with the graph queryable from `/mcp`. This skill never
    duplicates ingest or deploy logic.
 
-6. **Verify binding.** Run `../bd-shared/session-start.md`. The orchestrator connector
+6. **Verify binding.** Run `../bd-shared/session-start.md`; its printed lines open the reply. The orchestrator connector
    (discovered via ToolSearch with the query `get_project_binding`) must now return `kg.present:
    true` for this project's repo slug. If the orchestrator connector is not yet enabled in
    this session, add or enable it at claude.ai connectors, then re-run session-start to

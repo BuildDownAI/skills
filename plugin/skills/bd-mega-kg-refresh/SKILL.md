@@ -23,7 +23,7 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 
 ### Phase 1 — Bind and orient
 
-1. **Session start.** Run `../bd-shared/session-start.md`. This resolves the orchestrator
+1. **Session start.** Run `../bd-shared/session-start.md`; its printed lines open the reply. This resolves the orchestrator
    connector prefix (`<prefix>`), the repo slug, and the full binding (including `kg`).
    Stop with "This project has no KG bound." if `kg.present` is `false` or absent.
 

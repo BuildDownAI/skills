@@ -97,7 +97,7 @@ If the agent in use doesn't produce a structured gap analysis, build the equival
 **Check for an unfinished session first.** If `.bd/session.md` exists with an open `phase`, follow
 the resume rule in `../bd-shared/session-state.md` before scanning anything.
 
-**Session start.** Run `../bd-shared/session-start.md` to resolve the orchestrator connector prefix, binding, and tracker connector. `{{IMPLEMENT_LABEL}}` is `pickupLabel` from the binding (`../bd-shared/pickup-label.md` rule 1). Print the resolved label and its source before proceeding.
+**Session start.** Run `../bd-shared/session-start.md` to resolve the orchestrator connector prefix, binding, and tracker connector; its printed lines open the reply. `{{IMPLEMENT_LABEL}}` is `pickupLabel` from the binding (`../bd-shared/pickup-label.md` rule 1). Print the resolved label and its source before proceeding.
 
 Pull current state before assessing anything. Use tracker MCP and GitHub MCP in parallel.
 

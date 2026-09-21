@@ -39,6 +39,18 @@ jobs:
           done
           test "$bad" = 0
 
+      - name: Check session-start calls
+        # A skill that runs session-start must say its printed lines open the reply,
+        # or the skill's own first line hides them (seen in chat on 1.5.22).
+        run: |
+          bad=0
+          for f in plugin/skills/*/SKILL.md; do
+            if grep -q 'session-start.md' "$f" && ! grep -q 'its printed lines open the reply' "$f"; then
+              echo "::error file=$f::calls session-start.md without 'its printed lines open the reply'"; bad=1
+            fi
+          done
+          test "$bad" = 0
+
       - name: Build zip
         # claude.ai accepts the bundle as a plugin, not as a skill: one top-level
         # folder named after the plugin, with .claude-plugin/plugin.json and skills/ inside it.

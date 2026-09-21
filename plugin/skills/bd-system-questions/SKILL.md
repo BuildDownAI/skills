@@ -16,7 +16,7 @@ do not block unknown questions from reaching step 2.
 
 ## Binding
 
-Run `../bd-shared/session-start.md`. If no orchestrator connector is found (step 1 prints the
+Run `../bd-shared/session-start.md`; its printed lines open the reply. If no orchestrator connector is found (step 1 prints the
 no-connector line), stop. Otherwise `<prefix>` (the orchestrator connector prefix) and the
 binding are resolved for the session.
 

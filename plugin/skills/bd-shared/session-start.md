@@ -4,6 +4,11 @@ Shared discovery-and-binding procedure. Run once at the start of every skill ses
 needs the orchestrator. Stores session values (`prefix`, `team`, `defaultBranch`, `tracker`,
 `pickupLabel`, `kg`) for all subsequent steps in the session.
 
+**Read this file before acting; do not run it from memory.** Every "print" in this file is a
+line the user sees. The printed lines open the reply, in step order, before any other output
+from the calling skill. A skill's own first line (an opening declaration, a `KG:` line, a
+table) comes after them. A step that says "stop" ends the reply after its line.
+
 Pattern anchor: `./pickup-label.md` (tool-presence check first, printed source line) and
 `./kg-recon.md`.
 
@@ -95,12 +100,13 @@ Call `mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")`.
   session. Print one line:
   `binding: <owner>/<repo> → team <tracker.team> (<tracker.kind>)`
 
-  Then read `version` from `.claude-plugin/plugin.json` (the same file in the chat bundle;
-  in Claude Code, from the repo's `plugin/.claude-plugin/plugin.json`). Print:
+  Then read `version` from the loaded plugin's own `.claude-plugin/plugin.json` (the plugin
+  directory this skill file lives in; in a checkout of the skills repo that is
+  `plugin/.claude-plugin/plugin.json`). Print:
   `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<owner>/<repo>`
   where `<orchestratorUrl>` is `kg.orchestratorUrl` from the binding response, `<team>` is
   `tracker.team`, and `<owner>/<repo>` is the slug from Step 2. Example:
-  `builddown 1.5.20 · orchestrator https://ai-implement-testing-orchestrator.fly.dev · project BDS/BuildDownAI/skills`
+  `builddown 1.5.23 · orchestrator https://ai-implement-testing-orchestrator.fly.dev · project BDS/BuildDownAI/skills`
 
 ## Step 4 — Tracker connector check
 
