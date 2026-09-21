@@ -73,32 +73,42 @@ underscores; a query that starts with `__` matches nothing. Count the tools whos
 
   Print one line: `orchestrator: <prefix>`
 
-## Step 2 — Repo slug
+## Step 2 — Active mapping hint (optional)
 
-Resolve `<owner>/<repo>`:
+The orchestrator holds one mapping per repository. A session works against all of them; a
+hint only names which one is *active* by default. Resolve the hint, if any:
 
 - **Claude Code:** run `git remote get-url origin` and parse to `<owner>/<repo>` (strip
   protocol, host, and `.git` suffix; e.g. `https://github.com/BuildDownAI/skills.git` →
-  `BuildDownAI/skills`).
-- **Chat (claude.ai):** read the `repo:` line from the project instructions
-  (format: `repo: <owner>/<repo>`, e.g. `repo: BuildDownAI/skills`).
-- **Neither available:** ask once: "What is this project's GitHub repo slug (owner/name)?"
-
-Store the resolved slug for this session.
+  `BuildDownAI/skills`). The folder's own repository is the hint.
+- **Chat (claude.ai):** a `repo: <owner>/<repo>` line in the project instructions is the
+  hint. The line is optional. A repo or team key named in the person's prompt (for example
+  "for AI-Implement" or an issue key like `AII-123`) wins over the line.
+- **Nothing available:** no hint. Do not ask. Read-only skills never need one; a skill that
+  files or lands work chooses its target in Step 5.
 
 ## Step 3 — Binding
 
-Call `mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")`.
+Call `mcp__<prefix>__get_project_binding()` with no arguments. The answer is the list of
+every mapping on the orchestrator, each with `team`, `repo`, `defaultBranch`, `tracker`,
+`pickupLabel`, and `kg`. Store the whole list as `mappings` for the session. `pickupLabel`
+and `kg` are orchestrator-wide: read them from any entry.
 
-- **`isError` containing "No project mapping found":** print exactly —
+- **Empty list:** print exactly —
+  > orchestrator has no project mappings; add one on its admin page.
+
+  Stop.
+
+- **A hint from Step 2 that matches no `repo` in the list:** print exactly —
   > orchestrator \<orchestratorUrl\> has no project for \<owner\>/\<repo\>; read-only skills continue, skills that file issues stop.
 
-  where `<orchestratorUrl>` comes from the error response when present (omit the token if
-  absent). Read-only skills continue; planning and issue-filing skills stop here.
+  where `<orchestratorUrl>` is `kg.orchestratorUrl` from any entry. Read-only skills
+  continue with no active mapping; planning and issue-filing skills stop here.
 
-- **Success:** store `team`, `defaultBranch`, `tracker`, `pickupLabel`, and `kg` for the
-  session. Print one line:
-  `binding: <owner>/<repo> → team <tracker.team> (<tracker.kind>)`
+- **Otherwise:** the entry whose `repo` equals the hint is the `active` mapping; with no
+  hint there is none. Print one line:
+  `binding: <owner>/<repo> → team <tracker.team> (<tracker.kind>)` when active, or
+  `binding: <N> mappings (<team keys, comma-separated>)` when not.
 
   Then read `version` from the loaded plugin's own `.claude-plugin/plugin.json` (the plugin
   directory this skill file lives in; in a checkout of the skills repo that is
@@ -106,11 +116,16 @@ Call `mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")`.
   `../bd-shared/VERSION` instead (one line, written into the chat bundle by the release
   workflow). If neither is readable, print `version unknown` in its place. Print:
   `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<owner>/<repo>`
-  where `<orchestratorUrl>` is `kg.orchestratorUrl` from the binding response, `<team>` is
-  `tracker.team`, and `<owner>/<repo>` is the slug from Step 2. Example:
-  `builddown 1.5.23 · orchestrator https://ai-implement-testing-orchestrator.fly.dev · project BDS/BuildDownAI/skills`
+  when an active mapping exists, or
+  `builddown <version> · orchestrator <orchestratorUrl> · projects <team keys>` when not,
+  where `<orchestratorUrl>` is `kg.orchestratorUrl` from any entry. Examples:
+  `builddown 1.5.29 · orchestrator https://ai-implement-testing-orchestrator.fly.dev · project BDS/BuildDownAI/skills`
+  `builddown 1.5.29 · orchestrator https://ai-implement-testing-orchestrator.fly.dev · projects AII, KGB, DOC, KGA, BDS`
 
 ## Step 4 — Tracker connector check
+
+The teams to check are the active mapping's `tracker.team`, or, with no active mapping,
+every distinct `tracker.team` across `mappings`. Group them by `tracker.kind`.
 
 For **`tracker.kind = linear`**:
 
@@ -127,16 +142,18 @@ Use ToolSearch with the query `list_teams`. Count the tools whose name ends in `
   Stop. (A repo that still carries a Linear entry in `.mcp.json` next to the connector is the
   usual cause; remove the entry.)
 
-- **Exactly one found:** its prefix is `<tracker-prefix>`. Call
-  `mcp__<tracker-prefix>__get_team(query: "<tracker.team>")`. `list_teams` returns team names,
-  not keys, so it cannot answer this check.
+- **Exactly one found:** its prefix is `<tracker-prefix>`. For each team key to check, call
+  `mcp__<tracker-prefix>__get_team(query: "<key>")`. `list_teams` returns team names, not
+  keys, so it cannot answer this check.
 
-  - **Empty or error answer — wrong workspace:** print exactly —
-    > The Linear connector is signed into a workspace without team \<team\>; this repo's orchestrator mapping expects it. Reconnect the connector to that workspace.
+  - **Any key with an empty or error answer — wrong workspace:** print exactly —
+    > The Linear connector is signed into a workspace without team \<keys\>; this orchestrator's mappings expect it. Reconnect the connector to that workspace.
 
-    Stop for skills that write to the tracker. Read-only skills continue.
+    with the missing keys comma-separated. Stop for skills that write to the tracker.
+    Read-only skills continue.
 
-  - **Found:** print one line: `tracker: Linear team <tracker.team> ✓`
+  - **All found:** print one line: `tracker: Linear team <key> ✓`, or with several keys
+    `tracker: Linear teams <keys> ✓`.
 
 For **`tracker.kind = jira`**:
 
@@ -164,15 +181,26 @@ Use ToolSearch with the query `list_projects`. Count the tools whose name ends i
 
   - **Found:** print one line: `tracker: Jira project <tracker.team> ✓`
 
-## Step 5 — Downstream hand-off
+## Step 5 — Downstream hand-off and the target mapping
 
 The session values from steps 1–4 serve as the source for:
 
-- **`./pickup-label.md`** (rule 1): reads `pickupLabel` from the binding stored in step 3;
-  no second `get_project_binding` call needed.
-- **`./kg-recon.md`**: guard on `kg.present` from the step-3 binding; search tool is
-  `mcp__<prefix>__<kg.searchTool>`.
+- **`./pickup-label.md`** (rule 1): reads `pickupLabel` from any step-3 entry; no second
+  `get_project_binding` call needed.
+- **`./kg-recon.md`**: guard on `kg.present` from any step-3 entry; search tool is
+  `mcp__<prefix>__<kg.searchTool>`. The graph is one per orchestrator.
 - **`./orchestrator-auth.md`**: precondition is `<prefix>` from step 1.
+
+**Target mapping.** Where another file says "the binding" or "`tracker.team` from the
+binding", it means the *target* mapping, chosen this way:
+
+- A read-only skill (KG search and refresh, system questions) has no target. It works
+  against the whole orchestrator and never asks.
+- A skill that files issues or lands pull requests needs one target per action. Take it, in
+  order, from: a team key or repo the person named in the prompt or in the issue key at
+  hand; the active mapping from step 3; otherwise ask once per session, listing the mappings
+  as `<team> → <repo>`, and remember the answer. One mapping on the orchestrator means no
+  question. A landing skill with no target scans every mapped repo.
 
 ## Step 6 — Per-repo facts
 

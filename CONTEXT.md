@@ -59,6 +59,6 @@ repo folder's git origin has no mapping on the enabled orchestrator.
 
 ## Chat project
 
-A claude.ai container holding instructions, knowledge files and connectors. A chat project needs the skill bundle and one line, `repo: <owner>/<name>`.
+A claude.ai container holding instructions, knowledge files and connectors. A chat project needs the skill bundle; a `repo: <owner>/<name>` line is an optional default target, since the skills read every mapping from the orchestrator.
 
 **Not to be confused with:** a Linear project, the tracker container bd-build-up files issues into.

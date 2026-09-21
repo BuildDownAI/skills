@@ -16,8 +16,9 @@ Search this project's knowledge graph directly via hybrid search. The **orchestr
 ## Steps
 
 1. **Session start.** Run `../bd-shared/session-start.md`; its printed lines open the reply. This resolves the orchestrator
-   connector prefix (`<prefix>`), the repo slug, and the full binding (including `kg`).
-   If `kg.present` is `false` or absent from the binding:
+   connector prefix (`<prefix>`) and the mapping list (including `kg`, which is one per
+   orchestrator). This skill needs no active mapping and never asks for a repo.
+   If `kg.present` is `false` or absent from every mapping:
    - Print: "This project has no KG bound."
    - Stop. No tool call.
 
