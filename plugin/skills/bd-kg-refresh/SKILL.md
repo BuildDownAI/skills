@@ -64,8 +64,10 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
    - Print: "scope: N mapped projects; the rail adds missing repos and teams on this refresh
      (see the refresh PR's Scope section)."
    - **Base drift.** Check whether the derivative KG repo is behind the base template:
-     1. If `get_tenant_health` returned a row with type `base:drift`, print the row's value and
-        its `hint` field (when present).
+     1. If `get_tenant_health` returned a row with grant `base:drift`, read its `hint`. The row
+        carries no count field. No `hint` means the derivative is 0 commits behind: print
+        "base drift: none". A hint of `derivative is N commits behind base; …` means N behind:
+        print the hint. A hint of `base drift unknown` means the compare could not run: print it.
      2. If no `base:drift` row is present, print: "base drift unknown — this orchestrator
         predates [AII-598](https://linear.app/eudoxus/issue/AII-598/kg-refresh-preflight-advisory-basedrift-row-how-far-the-kg-repo-is);
         run `bd-mega-kg-refresh` to check and merge the base template" and continue.

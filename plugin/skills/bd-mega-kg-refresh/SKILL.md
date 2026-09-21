@@ -71,8 +71,11 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
 5. **Check upstream base drift.** Call `mcp__<prefix>__get_tenant_health` and read the
    `base:drift` row to determine how far the derivative has drifted from the base template.
 
-   1. If `get_tenant_health` returns a row with type `base:drift`, print the row's value and
-      its `hint` field (when present). Carry the drift count forward to Q0 in Phase 3.
+   1. If `get_tenant_health` returns a row with grant `base:drift`, read its `hint`. The row
+      carries no count field. No `hint` means 0 commits behind: print "base drift: none" and
+      carry 0 to Q0. A hint of `derivative is N commits behind base; …` means N behind: print
+      it and carry N to Q0. A hint of `base drift unknown` means the compare could not run:
+      print it and carry unknown to Q0.
    2. If no `base:drift` row is present, print: "base drift unknown — this orchestrator
       predates [AII-598](https://linear.app/eudoxus/issue/AII-598/kg-refresh-preflight-advisory-basedrift-row-how-far-the-kg-repo-is);
       upgrade the orchestrator to obtain the `base:drift` advisory row." and continue.
