@@ -40,8 +40,8 @@ this session:
 |---|---|
 | `orchestrator` | ToolSearch with the query `get_project_binding` returns at least one tool whose name ends in `__get_project_binding` |
 | `tracker` | ToolSearch with the query `list_teams` (Linear) or `list_projects` (Jira) returns at least one tool whose name ends in that suffix, outside the orchestrator prefix |
-| `github` | ToolSearch for `get_pull_request` returns at least one result |
-| `browser` | ToolSearch for a page navigation tool (`navigate`, `read_page`) returns at least one result |
+| `github` | ToolSearch with the query `get_pull_request` returns at least one tool whose name ends in `__get_pull_request` (a GitHub connector); a hit whose name merely contains the words does not count |
+| `browser` | ToolSearch with the query `navigate` returns at least one tool whose name ends in `__navigate` or `__read_page` |
 
 If a required entry is absent, print exactly:
   > bd-\<name\> needs \<tool\> in this session; it is not enabled.
