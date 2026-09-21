@@ -324,14 +324,16 @@ Goal: prove the changes pass the rail's own dry-run before opening a PR.
 
 2. **Trigger the dry-run.**
 
-   > **`ref` parameter status (AII-633 / AII-630 step 3):** Until AII-633 ships `ref`, the rail
-   > dry-run runs the default branch and cannot prove an unmerged branch. For the proof loop
-   > before then, use the offline harness path below and say so under `### Guard table` in the
-   > PR body.
+   > **No `ref` parameter.** `trigger_kg_refresh` accepts `dryRun` and `acceptNewBaseline`
+   > only (checked against the live schema 2026-09-21). The rail dry-run runs the KG repo's
+   > default branch and cannot prove an unmerged branch. AII-633 landed the branch proof as a
+   > PR-triggered required check on the KG repo, not as a `ref` argument. For the proof loop on
+   > an unmerged branch, use the offline harness path below and say so under `### Guard table`
+   > in the PR body; use the rail dry-run to prove the default branch after merge.
 
    Call:
    ```
-   mcp__<prefix>__trigger_kg_refresh { dryRun: true, ref: "<branch>" }
+   mcp__<prefix>__trigger_kg_refresh { dryRun: true }
    ```
    The dry-run runs the same job as a live refresh but does **not** write to `snapshot/`.
    Record the time of this call as the trigger time.
