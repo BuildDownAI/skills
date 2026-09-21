@@ -40,7 +40,7 @@ this session:
 |---|---|
 | `orchestrator` | ToolSearch with the query `get_project_binding` returns at least one tool whose name ends in `__get_project_binding` |
 | `tracker` | ToolSearch with the query `list_teams` (Linear) or `list_projects` (Jira) returns at least one tool whose name ends in that suffix, outside the orchestrator prefix |
-| `github` | ToolSearch with the query `get_pull_request` returns at least one tool whose name ends in `__get_pull_request` (a GitHub connector); a hit whose name merely contains the words does not count |
+| `github` | Either a GitHub connector (ToolSearch with the query `get_pull_request` returns a tool whose name ends in `__get_pull_request`; a hit whose name merely contains the words does not count) or, in Claude Code, a shell where `gh auth status` succeeds. A chat session has no shell, so the connector is the only way there |
 | `browser` | ToolSearch with the query `navigate` returns at least one tool whose name ends in `__navigate` or `__read_page` |
 
 If a required entry is absent, print exactly:
