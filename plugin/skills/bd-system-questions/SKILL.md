@@ -1,6 +1,6 @@
 ---
 name: bd-system-questions
-description: "Ask the orchestrator direct questions about the system: why a ticket isn't running, whether a pipeline is stuck, overall health, the project list, the runner mode, or the KG refresh status. Discovers the bound orchestrator MCP's tools at session start and routes questions by their descriptions — new capabilities are askable the day they ship. Trigger when the user says 'bd-system-questions', 'why isn't <ticket> running', 'why wasn't my ticket picked up', 'is the pipeline stuck', 'what's running right now', 'system health', 'orchestrator health', 'list the projects', 'what runner mode are we in', 'what is the KG refresh doing', or 'did the last refresh work'. No-op with a clear message if no orchestrator MCP is bound."
+description: "Ask the orchestrator direct questions about the system: why a ticket isn't running, whether a pipeline is stuck, overall health, the project list, the runner mode, or the KG refresh status. Discovers the bound orchestrator MCP's tools at session start and routes questions by their descriptions — new capabilities are askable the day they ship. Trigger when the user says 'bd-system-questions', 'why isn't AII-123 running', 'why wasn't my ticket picked up', 'is the pipeline stuck', 'what's running right now', 'system health', 'orchestrator health', 'list the projects', 'what runner mode are we in', 'what is the KG refresh doing', or 'did the last refresh work'. No-op with a clear message if no orchestrator MCP is bound."
 metadata:
   suite: builddown
   client: any

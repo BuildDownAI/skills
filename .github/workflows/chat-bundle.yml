@@ -28,6 +28,17 @@ jobs:
           VERSION=$(jq -r .version plugin/.claude-plugin/plugin.json)
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+      - name: Check skill frontmatter
+        # The claude.ai plugin upload rejects a description that contains an XML-looking tag.
+        run: |
+          bad=0
+          for f in plugin/skills/*/SKILL.md; do
+            if awk '/^---$/{c++; next} c==1' "$f" | grep -q '[<>]'; then
+              echo "::error file=$f::frontmatter contains < or >"; bad=1
+            fi
+          done
+          test "$bad" = 0
+
       - name: Build zip
         # claude.ai accepts the bundle as a plugin, not as a skill: one top-level
         # folder named after the plugin, with .claude-plugin/plugin.json and skills/ inside it.

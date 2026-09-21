@@ -37,7 +37,7 @@ The skills don't run inside AI-Implement; they file issues that it later picks u
 
 ## Skill authoring rule
 
-Every new or changed `SKILL.md` must declare `metadata.client` and `metadata.requires` in its frontmatter and call `../bd-shared/session-start.md` first; a change that moves a step onto the shell, git, a local checkout, or a browser must update the declaration in the same PR (see `docs/adr/0003-every-skill-declares-its-client-and-required-tools.md`).
+Every new or changed `SKILL.md` must declare `metadata.client` and `metadata.requires` in its frontmatter and call `../bd-shared/session-start.md` first; a change that moves a step onto the shell, git, a local checkout, or a browser must update the declaration in the same PR (see `docs/adr/0003-every-skill-declares-its-client-and-required-tools.md`). A `description` never contains `<` or `>`; the claude.ai plugin upload rejects it.
 
 ## Build verification — `{{BUILD_CMD}}`
 
