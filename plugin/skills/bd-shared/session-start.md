@@ -102,7 +102,9 @@ Call `mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")`.
 
   Then read `version` from the loaded plugin's own `.claude-plugin/plugin.json` (the plugin
   directory this skill file lives in; in a checkout of the skills repo that is
-  `plugin/.claude-plugin/plugin.json`). Print:
+  `plugin/.claude-plugin/plugin.json`). In a chat session that file is not mounted; read
+  `../bd-shared/VERSION` instead (one line, written into the chat bundle by the release
+  workflow). If neither is readable, print `version unknown` in its place. Print:
   `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<owner>/<repo>`
   where `<orchestratorUrl>` is `kg.orchestratorUrl` from the binding response, `<team>` is
   `tracker.team`, and `<owner>/<repo>` is the slug from Step 2. Example:

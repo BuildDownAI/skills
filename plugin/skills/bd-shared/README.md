@@ -25,6 +25,7 @@ does **not** reach an installed skill.
 | `learnings-comments.md` | The `# ai-implement-*-learnings` comment convention | build-up, mega-build-up, build-down, super-build-down, belay-on |
 | `session-state.md` | The `.bd/session.md` landing-session state file — shape, state vocabulary, write points, resume, renderers | build-down, super-build-down, smoke-jumper |
 | `tools/bd-statusline.sh` | Claude Code statusline renderer for `session-state.md` | (installed once per machine, see `session-state.md`) |
+| `VERSION` | Present only inside the chat bundle: the plugin version, one line, written by the release workflow from `plugin.json`; `session-start.md` reads it when `.claude-plugin/plugin.json` is not mounted (chat) | session-start |
 | `session-start.md` | Session start — Step 0 client and required-tool check (stops with a named message if `client: claude-code` in chat or a required tool is absent), then orchestrator discovery by tool suffix, repo slug, binding, tracker workspace check, per-repo facts; every skill except bd-belay-on runs it first | all skills except bd-belay-on |
 | `pickup-label.md` | The pickup-label resolution procedure — three-tier chain (orchestrator → project binding → default), re-resolve rule, Jira carve-out | build-up, mega-build-up (landing skills added by BDS-77/78) |
 | `kg-binding.md` | The `get_project_binding` response shape; discovery lives in `session-start.md` | kg-create, kg-refresh, kg-search |

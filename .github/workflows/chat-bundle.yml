@@ -57,6 +57,7 @@ jobs:
         # folder named after the plugin, with .claude-plugin/plugin.json and skills/ inside it.
         run: |
           rm -rf builddown && cp -R plugin builddown
+          printf '%s\n' "${{ steps.version.outputs.version }}" > builddown/skills/bd-shared/VERSION
           zip -r "builddown-skills-${{ steps.version.outputs.version }}.zip" builddown -x '*/__pycache__/*' '*.pyc'
 
       - name: Check zip layout
@@ -66,6 +67,7 @@ jobs:
           test "$(unzip -Z1 "$zip" | grep -c '^builddown/.claude-plugin/plugin.json$')" = 1
           test "$(unzip -Z1 "$zip" | grep -c 'SKILL.md$')" = "$(find plugin/skills -name SKILL.md | wc -l | tr -d ' ')"
           test "$(unzip -Z1 "$zip" | grep -c '^builddown/skills/bd-shared/SKILL.md$')" = 1
+          test "$(unzip -p "$zip" builddown/skills/bd-shared/VERSION)" = "${{ steps.version.outputs.version }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
