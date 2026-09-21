@@ -29,9 +29,18 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build zip
+        # claude.ai accepts the bundle as a plugin, not as a skill: one top-level
+        # folder named after the plugin, with .claude-plugin/plugin.json and skills/ inside it.
         run: |
-          cd plugin
-          zip -r "../builddown-skills-${{ steps.version.outputs.version }}.zip" .
+          rm -rf builddown && cp -R plugin builddown
+          zip -r "builddown-skills-${{ steps.version.outputs.version }}.zip" builddown
+
+      - name: Check zip layout
+        run: |
+          zip="builddown-skills-${{ steps.version.outputs.version }}.zip"
+          test "$(unzip -Z1 "$zip" | grep -vc '^builddown/')" = 0
+          test "$(unzip -Z1 "$zip" | grep -c '^builddown/.claude-plugin/plugin.json$')" = 1
+          test "$(unzip -Z1 "$zip" | grep -c 'SKILL.md$')" = "$(find plugin/skills -name SKILL.md | wc -l | tr -d ' ')"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
