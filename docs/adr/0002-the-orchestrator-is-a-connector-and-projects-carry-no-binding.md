@@ -77,6 +77,11 @@ workspace if a repo's mapping expects a different one.
   connector enabled, a session in this repo with no `.mcp.json` must list a server exposing
   `get_project_binding` and a server exposing `save_issue`. This is a manual, post-merge gate;
   it must pass before BDS-84 merges.
+- Amended 2026-09-21 (BDS-80 live test): the binding is the orchestrator's full mapping list,
+  read with `get_project_binding()` and no arguments. The git origin or a `repo:` line only
+  names the active mapping; a chat needs neither. Read-only skills never choose a repo; a
+  skill that files or lands work chooses its target per action and asks once only when
+  nothing names it.
 
 ## Related
 
