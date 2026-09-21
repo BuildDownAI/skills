@@ -41,7 +41,7 @@ ever applied by this skill — see Filing.
 
 ## The Process
 
-**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state the environment and primary tools (chat MCP stack vs. code-execution filesystem).
+**Opening declaration:** Run `../bd-shared/session-start.md` first; its printed lines open the reply. Then state the environment and primary tools (chat MCP stack vs. code-execution filesystem).
 
 ### Phase 1 — KG recon (before any proposal)
 

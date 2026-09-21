@@ -15,7 +15,7 @@ Search this project's knowledge graph directly via hybrid search. The **orchestr
 
 ## Steps
 
-1. **Session start.** Run `../bd-shared/session-start.md`. This resolves the orchestrator
+1. **Session start.** Run `../bd-shared/session-start.md`; its printed lines open the reply. This resolves the orchestrator
    connector prefix (`<prefix>`), the repo slug, and the full binding (including `kg`).
    If `kg.present` is `false` or absent from the binding:
    - Print: "This project has no KG bound."
@@ -39,7 +39,7 @@ Search this project's knowledge graph directly via hybrid search. The **orchestr
    than one issue key, run one search per key, plus one combined search for any remaining
    prose, and merge the results per key in the render. Found live 2026-08-12.
 
-4. **Announce the target, then render results.** First line: `KG: orchestrator (graph as of <date>)`. Then hits ranked by `score`: `title`, `type`, `score`, `matched_by`, a short
+4. **Announce the target, then render results.** After the session-start lines, print `KG: orchestrator (graph as of <date>)`. Then hits ranked by `score`: `title`, `type`, `score`, `matched_by`, a short
    `snippet`, the `iri`. **`DocSection` hits render their anchor URL prominently** (BDS-38):
    the IRI encodes `docpage/<url-encoded-page-url>#<anchor>` — decode the page URL, append
    the `#anchor`, and print it as the hit's first line (e.g.

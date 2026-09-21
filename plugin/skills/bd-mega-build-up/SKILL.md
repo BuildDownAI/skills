@@ -71,7 +71,7 @@ State both at session start.
 tracker-touching step follows its matching section. The adapters are shared with
 `bd-build-up`; sections marked **(mega only)** are the ones plain build-up skips.
 
-**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state: environment, tracker and container, and mode. *"Running in chat.
+**Opening declaration:** Run `../bd-shared/session-start.md` first; its printed lines open the reply. Then state: environment, tracker and container, and mode. *"Running in chat.
 Tracker: Linear, team BDS. Mode 2, new design."*
 
 ## Modes

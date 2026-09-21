@@ -65,7 +65,7 @@ Same as bd-build-down. State at session start and adapt.
 **Code-reading agent:**
 - Rarely used. If it's needed for something, that something is probably a pattern break that should escalate.
 
-**Opening declaration at session start:** Run `../bd-shared/session-start.md` first. Then state: environment, tool availability, PR count, target completion time.
+**Opening declaration at session start:** Run `../bd-shared/session-start.md` first; its printed lines open the reply. Then state: environment, tool availability, PR count, target completion time.
 
 ### The AI coding agent pipeline
 

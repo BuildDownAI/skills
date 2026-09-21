@@ -52,7 +52,7 @@ Same as bd-build-up and bd-build-down.
 - Useful for: cross-file pattern verification when an issue references patterns that need to be confirmed
 - Return findings to chat for manifest generation
 
-**Opening declaration:** Run `../bd-shared/session-start.md` first. Then state: the environment, the input (plan vs. filed issues vs. open PRs), and the mode (pre-push vs. mid-push). Print the resolved `{{IMPLEMENT_LABEL}}` and its source (from session-start binding).
+**Opening declaration:** Run `../bd-shared/session-start.md` first; its printed lines open the reply. Then state: the environment, the input (plan vs. filed issues vs. open PRs), and the mode (pre-push vs. mid-push). Print the resolved `{{IMPLEMENT_LABEL}}` and its source (from session-start binding).
 
 ### Relationship to other skills
 
