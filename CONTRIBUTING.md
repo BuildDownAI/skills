@@ -33,7 +33,7 @@ cd builddown-skills
 ./install.sh                 # symlink the skills into ~/.claude/skills so a git pull updates them
 ```
 
-Then open a Claude Code session in a project you want to use the skills with and run `bd-project-setup`. See [README.md](README.md) for the full install matrix (plugin marketplace, script options, channels).
+See [README.md](README.md) for the full install matrix (plugin marketplace, script options, channels).
 
 ## Before opening a PR
 
@@ -41,10 +41,11 @@ Then open a Claude Code session in a project you want to use the skills with and
    - **Release target, set once per cycle.** If `testing` still carries `main`'s version, set `main` + `0.1.0` for additive or backward-compatible work, or `main` + `1.0.0` for a breaking change. This happens once between releases, however many PRs land.
    - **Patch per PR.** Every later PR that changes shipped content adds `0.0.1`. A PR that touches no shipped content leaves the version alone.
    Worked example: `main` is `1.4.0`; the first content PR sets `1.5.0`; the next two set `1.5.1` and `1.5.2`; the release is tagged `v1.5.2`. `testing` never reaches `1.6.0` before a release. The full rule, including how a release is cut, is `CLAUDE.md` → *Releasing*.
-2. **Keep skill frontmatter valid.** Every BuildDown `SKILL.md` carries `metadata.suite: builddown` in its frontmatter; follow the shape of the existing skills for `name`, `description`, and trigger phrasing.
-3. **Lint any shell you touch.** If you change `install.sh` or another script, run `shellcheck` on it if you have it installed.
-4. **No secrets, no client-specific data** — the skills are generic and tooling-agnostic; service names appear as `{{PLACEHOLDER}}` tokens, not hardcoded workspaces, repos, or client names. Double-check before pushing.
-5. **Disclose third-party and AI-generated material** — if your contribution includes code or text under a third-party licence, or was generated in substantial part by an AI system, mark it and say so in the PR description. Sections 5.4 and 5.5 of the CLA. This is a disclosure requirement, not a prohibition.
+2. **Declare `metadata.client` and `metadata.requires` in every SKILL.md.** Every new or changed `SKILL.md` must declare `metadata.client` (`any` or `claude-code`) and `metadata.requires` (the list of hard-stop tools, empty if none), and must call `../bd-shared/session-start.md` first in its opening declaration, step 1, or Phase 1, with the words "its printed lines open the reply" (the chat-bundle workflow checks for them, because a skill that names its own first line otherwise hides the session-start lines). A change that moves a step onto the shell, git, a local checkout, or a browser must update the declaration in the same PR. See `docs/adr/0003-every-skill-declares-its-client-and-required-tools.md` for the full inventory and stop-line format.
+3. **Keep other skill frontmatter valid.** Every BuildDown `SKILL.md` carries `metadata.suite: builddown` in its frontmatter; follow the shape of the existing skills for `name`, `description`, and trigger phrasing. A `description` must not contain `<` or `>`: the claude.ai plugin upload rejects a description that looks like it holds an XML tag, so write a placeholder as `AII-123` or `{ticket}`, never `<ticket>`. The chat-bundle workflow checks this.
+4. **Lint any shell you touch.** If you change `install.sh` or another script, run `shellcheck` on it if you have it installed.
+5. **No secrets, no client-specific data** — the skills are generic and tooling-agnostic; service names appear as `{{PLACEHOLDER}}` tokens, not hardcoded workspaces, repos, or client names. Double-check before pushing.
+6. **Disclose third-party and AI-generated material** — if your contribution includes code or text under a third-party licence, or was generated in substantial part by an AI system, mark it and say so in the PR description. Sections 5.4 and 5.5 of the CLA. This is a disclosure requirement, not a prohibition.
 
 ## Commit messages
 

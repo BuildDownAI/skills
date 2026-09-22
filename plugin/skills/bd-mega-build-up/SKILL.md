@@ -3,6 +3,8 @@ name: bd-mega-build-up
 description: "bd-build-up, but it grills you first. Same decomposition rubric, same tracker filing, plus an adversarial design review that works the open questions in rounds until nothing is silently assumed — and captures what survives as repo ADRs and glossary entries. Trigger when the user says 'bd-mega-build-up', 'mega bd-build-up', 'deep bd-build-up', 'grill me on this bd-build-up', asks to run mega on a step of a bd-high-plan planning parent, or describes an objective and wants the design pressure-tested before any issue gets filed. Use plain bd-build-up when the scope is small and the design is already settled."
 metadata:
   suite: builddown
+  client: any
+  requires: [tracker]
 ---
 
 # Mega Build-Up Skill
@@ -60,18 +62,16 @@ Load each when its phase reaches it:
 State both at session start.
 
 - **Chat** — tracker MCP, GitHub MCP, conversation memory. No local filesystem. Use
-  `bd-belay-on` to a code-reading agent for codebase reads, and to a code-execution session
-  for writing ADRs into the repo.
-- **Code execution** — bash, filesystem, git. Write ADRs and glossary entries directly; hand
-  back to chat for filing when the tracker MCP lives there.
+  `bd-belay-on` to a code-reading agent for codebase reads. The grill runs fully in chat;
+  ADR and glossary drafts go into the parent issue body, not the repo.
+- **Code execution** — bash, filesystem, git. Hand back to chat for filing when the tracker
+  MCP lives there.
 
-Infer `{{TRACKER}}` from the connected MCP (`linear-<workspace>` → linear,
-`atlassian-<workspace>` → jira), or from `tracker.kind` in `CLAUDE.md`. Ask once if it is
-ambiguous. Read [`../bd-shared/trackers/{{TRACKER}}.md`](../bd-shared/trackers/); every
+`{{TRACKER}}` is `tracker.kind` from the binding resolved by `../bd-shared/session-start.md` step 3. Ask once if it is ambiguous. Read [`../bd-shared/trackers/{{TRACKER}}.md`](../bd-shared/trackers/); every
 tracker-touching step follows its matching section. The adapters are shared with
 `bd-build-up`; sections marked **(mega only)** are the ones plain build-up skips.
 
-**Opening declaration:** environment, tracker and container, and mode. *"Running in chat.
+**Opening declaration:** Run `../bd-shared/session-start.md` first; its printed lines open the reply. Then state: environment, tracker and container, and mode. *"Running in chat.
 Tracker: Linear, team BDS. Mode 2, new design."*
 
 ## Modes
@@ -157,11 +157,25 @@ The **decisions** are the user's. Put each one to them and wait.
 The moment a decision resolves, capture it — see
 [`../bd-shared/decision-docs.md`](../bd-shared/decision-docs.md).
 
-- **Hard to reverse, surprising, and a real trade-off** → write the ADR into `docs/adr/` now.
-  Most decisions fail this test; that is expected.
-- **A fuzzy or overloaded term** → sharpen it and write the glossary entry into `CONTEXT.md`
-  now. Challenge a term that contradicts the existing glossary. Check the user's claim about
-  how something works against the code.
+- **Hard to reverse, surprising, and a real trade-off** → draft the ADR in the parent issue's
+  `## Decision records` section now. Use the full ADR format from `decision-docs.md`. Write
+  the ADR number as `NNNN` (the implementer assigns the real number from the highest existing
+  ADR at PR-open time). Head each block with its target path and `new` or `update`:
+
+  ```
+  `{{ADR_DIR}}/NNNN-<slug>.md` — new
+
+  \```markdown
+  # NNNN. <Decision title>
+  ...
+  \```
+  ```
+
+  Most decisions fail the three-part test; that is expected.
+- **A fuzzy or overloaded term** → sharpen it and draft the glossary entry in the parent
+  issue's `## Decision records` section now. Head the block with `CONTEXT.md — update`.
+  Challenge a term that contradicts the existing glossary. Check the user's claim about how
+  something works against the code.
 
 Batching these to the end loses the alternatives that made the decision worth recording.
 
@@ -259,6 +273,15 @@ it.
 Resolve the container per the adapter's **Container** section. Attach or link the ADRs per its
 **Doc home** section, so a board reader can reach the design without a repo checkout.
 
+For each draft in the parent's `## Decision records` section, add the corresponding file entry
+to the `## Files` block of the child whose work settles that decision:
+
+- **New ADR:** `Create: {{ADR_DIR}}/NNNN-<slug>.md` — the implementer assigns `NNNN` from the
+  highest existing ADR at PR-open time, not from the grill draft.
+- **Glossary update:** `Modify: CONTEXT.md`
+
+Include an acceptance line on each entry: the landed file matches the code.
+
 ### Step 4 — execute the overlap reconciliation
 
 Work through the committed actions from the Overlap Inventory **before** filing new issues —
@@ -337,8 +360,9 @@ Match the user's reference to a container per the adapter's **Container** sectio
 grouped by state, surface blockers, and flag bd-build-down readiness — issues in review or
 with open PRs.
 
-When the user asks *"what was the design for X?"*, read the ADRs. Do not reconstruct the
-decision from issue bodies.
+When the user asks *"what was the design for X?"*, check the parent issue's `## Decision
+records` first. Once the child that settles the decision has landed, the repo file is
+authoritative. Do not reconstruct the decision from issue bodies.
 
 ---
 
@@ -350,8 +374,9 @@ decision from issue bodies.
   settled. Resume the rounds.
 - **Grilling skipped because the user seemed sure.** → The grill is what this skill is. If
   skipping it was right, plain `bd-build-up` was the right skill.
-- **A decision that is hard to reverse, surprising, and a real trade-off, with no ADR.** → It
-  lives only in the session. Write it before Gate 1.
+- **A decision that is hard to reverse, surprising, and a real trade-off, with no draft in the
+  parent's `## Decision records` section.** → It lives only in the session. Draft it before
+  Gate 1.
 - **An issue that is wide AND deep.** → Shape violation. Split into a deep core plus a wide
   propagation blocked by it.
 - **A per-touch decision rule whose inputs are not in the spec** — *"for each viewset, decide
@@ -404,4 +429,5 @@ decision from issue bodies.
 - **`bd-summit-push`** — optimizes sequencing across a filed issue set.
 - **`bd-build-down`** — the next session. Drives the filed issues to merge.
 - **`bd-belay-on`** — environment hops: chat to a code-reading agent during orient and the
-  grill's fact-finding, code execution to chat for filing.
+  grill's fact-finding. ADR and glossary writes go into the parent issue body, not through a
+  code-execution handoff.

@@ -21,9 +21,11 @@ Everything else applies to both.
 > intermediate status.
 
 ## MCP & discovery
-Use the `atlassian-<workspace>` MCP. Tool names are not hardcoded — discover them
-at runtime with ToolSearch (`jira create issue`, `jira search jql`,
-`jira edit issue`, `jira add comment`, `jira issue link`, `jira attachment`).
+
+Run `../../bd-shared/session-start.md`. The Atlassian connector is the one found in step 4
+(the one tool outside the orchestrator prefix whose name ends in `__list_projects`); the project key is `tracker.team` from the binding.
+Tool names are not hardcoded — discover them at runtime with ToolSearch (`jira create issue`,
+`jira search jql`, `jira edit issue`, `jira add comment`, `jira issue link`, `jira attachment`).
 The MCP covers both Jira and Confluence; this adapter uses Jira only.
 
 ## Container

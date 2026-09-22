@@ -3,49 +3,50 @@ name: bd-kg-search
 description: "Search this project's knowledge graph (KG) directly via hybrid search — the fast way to ask what past issues, PRs, decisions, and build-up/build-down learnings already exist, without running a full build-up/build-down session. Trigger when the user says 'bd-kg-search', 'kg search', 'search the KG for …', 'ask the knowledge graph', or asks whether the KG already knows about something. No-op with a clear message if this project has no KG bound."
 metadata:
   suite: builddown
+  client: any
+  requires: [orchestrator]
 ---
 
 # bd-kg-search Skill
 
 Search this project's knowledge graph directly via hybrid search. The **orchestrator MCP**
-(`/mcp`, OAuth) is the single source of truth (AII-324); `mcp__<kg.mcp_server>__<searchTool>`
+(`/mcp`, OAuth) is the single source of truth (AII-324); `mcp__<prefix>__<kg.searchTool>`
 (the resolved hybrid-search tool) is the only tool this skill calls.
 
 ## Steps
 
-1. **Read the binding.** Open `CLAUDE.md` and find the `## Knowledge graph` block (format:
-   `../bd-shared/kg-binding.md`). Read `kg.mcp_server`. Then resolve the full binding:
-   - Use ToolSearch to check whether `mcp__<kg.mcp_server>__get_project_binding` is in the
-     session's tool list.
-   - If present: call `mcp__<kg.mcp_server>__get_project_binding(repo: "<owner>/<repo>")` — where
-     `<owner>/<repo>` is the repo slug from the project's `CLAUDE.md` `## GitHub repo` block — and take
-     `present` and `searchTool` from the response's `kg` sub-object. Resolve the search tool
-     as `mcp__<kg.mcp_server>__<searchTool>`. Print: "binding: get_project_binding".
-   - If absent: read `kg.present` and `kg.search_tool` from the legacy block in `CLAUDE.md` and
-     resolve the search tool from `kg.search_tool` directly. Print: "legacy binding".
-   If `kg.present` is `false` or the block is absent:
-   - Print: "This project has no KG bound — run bd-project-setup to add one."
+1. **Session start.** Run `../bd-shared/session-start.md`; its printed lines open the reply. This resolves the orchestrator
+   connector prefix (`<prefix>`) and the mapping list (including `kg`, which is one per
+   orchestrator). This skill needs no active mapping and never asks for a repo.
+   If `kg.present` is `false` or absent from every mapping:
+   - Print: "This project has no KG bound."
    - Stop. No tool call.
 
-2. **Resolve the target.** The resolved search tool (`mcp__<kg.mcp_server>__<searchTool>` from
-   Step 1) is the single KG target.
+2. **Resolve the target.** The resolved search tool (`mcp__<prefix>__<kg.searchTool>` from
+   the session-start binding) is the single KG target.
 
-   **Auth health check.** If `mcp__<kg.mcp_server>__get_session_identity` is in the session's
+   **Auth health check.** If `mcp__<prefix>__get_session_identity` is in the session's
    tool list, call it (health only — this step does not gate on role). Apply
    `../bd-shared/orchestrator-auth.md`; the 401 recovery applies to the search call in Step 3
    and to any other orchestrator call in this skill. If the tool is absent, skip this check.
 
    If the search tool is unavailable or errors (503 or other non-401 error), report it and stop.
 
-3. **Run the search** with `{query, limit: 10}` on the resolved tool. Call **only** the
-   hybrid-search tool — never other KG tools (the one exception, spine-stamp staleness via
-   `kg_neighbors`, belongs to recon — `../bd-shared/kg-recon.md` — not this skill).
+3. **Run the search** with `{query, limit: 10}` on the resolved tool, then read the graph's
+   age with one call, `mcp__<prefix>__kg_neighbors(iri: "<namespace>resource/graph/spine")`,
+   where `<namespace>` is the IRI root of the hits (e.g. `https://kg.builddown.dev/`); the
+   `dcterms:modified` edge is the ingest stamp (ISO, UTC). Call no other KG tool. The spine
+   read is the one sanctioned exception to the hybrid-search-only rule (`../bd-shared/kg-recon.md`,
+   Staleness-delta); when it errors, print `graph date unavailable` and continue.
    **Split multi-key queries.** The exact-ID boost matches one issue key per query — a query
    with two keys ("AII-346 AII-340") surfaces neither. When the user's query contains more
    than one issue key, run one search per key, plus one combined search for any remaining
    prose, and merge the results per key in the render. Found live 2026-08-12.
 
-4. **Announce the target, then render results.** First line: `KG: orchestrator (graph as of <date>)`. Then hits ranked by `score`: `title`, `type`, `score`, `matched_by`, a short
+4. **Announce the target, then render results.** After the session-start lines, print
+   `KG: orchestrator (graph as of <stamp>, <age>)`, e.g. `graph as of 2026-09-14T19:06Z, 7 days old`.
+   When the stamp is older than 24 hours, add one line: `Older than a day; run bd-kg-refresh for a
+   fresh graph.` Then hits ranked by `score`: `title`, `type`, `score`, `matched_by`, a short
    `snippet`, the `iri`. **`DocSection` hits render their anchor URL prominently** (BDS-38):
    the IRI encodes `docpage/<url-encoded-page-url>#<anchor>` — decode the page URL, append
    the `#anchor`, and print it as the hit's first line (e.g.

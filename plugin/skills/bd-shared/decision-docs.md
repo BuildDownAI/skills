@@ -30,6 +30,14 @@ until the first decision earns an ADR.
 These **are** committed to the code repo. They are canonical reference, unlike the working
 notes a session generates.
 
+**During the grill**, drafts live in the parent issue's `## Decision records` section — one
+fenced block per file, headed by its target path and `new` or `update`. ADR numbers are written
+as `NNNN` at grill time; the implementer assigns the real number from the highest existing ADR
+at PR-open time. After the child that changes the subsystem lands the file, the parent's copy
+is the historical draft and the repo file is authoritative. This follows the same pattern as
+`bd-high-plan` Phase 5 ("Subsystem documentation rides in the parent"; "The drafts leave the
+issue when the work lands").
+
 ## When a decision earns an ADR
 
 Offer one only when all three hold:

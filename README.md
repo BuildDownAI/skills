@@ -21,14 +21,6 @@ Each skill in this repo answers one of those questions, with a consistent autono
 
 ## The skills
 
-### `bd-project-setup` — wire a project's tools and bindings
-
-Runs once per project to configure everything the other skills need: writes `.mcp.json` with the project's MCP servers, pre-approves them so the trust prompt never fires, drives each server's OAuth flow from inside the session, and writes the `{{PLACEHOLDER}}` → value bindings into `CLAUDE.md` (tracker workspace/team, GitHub repo, build command, etc.). The rest of the skills read those bindings — you only run setup once.
-
-The plugin ships **skills only** — it bundles no MCP servers. So each project provisions **exactly one** tracker server, chosen by `tracker.kind`: `linear-server` for a Linear project or `jira-server` for a Jira project, never both. (GitHub is added per project only where needed.)
-
-Trigger: *"bd-project-setup"*, *"set up the skills"*, *"wire up the relationships"*, *"configure the MCP servers"*, *"point Linear at this project"*.
-
 ### `bd-build-up` — plan a milestone's worth of issues
 
 Turns a product objective, design handoff, or convergence plan into a sequenced, dependency-aware set of tracker issues ready for the AI coding agent. **Plan first, file second** — bd-build-up always presents the proposed breakdown for your review before creating anything in the tracker.
@@ -78,14 +70,8 @@ Trigger: *"bd-belay-on"*, *"hold while I check"*, *"sending to {tool}"*, *"back 
 ## How they fit together
 
 ```
-        ┌──────────────────┐
-  once  │ bd-project-setup │  write .mcp.json, CLAUDE.md bindings,
-  per   │                  │  OAuth each MCP server from inside the session
- project└──────────────────┘
-                 │ bindings in place
-                 ▼
-   ┌─────────────┴──────────────────┐
-   ▼                                ▼
+   ┌─────────────────────────────────┐
+   ▼                                 ▼
 ┌──────────┐              ┌──────────────────┐
 │ bd-build-up │◄─ design,    │ bd-mega-build-up    │◄─ design,  adversarial grilling
 │          │   objective  │                  │   objective + written plan docs
@@ -138,6 +124,28 @@ The skills are tooling-agnostic where possible — service names appear as `{{TR
 ---
 
 ## Installation
+
+### Setup
+
+Two one-time steps before you use the skills:
+
+1. **Add the connectors at [claude.ai/settings/connectors](https://claude.ai/settings/connectors).** Add your orchestrator (e.g. the AI-Implement testing instance) and your tracker (e.g. Linear) as custom connectors — each added once per account, from the web UI. Before a custom connector can authenticate, the orchestrator must allow the claude.ai callback origin: `fly secrets set MCP_ALLOWED_REDIRECT_ORIGINS=https://claude.ai,https://claude.com --app <your-app>`. Claude Code needs nothing; loopback callbacks are accepted by default. A registration rejected with `invalid_redirect_uri` before the sign-in screen means that origin is missing. New connectors are added and removed from the web; they are enabled and disabled per-session from the mobile app. The connectors load automatically in Claude Code when you sign in with that account — no project `.mcp.json` entry needed. One tracker connector is bound to one workspace at a time; if a repo's mapping expects a different workspace, the session-start check will name the one to reconnect to.
+
+2. **Install the plugin in Claude Code, or load the chat bundle.** In Claude Code: run `/plugin marketplace add BuildDownAI/skills && /plugin install builddown@builddown`. In a chat project, nothing more is required; a `repo: <owner>/<name>` line in the project instructions is an optional default target.
+
+**Switching orchestrators:** enable the connector for the orchestrator you want and disable the other. The session-start check uses whichever `get_project_binding` tool is present.
+
+### Chat (claude.ai)
+
+Three steps to use BuildDown skills in a claude.ai chat project:
+
+1. **Add the orchestrator connector once for the organisation.** In [claude.ai/settings/connectors](https://claude.ai/settings/connectors), add your orchestrator (e.g. the AI-Implement testing instance) as a custom connector — one addition covers every project in the org. The `MCP_ALLOWED_REDIRECT_ORIGINS` secret from `### Setup` step 1 must be in place first.
+
+2. **Upload the bundle as a plugin.** Download the `builddown-skills-<version>.zip` asset from the [latest release](https://github.com/BuildDownAI/skills/releases/latest). Team and Enterprise Owners upload it at Organization settings › Plugins › Add plugins › Upload a file, into a marketplace of any name; every member then sees it under Customize › Plugins. Pro and Max users upload the same file at Customize › Plugins as a custom plugin. Do not upload it under Skills: that page takes one skill per zip and rejects a plugin manifest. The zip holds one top-level `builddown/` folder with the same `skills/` tree and `.claude-plugin/plugin.json` that Claude Code installs. Uploading a new zip with the same plugin name replaces the old version. One upload per release, done by hand because claude.ai has no documented admin API for plugins.
+
+3. **Optional: add `repo: <owner>/<name>` to the chat project's instructions.** The skills read every project mapping from the orchestrator at session start, so a chat works against all of them. Read-only skills (KG search, system questions) never need a repo. A skill that files issues or lands pull requests takes its target from the prompt, then from this line, and otherwise asks once which team, listing the mappings.
+
+At the start of each session the skills print the plugin version and the orchestrator they resolved, so you can confirm the right bundle and connector are active.
 
 This repo is also a **Claude Code plugin marketplace**, so the simplest install is:
 
@@ -197,8 +205,6 @@ cd builddown-skills
 ```
 
 By default this **symlinks** the skills into `~/.claude/skills/`, so a future `git pull` updates them instantly.
-
-After installing, open a Claude Code session in the repo you want to use these skills with and run `bd-project-setup`. Setup writes `.mcp.json`, pre-approves the MCP servers, drives OAuth authentication from inside the session, and records all `{{PLACEHOLDER}}` bindings in `CLAUDE.md`. You only need to do this once per project; the other skills read those bindings automatically.
 
 ### Options
 

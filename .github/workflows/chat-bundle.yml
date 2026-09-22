@@ -1,0 +1,86 @@
+name: Chat bundle
+
+on:
+  push:
+    branches:
+      - testing
+    paths:
+      - plugin/**
+  pull_request:
+    paths:
+      - plugin/**
+      - .github/workflows/chat-bundle.yml
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(jq -r .version plugin/.claude-plugin/plugin.json)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check skill frontmatter
+        # The claude.ai plugin upload rejects a description that contains an XML-looking tag.
+        run: |
+          bad=0
+          for f in plugin/skills/*/SKILL.md; do
+            if awk '/^---$/{c++; next} c==1' "$f" | grep -q '[<>]'; then
+              echo "::error file=$f::frontmatter contains < or >"; bad=1
+            fi
+          done
+          test "$bad" = 0
+
+      - name: Check session-start calls
+        # A skill that runs session-start must say its printed lines open the reply,
+        # or the skill's own first line hides them (seen in chat on 1.5.22).
+        run: |
+          bad=0
+          for f in plugin/skills/*/SKILL.md; do
+            case "$f" in */bd-shared/*) continue;; esac
+            if grep -q 'session-start.md' "$f" && ! grep -q 'its printed lines open the reply' "$f"; then
+              echo "::error file=$f::calls session-start.md without 'its printed lines open the reply'"; bad=1
+            fi
+          done
+          test "$bad" = 0
+
+      - name: Build zip
+        # claude.ai accepts the bundle as a plugin, not as a skill: one top-level
+        # folder named after the plugin, with .claude-plugin/plugin.json and skills/ inside it.
+        run: |
+          rm -rf builddown && cp -R plugin builddown
+          printf '%s\n' "${{ steps.version.outputs.version }}" > builddown/skills/bd-shared/VERSION
+          zip -r "builddown-skills-${{ steps.version.outputs.version }}.zip" builddown -x '*/__pycache__/*' '*.pyc'
+
+      - name: Check zip layout
+        run: |
+          zip="builddown-skills-${{ steps.version.outputs.version }}.zip"
+          test "$(unzip -Z1 "$zip" | grep -vc '^builddown/')" = 0
+          test "$(unzip -Z1 "$zip" | grep -c '^builddown/.claude-plugin/plugin.json$')" = 1
+          test "$(unzip -Z1 "$zip" | grep -c 'SKILL.md$')" = "$(find plugin/skills -name SKILL.md | wc -l | tr -d ' ')"
+          test "$(unzip -Z1 "$zip" | grep -c '^builddown/skills/bd-shared/SKILL.md$')" = 1
+          test "$(unzip -p "$zip" builddown/skills/bd-shared/VERSION)" = "${{ steps.version.outputs.version }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: builddown-skills-${{ steps.version.outputs.version }}
+          path: builddown-skills-${{ steps.version.outputs.version }}.zip
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "builddown-skills-${{ steps.version.outputs.version }}.zip" \
+            --clobber

@@ -3,6 +3,8 @@ name: bd-build-down
 description: "Run a bd-build-down session — drive open PRs to merge. Trigger this skill when the user says 'bd-build-down', 'let's do a bd-build-down', 'drive PRs to merge', 'PR triage', or asks to review and merge open pull requests. A bd-build-down is an active sprint-closure session — survey the issue tracker and open GitHub PRs, assess each one against its gap analysis, drive gaps to resolution autonomously via PR comments to the AI coding agent, merge clean PRs, file minimal new tracker issues only when blockers are discovered, and leave the board cleaner than it started. This skill assumes a workflow with an issue tracker (e.g., Linear MCP), GitHub MCP, browser automation MCP for preview testing, and an AI coding agent that opens PRs in response to issues."
 metadata:
   suite: builddown
+  client: any
+  requires: [tracker, github]
 ---
 
 # Build-Down Skill
@@ -95,7 +97,7 @@ If the agent in use doesn't produce a structured gap analysis, build the equival
 **Check for an unfinished session first.** If `.bd/session.md` exists with an open `phase`, follow
 the resume rule in `../bd-shared/session-state.md` before scanning anything.
 
-**Resolve `{{IMPLEMENT_LABEL}}` (per `../bd-shared/pickup-label.md`):** Follow the procedure to resolve the pickup label — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source before proceeding.
+**Session start.** Run `../bd-shared/session-start.md` to resolve the orchestrator connector prefix, binding, and tracker connector; its printed lines open the reply. `{{IMPLEMENT_LABEL}}` is `pickupLabel` from the binding (`../bd-shared/pickup-label.md` rule 1). Print the resolved label and its source before proceeding.
 
 Pull current state before assessing anything. Use tracker MCP and GitHub MCP in parallel.
 
@@ -144,8 +146,9 @@ Before triaging gaps, consult the project's knowledge graph for prior learnings
 and decisions about the work — derive queries per PR being triaged (or for the
 session's PR set), not just a single PR. Follow `../bd-shared/kg-recon.md`: derive 1–3
 queries per PR from **its linked issue key + title + the gap topics from its
-gap-analysis**, call **only** `mcp__<kg.mcp_server>__<searchTool>` (the resolved
-hybrid-search tool from `../bd-shared/kg-recon.md`), surface the top
+gap-analysis**, call **only** `mcp__<prefix>__<kg.searchTool>` (the resolved
+hybrid-search tool from `../bd-shared/kg-recon.md`, where `<prefix>` and `<kg.searchTool>`
+come from session-start), surface the top
 relevant hits and cite any that change a gap decision, and note KG staleness.
 Advisory and non-blocking. If the project has no KG bound, skip this step
 silently.
