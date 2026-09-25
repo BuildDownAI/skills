@@ -125,5 +125,5 @@ Add a dated line here whenever `testing` gains something the release will need.
 - 2026-09-18 — BDS-79 landed on `testing` at `1.5.16` (#118).
 - 2026-09-21 — BDS-80 tree landed on `testing` at `1.5.29` (#128, carrying #121–#138). Retire the
   "legacy block read-only for one release" decision above: the block is gone. New release step:
-  upload the chat plugin asset (decision 6). Follow-ups live under AII-733 (AII-731/732/734, BDS-86, DOC-47).
+  upload the chat plugin asset (decision 6, superseded by BDS-89). Follow-ups live under AII-733 (AII-731/732/734, BDS-86, DOC-47).
 - 2026-09-25 — BDS-89: install and update docs rewritten for repo-based install. `builddown-dev` catalog entry recorded in decision 6. Decisions 2 and 7 updated.
