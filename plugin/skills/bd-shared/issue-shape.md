@@ -201,6 +201,8 @@ is not.
 | **Observability** | What log or metric confirms it works in production? | If the issue adds behaviour worth verifying, name the signal. |
 | **Parallel safety** | Does this share file edits with another unblocked issue? | One blocks the other, or they merge into one issue. |
 | **Chain position** | Is this the first issue in a dependency chain? | Make it the **smallest** issue in the chain, not the largest. It sets the pattern every later issue mirrors, and it is the one issue nothing else can start before. Cap it at half the normal ceiling. |
+| **Non-negotiables** | Does the project (or the parent) carry a constraint every issue must honour — *"no third-party fallback layer"*, *"no new dependency"*? | Repeat it, word for word, in **every** child issue body, not only the parent. The pipeline reads each body cold and never reads the parent. Observed (Answer9 ANS-966): an external reviewer asked for a CARTO fallback layer that the parent had ruled out, the child did not say so, and the fix loop spent its budget building the forbidden layer. If the constraint has a grep-able check, add the files the check reads to the child's `## Files`, or the child's own check fails. |
+| **Dead helpers** | Does this issue remove the last caller of a helper, module, or config row? | Delete the helper in the **same** issue. A helper with no caller left in the tree is an invitation: the next agent (or a reviewer's suggestion) finds it and reuses it, and the removed behaviour comes back. |
 
 
 ## A worked split
