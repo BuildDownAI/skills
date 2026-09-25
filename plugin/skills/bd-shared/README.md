@@ -14,7 +14,7 @@ does **not** reach an installed skill.
 
 | File | What it holds | Pointed at by |
 |---|---|---|
-| `ste.md` | Simplified Technical English — the rules for questions put to the user and for issue titles and opening paragraphs | build-up, mega-build-up |
+| `ste.md` | the rules for all prose a skill writes: messages, decisions, issues, and learnings comments | all skills (via `session-start.md`) |
 | `issue-shape.md` | The decomposition rubric — shape rule, hard rules, writer census, soft signals | build-up, mega-build-up |
 | `issue-body.md` | The issue body template, routing, and the machine-read `## Files` contract | build-up, mega-build-up |
 | `pipeline.md` | AI-Implement pickup, wave staging, feature-node designation order, pilot-first | build-up, mega-build-up |
