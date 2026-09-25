@@ -13,8 +13,8 @@ procedure itself is in `CLAUDE.md` → *Cutting a release*.
 | Item | Value |
 |---|---|
 | `main` plugin version | `1.4.0`, tag `v1.4.0` |
-| `testing` plugin version | `1.5.4` |
-| Commits on `testing` not on `main` | 69 |
+| `testing` plugin version | `1.5.29` |
+| Commits on `testing` not on `main` | 141 |
 | Release tag the merge will need | `vX.Y.Z` where `X.Y.Z` is what `testing` carries at merge time |
 
 ## What the release carries
@@ -53,11 +53,37 @@ Grouped by skill. One line per landed PR.
   (`bd-shared/pickup-label.md`); shared adapters and grouping docs name `{{IMPLEMENT_LABEL}}`.
 - #92 — session-state: persistent landing-session state file (`bd-shared/session-state.md`) + Claude Code statusline script (`bd-shared/tools/bd-statusline.sh`) for build-down, super-build-down, smoke-jumper.
 
+**Connector-first setup (BDS-80 tree, #121–#138, `1.5.17` → `1.5.29`)**
+- #121 BDS-81 — bd-project-setup retired; the orchestrator and the tracker are claude.ai connectors; this
+  repo drops `.mcp.json`, the pre-approval and both `CLAUDE.md` binding blocks; ADR 0002; README `### Setup`.
+- #123 BDS-82 — `.github/workflows/chat-bundle.yml` builds `builddown-skills-<version>.zip` on every push and
+  attaches it to releases; README `### Chat (claude.ai)`.
+- #124 BDS-84 — `bd-shared/session-start.md`: discovery by tool suffix, binding, tracker check, per-repo facts;
+  the legacy `kg.*` reads are retired across eight skills and four adapters (no release ever shipped them).
+- #125 BDS-85 — every SKILL.md declares `metadata.client` and `metadata.requires`; chat stops with one line
+  when a skill needs Claude Code; the version line; ADR 0003; CONTRIBUTING and CLAUDE.md authoring rule.
+- #126 BDS-83 — bd-mega-build-up writes ADR and glossary drafts into the parent issue; children land them.
+- #127 BDS-80 — CONTEXT.md glossary aligned (repo folder, orchestrator mapping, chat project).
+- #129 — session-start: ToolSearch queries without leading underscores; team check by `get_team`; two tracker
+  connectors stop; version line format; README states the redirect-origin secret inline.
+- #130 — the chat bundle is a plugin zip (one top-level `builddown/` folder), uploaded at claude.ai Plugins.
+- #131 — no `<…>` in a skill description (the claude.ai validator rejects it); workflow check.
+- #132 — session-start's printed lines open every skill's reply; workflow check on every call site.
+- #133 — `bd-shared` carries a stub `SKILL.md` so claude.ai mounts the shared files.
+- #134 — bd-kg-search prints the graph stamp and age; the bundle carries `bd-shared/VERSION` for chat.
+- #135, #137 — `requires` checks match tool names by suffix; a signed-in `gh` satisfies `github` in Claude Code;
+  the rail dry-run takes no `ref`.
+- #136 — the `base:drift` preflight row has no value field; no hint means zero drift.
+- #138 — the binding is the orchestrator's full mapping list (`get_project_binding()` with no arguments); a
+  chat needs no `repo:` line; read-only skills never ask for a repo.
+
 **Repo configuration (not shipped in the plugin)**
-- #100 — `CLAUDE.md` binds the testing orchestrator's knowledge graph to this repo, and
-  `.mcp.json` gains the `orch-ai-implement-testing` server.
-- ADR 0001 (`docs/adr/`) and the first `CONTEXT.md` glossary: the project binding is one
-  orchestrator call. Repo docs, not shipped in the plugin.
+- #100 — `CLAUDE.md` bound the testing orchestrator's knowledge graph to this repo and `.mcp.json`
+  gained the `orch-ai-implement-testing` server. Superseded by #121: both are gone; the connectors
+  replace them.
+- ADR 0001, 0002 and 0003 (`docs/adr/`) and the `CONTEXT.md` glossary: the project binding is one
+  orchestrator call; the orchestrator is a connector and projects carry no binding; every skill
+  declares its client and required tools. Repo docs, not shipped in the plugin.
 - #77 — sync from AI-Implement. #59 — release instructions fix.
 
 ## Decisions to make at release time
@@ -65,13 +91,29 @@ Grouped by skill. One line per landed PR.
 1. **Version.** Confirm `plugin/.claude-plugin/plugin.json` on `testing` is the intended
    release version. `main` is `1.4.0`; the first content PR set the target to `1.5.0`, so the
    tag is `v1.5.x`.
-2. **Catalog repoint.** After the merge and tag, open a `main`-only PR that sets
-   `.claude-plugin/marketplace.json` `ref` to the new tag. `testing` keeps `./plugin`.
-3. **KG binding in `CLAUDE.md`.** The binding names the *testing* orchestrator. It is for
-   developing this repo and is not shipped. Confirm that is still right for `main`.
+2. **Catalog repoint.** After the merge and tag, open a `main`-only PR. Change only the `builddown` entry's `ref` to the new tag. Leave the `builddown-dev` entry unchanged. `testing` keeps `./plugin`.
+3. **No binding in `CLAUDE.md`.** Since #121 this repo carries no orchestrator or tracker
+   binding and no `.mcp.json`; nothing to confirm for `main`. The legacy `kg.*` block is
+   retired now, not after a release (ADR 0002): no release ever shipped it.
 4. **README channel text.** *Versions and channels* describes stable vs dev. Confirm it needs
    no change for the new tag.
 5. **GitHub release notes.** Use the *What the release carries* list above as the draft.
+6. **Catalog: add the Dev entry.** Done early on 2026-09-25 in a `main`-only catalog PR (#144, merge `8661308`). Nothing to do at release: confirm that `main`'s `.claude-plugin/marketplace.json` still holds this entry next to `builddown`:
+
+   ```json
+   {
+     "name": "builddown-dev",
+     "source": {
+       "source": "git-subdir",
+       "url": "https://github.com/BuildDownAI/skills.git",
+       "path": "plugin",
+       "ref": "testing"
+     },
+     "description": "BuildDown skills, Dev channel: follows the testing branch. Install builddown or builddown-dev, not both."
+   }
+   ```
+
+7. **Auto-sync test.** Partly done on 2026-09-25: claude.ai synced the `builddown-dev` entry by itself after #144 changed `main`, and listed "Builddown dev · 1.5.31". Still open: on the next `testing` version change (with no change on `main`), check whether claude.ai shows the new version without a click. If it does not, update the README to tell Dev users to click "Check for updates".
 
 ## Items to append
 
@@ -81,3 +123,8 @@ Add a dated line here whenever `testing` gains something the release will need.
 - 2026-09-17 — BDS-75 tree landed on `testing` at `1.5.11` (#110). ADR 0001 and `CONTEXT.md` added. BDS-69 tree next; its four children take `testing` to `1.5.15` or `1.5.16`.
 - 2026-09-17 — BDS-69 tree landed on `testing` at `1.5.15` (#116). Release decision to add: the legacy five-key `kg.*` block is read-only for one release; file the retirement issue after `v1.5.x` ships (ADR 0001).
 - 2026-09-18 — BDS-79 landed on `testing` at `1.5.16` (#118).
+- 2026-09-21 — BDS-80 tree landed on `testing` at `1.5.29` (#128, carrying #121–#138). Retire the
+  "legacy block read-only for one release" decision above: the block is gone. New release step:
+  upload the chat plugin asset (decision 6, superseded by BDS-89). Follow-ups live under AII-733 (AII-731/732/734, BDS-86, DOC-47).
+- 2026-09-25 — BDS-89: install and update docs rewritten for repo-based install. `builddown-dev` catalog entry recorded in decision 6. Decisions 2 and 7 updated.
+- 2026-09-25 — #144 (`main`, catalog only) added `builddown-dev` at `ref: testing` ahead of the release. Verified: Claude Code installs `builddown-dev@builddown` 1.5.31; claude.ai lists "Builddown dev · 1.5.31". Decision 6 is done; decision 7 is narrowed to a `testing`-only version change.

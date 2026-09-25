@@ -9,6 +9,8 @@ line the user sees. The printed lines open the reply, in step order, before any 
 from the calling skill. A skill's own first line (an opening declaration, a `KG:` line, a
 table) comes after them. A step that says "stop" ends the reply after its line.
 
+Write all prose to the user, and all issue and learnings prose, in STE — see [`ste.md`](./ste.md).
+
 Pattern anchor: `./pickup-label.md` (tool-presence check first, printed source line) and
 `./kg-recon.md`.
 
@@ -113,8 +115,7 @@ and `kg` are orchestrator-wide: read them from any entry.
   Then read `version` from the loaded plugin's own `.claude-plugin/plugin.json` (the plugin
   directory this skill file lives in; in a checkout of the skills repo that is
   `plugin/.claude-plugin/plugin.json`). In a chat session that file is not mounted; read
-  `../bd-shared/VERSION` instead (one line, written into the chat bundle by the release
-  workflow). If neither is readable, print `version unknown` in its place. Print:
+  `../bd-shared/VERSION` instead (one line, committed next to this file; CI keeps it equal to `plugin.json`). If neither is readable, print `version unknown` in its place. Print:
   `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<owner>/<repo>`
   when an active mapping exists, or
   `builddown <version> · orchestrator <orchestratorUrl> · projects <team keys>` when not,

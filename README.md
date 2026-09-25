@@ -131,7 +131,7 @@ Two one-time steps before you use the skills:
 
 1. **Add the connectors at [claude.ai/settings/connectors](https://claude.ai/settings/connectors).** Add your orchestrator (e.g. the AI-Implement testing instance) and your tracker (e.g. Linear) as custom connectors — each added once per account, from the web UI. Before a custom connector can authenticate, the orchestrator must allow the claude.ai callback origin: `fly secrets set MCP_ALLOWED_REDIRECT_ORIGINS=https://claude.ai,https://claude.com --app <your-app>`. Claude Code needs nothing; loopback callbacks are accepted by default. A registration rejected with `invalid_redirect_uri` before the sign-in screen means that origin is missing. New connectors are added and removed from the web; they are enabled and disabled per-session from the mobile app. The connectors load automatically in Claude Code when you sign in with that account — no project `.mcp.json` entry needed. One tracker connector is bound to one workspace at a time; if a repo's mapping expects a different workspace, the session-start check will name the one to reconnect to.
 
-2. **Install the plugin in Claude Code, or load the chat bundle.** In Claude Code: run `/plugin marketplace add BuildDownAI/skills && /plugin install builddown@builddown`. In a chat project, nothing more is required; a `repo: <owner>/<name>` line in the project instructions is an optional default target.
+2. **Install the plugin.** Follow the Claude Code or Chat (claude.ai) install steps below.
 
 **Switching orchestrators:** enable the connector for the orchestrator you want and disable the other. The session-start check uses whichever `get_project_binding` tool is present.
 
@@ -141,38 +141,59 @@ Three steps to use BuildDown skills in a claude.ai chat project:
 
 1. **Add the orchestrator connector once for the organisation.** In [claude.ai/settings/connectors](https://claude.ai/settings/connectors), add your orchestrator (e.g. the AI-Implement testing instance) as a custom connector — one addition covers every project in the org. The `MCP_ALLOWED_REDIRECT_ORIGINS` secret from `### Setup` step 1 must be in place first.
 
-2. **Upload the bundle as a plugin.** Download the `builddown-skills-<version>.zip` asset from the [latest release](https://github.com/BuildDownAI/skills/releases/latest). Team and Enterprise Owners upload it at Organization settings › Plugins › Add plugins › Upload a file, into a marketplace of any name; every member then sees it under Customize › Plugins. Pro and Max users upload the same file at Customize › Plugins as a custom plugin. Do not upload it under Skills: that page takes one skill per zip and rejects a plugin manifest. The zip holds one top-level `builddown/` folder with the same `skills/` tree and `.claude-plugin/plugin.json` that Claude Code installs. Uploading a new zip with the same plugin name replaces the old version. One upload per release, done by hand because claude.ai has no documented admin API for plugins.
+2. **Add the plugin from the repository.** Open Customize › Plugins › Add › Add marketplace › Add from a repository. Enter `BuildDownAI/skills`. Keep "Sync automatically" on. Click Sync. Then add `builddown` (Stable) or `builddown-dev` (Dev). Add only one. A Team or Enterprise org marketplace requires a private repo. Each member adds this public repo to their own account instead. "Check for updates" on the plugin installs a new version immediately.
 
 3. **Optional: add `repo: <owner>/<name>` to the chat project's instructions.** The skills read every project mapping from the orchestrator at session start, so a chat works against all of them. Read-only skills (KG search, system questions) never need a repo. A skill that files issues or lands pull requests takes its target from the prompt, then from this line, and otherwise asks once which team, listing the mappings.
 
-At the start of each session the skills print the plugin version and the orchestrator they resolved, so you can confirm the right bundle and connector are active.
+At the start of each session the skills print the plugin version and the orchestrator they resolved. You can confirm the right plugin and connector are active.
 
-This repo is also a **Claude Code plugin marketplace**, so the simplest install is:
+> **Migrated from zip?** If you uploaded the zip before, you have a `builddown` plugin under "Created by you" on claude.ai. Remove it there. In Claude Code, the marketplace copy loads instead of `builddown@synced`.
+
+### Claude Code
+
+This repo is a **Claude Code plugin marketplace**.
+
+**Stable** (plugin `builddown`):
 
 ```
-/plugin marketplace add BuildDownAI/skills
-/plugin install builddown@builddown
+claude plugin marketplace add BuildDownAI/skills
+claude plugin install builddown@builddown
 ```
 
-That tracks the repo's default branch and is managed by `/plugin` (update with `/plugin marketplace update builddown`). To install from a specific branch or tag, append `@ref` (GitHub shorthand) or `#ref` (full git URL):
+**Dev** (plugin `builddown-dev`):
 
 ```
-/plugin marketplace add BuildDownAI/skills@ai-implement/feature/bds-1
-/plugin install builddown@builddown
+claude plugin marketplace add BuildDownAI/skills
+claude plugin install builddown-dev@builddown
+```
+
+A second Dev path uses the `testing` branch directly:
+
+```
+claude plugin marketplace add BuildDownAI/skills#testing
+claude plugin install builddown@builddown
+```
+
+To install from a specific branch or tag, use `#<ref>`:
+
+```
+claude plugin marketplace add BuildDownAI/skills#ai-implement/feature/bds-1
+claude plugin install builddown@builddown
 ```
 
 ### Versions and channels
 
 Which channel you're on depends on how you installed:
 
-| How you installed | What you get |
-|---|---|
-| `/plugin marketplace add BuildDownAI/skills` (no ref) | **Stable** — pinned to the latest release tag |
-| `/plugin marketplace add BuildDownAI/skills@testing` | **Dev** — tracks `testing`, updates as work lands |
-| `./install.sh --from-git <url>@v1.0.0` | Whatever tag you pin |
-| `./install.sh` from a checkout, or manual copy | Whatever that checkout contains — unversioned |
+| Plugin | Channel | How you installed |
+|---|---|---|
+| `builddown` | **Stable** — pinned to the latest release tag | `marketplace add BuildDownAI/skills` + `install builddown@builddown` |
+| `builddown-dev` | **Dev** — tracks `testing` | `marketplace add BuildDownAI/skills` + `install builddown-dev@builddown` |
+| `builddown` | **Dev** — via direct ref | `marketplace add BuildDownAI/skills#testing` + `install builddown@builddown` |
+| — | Pin to a specific tag | `./install.sh --from-git <url>@v1.0.0` |
+| — | Unversioned | `./install.sh` from a checkout, or manual copy |
 
-**Stable** only changes when a new version ships. **Dev** follows `testing` and can change at any time,
+A version changes only when `plugin.json` changes. **Stable** only changes when a new version ships. **Dev** follows `testing` and can change at any time,
 including in ways that haven't been through a release. Check which version you have with
 `/plugin list --enabled`.
 
@@ -181,7 +202,7 @@ including in ways that haven't been through a release. Check which version you h
 Your channel is recorded **on your machine** when you first run `marketplace add`. Releases in this repo
 cannot move you — switching is something you do locally.
 
-To move from dev to stable:
+To move from Dev to Stable:
 
 ```
 /plugin marketplace remove builddown
@@ -189,7 +210,21 @@ To move from dev to stable:
 /plugin install builddown@builddown
 ```
 
-Reverse the middle line (`BuildDownAI/skills@testing`) to go the other way.
+To move to Dev:
+
+```
+/plugin marketplace remove builddown
+/plugin marketplace add BuildDownAI/skills
+/plugin install builddown-dev@builddown
+```
+
+Or use the direct `testing` ref:
+
+```
+/plugin marketplace remove builddown
+/plugin marketplace add BuildDownAI/skills#testing
+/plugin install builddown@builddown
+```
 
 > **Removing a marketplace uninstalls the plugins installed from it.** The third line is not optional —
 > without it you'll have no skills installed.
@@ -256,6 +291,21 @@ ln -s "$PWD/plugin/skills/bd-build-up"   ~/.claude/skills/bd-build-up
 ```
 
 ### Updating
+
+#### Plugin install
+
+Auto-update is off by default for third-party marketplaces. To enable it, open `/plugin` › Marketplaces › Enable auto-update.
+
+To update manually:
+
+```
+claude plugin marketplace update builddown
+claude plugin update <plugin>@builddown
+```
+
+Replace `<plugin>` with `builddown` or `builddown-dev`.
+
+#### Script install
 
 If installed with symlinks (the default):
 
