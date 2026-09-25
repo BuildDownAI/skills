@@ -98,7 +98,7 @@ Grouped by skill. One line per landed PR.
 4. **README channel text.** *Versions and channels* describes stable vs dev. Confirm it needs
    no change for the new tag.
 5. **GitHub release notes.** Use the *What the release carries* list above as the draft.
-6. **Catalog: add the Dev entry.** Add this entry to `main`'s `.claude-plugin/marketplace.json`, next to the existing `builddown` entry:
+6. **Catalog: add the Dev entry.** Done early on 2026-09-25 in a `main`-only catalog PR (#144, merge `8661308`). Nothing to do at release: confirm that `main`'s `.claude-plugin/marketplace.json` still holds this entry next to `builddown`:
 
    ```json
    {
@@ -113,7 +113,7 @@ Grouped by skill. One line per landed PR.
    }
    ```
 
-7. **Auto-sync test.** After the release, test that claude.ai "Sync automatically" updates `builddown-dev` when `testing` changes version. If it does not, update the README to tell Dev users to click "Check for updates".
+7. **Auto-sync test.** Partly done on 2026-09-25: claude.ai synced the `builddown-dev` entry by itself after #144 changed `main`, and listed "Builddown dev · 1.5.31". Still open: on the next `testing` version change (with no change on `main`), check whether claude.ai shows the new version without a click. If it does not, update the README to tell Dev users to click "Check for updates".
 
 ## Items to append
 
@@ -127,3 +127,4 @@ Add a dated line here whenever `testing` gains something the release will need.
   "legacy block read-only for one release" decision above: the block is gone. New release step:
   upload the chat plugin asset (decision 6, superseded by BDS-89). Follow-ups live under AII-733 (AII-731/732/734, BDS-86, DOC-47).
 - 2026-09-25 — BDS-89: install and update docs rewritten for repo-based install. `builddown-dev` catalog entry recorded in decision 6. Decisions 2 and 7 updated.
+- 2026-09-25 — #144 (`main`, catalog only) added `builddown-dev` at `ref: testing` ahead of the release. Verified: Claude Code installs `builddown-dev@builddown` 1.5.31; claude.ai lists "Builddown dev · 1.5.31". Decision 6 is done; decision 7 is narrowed to a `testing`-only version change.
