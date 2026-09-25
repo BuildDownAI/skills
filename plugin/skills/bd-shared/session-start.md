@@ -115,8 +115,7 @@ and `kg` are orchestrator-wide: read them from any entry.
   Then read `version` from the loaded plugin's own `.claude-plugin/plugin.json` (the plugin
   directory this skill file lives in; in a checkout of the skills repo that is
   `plugin/.claude-plugin/plugin.json`). In a chat session that file is not mounted; read
-  `../bd-shared/VERSION` instead (one line, written into the chat bundle by the release
-  workflow). If neither is readable, print `version unknown` in its place. Print:
+  `../bd-shared/VERSION` instead (one line, committed next to this file; CI keeps it equal to `plugin.json`). If neither is readable, print `version unknown` in its place. Print:
   `builddown <version> · orchestrator <orchestratorUrl> · project <team>/<owner>/<repo>`
   when an active mapping exists, or
   `builddown <version> · orchestrator <orchestratorUrl> · projects <team keys>` when not,

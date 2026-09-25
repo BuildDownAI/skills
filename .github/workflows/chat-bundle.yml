@@ -1,4 +1,4 @@
-name: Chat bundle
+name: Plugin checks
 
 on:
   push:
@@ -10,11 +10,9 @@ on:
     paths:
       - plugin/**
       - .github/workflows/chat-bundle.yml
-  release:
-    types: [published]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   bundle:
@@ -27,6 +25,16 @@ jobs:
         run: |
           VERSION=$(jq -r .version plugin/.claude-plugin/plugin.json)
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check VERSION file
+        # Chat reads the plugin version from this file; plugin.json is not mounted there.
+        run: |
+          want="${{ steps.version.outputs.version }}"
+          got="$(tr -d '[:space:]' < plugin/skills/bd-shared/VERSION)"
+          if [ "$got" != "$want" ]; then
+            echo "::error file=plugin/skills/bd-shared/VERSION::VERSION is '$got'; set it to the plugin.json version '$want'"
+            exit 1
+          fi
 
       - name: Check skill frontmatter
         # The claude.ai plugin upload rejects a description that contains an XML-looking tag.
@@ -51,36 +59,3 @@ jobs:
             fi
           done
           test "$bad" = 0
-
-      - name: Build zip
-        # claude.ai accepts the bundle as a plugin, not as a skill: one top-level
-        # folder named after the plugin, with .claude-plugin/plugin.json and skills/ inside it.
-        run: |
-          rm -rf builddown && cp -R plugin builddown
-          printf '%s\n' "${{ steps.version.outputs.version }}" > builddown/skills/bd-shared/VERSION
-          zip -r "builddown-skills-${{ steps.version.outputs.version }}.zip" builddown -x '*/__pycache__/*' '*.pyc'
-
-      - name: Check zip layout
-        run: |
-          zip="builddown-skills-${{ steps.version.outputs.version }}.zip"
-          test "$(unzip -Z1 "$zip" | grep -vc '^builddown/')" = 0
-          test "$(unzip -Z1 "$zip" | grep -c '^builddown/.claude-plugin/plugin.json$')" = 1
-          test "$(unzip -Z1 "$zip" | grep -c 'SKILL.md$')" = "$(find plugin/skills -name SKILL.md | wc -l | tr -d ' ')"
-          test "$(unzip -Z1 "$zip" | grep -c '^builddown/skills/bd-shared/SKILL.md$')" = 1
-          test "$(unzip -p "$zip" builddown/skills/bd-shared/VERSION)" = "${{ steps.version.outputs.version }}"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: builddown-skills-${{ steps.version.outputs.version }}
-          path: builddown-skills-${{ steps.version.outputs.version }}.zip
-          if-no-files-found: error
-
-      - name: Attach to release
-        if: github.event_name == 'release'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ github.event.release.tag_name }}" \
-            "builddown-skills-${{ steps.version.outputs.version }}.zip" \
-            --clobber
