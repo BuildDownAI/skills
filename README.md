@@ -133,7 +133,13 @@ Two one-time steps before you use the skills:
 
 2. **Install the plugin.** Follow the Claude Code or Chat (claude.ai) install steps below.
 
-**Switching orchestrators:** enable the connector for the orchestrator you want and disable the other. The session-start check uses whichever `get_project_binding` tool is present.
+**Switching the orchestrator, the Linear workspace, or the project:**
+
+- **Orchestrator:** ask its admin to add your email to its allowlist (admin UI › Access). Add its MCP address (`<orchestrator URL>/mcp`, not `/admin#projects`) as a custom connector. Keep only one orchestrator connector enabled, on claude.ai and in Claude Code `/mcp`. With two enabled, each skill stops with `Two orchestrator connectors are enabled; disable one.`
+- **Linear workspace:** disconnect and reconnect the Linear connector on claude.ai, and choose the workspace. In Claude Code, run `/mcp` › Linear › Reauthenticate. The session-start line `tracker: Linear team <key> ✓` confirms it.
+- **Project:** the orchestrator maps each Linear team to a repository (admin UI › Projects). An admin changes the mapping there. No file in your repo changes.
+
+Full steps: [Switch to a different orchestrator, workspace, or project](https://docs.builddown.ai/latest/skills/project-setup#switch-to-a-different-orchestrator-workspace-or-project).
 
 ### Chat (claude.ai)
 
