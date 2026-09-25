@@ -4,8 +4,8 @@ Shared reference for `bd-build-up` and `bd-mega-build-up`. Every filed issue use
 
 The body has two audiences in this order: a **human** skimming the board, then a **coding
 agent** reading cold. The opening paragraph serves the human. Everything after it serves the
-agent. Write the title and the opening paragraph in Simplified Technical English — see
-[`ste.md`](./ste.md).
+agent. Write all prose in the body in Simplified Technical English — see [`ste.md`](./ste.md).
+Paths, code blocks, headings, and the `## Shape` fields keep their current form.
 
 ## Template
 

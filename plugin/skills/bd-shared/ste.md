@@ -1,14 +1,12 @@
 # Simplified Technical English (STE)
 
 Shared writing-style reference for the BuildDown skills. When a skill says "STE", it means
-this file. Two surfaces use it:
+this file. STE applies to all prose that a skill writes for a person: messages to the user,
+issues, and learnings comments. Decisions keep their own section — see `## Decision style`.
 
-- **Tickets** — the title and the opening paragraph of every filed issue.
-- **Decisions** — every question a skill asks the user to decide, in any phase.
-
-**Why.** The people who read tickets and answer questions vary in technical depth and in
-English fluency. STE keeps the decision visible: one idea per sentence, no idiom to decode,
-no synonym to reconcile. The reader spends their attention on the trade-off, not on the prose.
+**Why.** The people who read messages and issues vary in technical depth and in English
+fluency. STE keeps the meaning clear: one idea per sentence, no idiom to decode, no synonym
+to reconcile. The reader focuses on the content, not on the prose.
 
 STE here means the ASD-STE100 *grammar* rules plus the spirit of its dictionary — not full
 dictionary compliance. An established technical term ("idempotency key", "feature branch",
@@ -23,7 +21,7 @@ Apply every rule to every STE sentence:
    picked up."
 2. **Present tense** where possible.
 3. **One idea per sentence.** Split compound sentences.
-4. **Keep sentences to 20 words or fewer** (25 for descriptive text).
+4. **Word limits.** Use a maximum of 20 words in an instruction. Use a maximum of 25 words in a description.
 5. **One word, one meaning — one meaning, one word.** Pick one term per concept and repeat
    it. An issue stays an "issue" — it does not become a "ticket", then a "task", then a "card".
 6. **Prefer common words over jargon.** Use a simple verb: "Add", "Remove", "Change", "Show",
@@ -34,7 +32,12 @@ Apply every rule to every STE sentence:
    big blast radius". No idioms, no figures of speech.
 9. **Explain each abbreviation at first use**, unless the project already defines it (PR,
    API, and the project's own names are fine).
-10. **Terms of art are allowed.** A precise technical term beats a vague common one — keep
+10. **Use the imperative for procedures.** "Run the command" — not "You should run the command."
+11. **Give one instruction in each sentence.**
+12. **In lists, give one fact for each item.**
+13. **Keep Technical Names exactly as they are:** file paths, commands, API names, issue keys,
+    error text. Do not change code, commands, quoted output, file contents, or markers.
+14. **Terms of art are allowed.** A precise technical term beats a vague common one — keep
     the sentence around it simple.
 
 More short sentences beat one dense sentence. When a rule forces a split, split — never
@@ -54,7 +57,7 @@ compress by dropping information.
    blocks instead of descriptions of code, explicit values instead of "appropriate" ones, the
    exact section headings the skill's body template names (they are parsed), consistent names
    for every type/function/route across sections, and no information that exists only behind
-   a link.
+   a link. The prose sentences in the rest of the body also use STE.
 
 ## Decision style — questions to the user
 
