@@ -54,7 +54,7 @@ Every new or changed `SKILL.md` must declare `metadata.client` and `metadata.req
 ### On `testing` — where every change lands
 
 - **Any change to `plugin/skills/**` (or other shipped plugin content) must change `version` in
-  [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) in the *same* PR.** The plugin
+  [`plugin/.claude-plugin/plugin.json`](plugin/.claude-plugin/plugin.json) and in `plugin/skills/bd-shared/VERSION` in the *same* PR.** The plugin
   `version` is the only signal that tells `/plugin update` to pull new content.
 - **Compute the new version from `main`, not from the previous `testing` value.** Read `main`'s
   version first (a shallow clone needs the fetch):
@@ -74,13 +74,13 @@ Every new or changed `SKILL.md` must declare `metadata.client` and `metadata.req
 ### On `main` — where releases live
 
 - No direct commits: changes arrive by merging `testing`, except for catalog repoint PRs.
-- `.claude-plugin/marketplace.json` must pin the plugin source to a release tag (`git-subdir` + `ref`).
+- `.claude-plugin/marketplace.json` has two entries. `builddown` pins `git-subdir` `ref` to the release tag. `builddown-dev` uses `ref: testing`.
 - Keep the URL explicit: `https://github.com/BuildDownAI/skills.git`.
 
 ### Cutting a release
 
 1. Merge `testing` → `main` with a merge commit (no extra version bump commit).
 2. Create/push annotated tag `vX.Y.Z`, where `X.Y.Z` is the version `testing` carries at merge time. Publish the GitHub release from that tag.
-3. Repoint `main` catalog `ref` to that tag in a `main`-only PR.
+3. Repoint `main` catalog `ref` to that tag in a `main`-only PR. Change only the `builddown` entry's `ref`; leave `builddown-dev` unchanged.
 
 After merges between `testing` and `main`, verify the catalog file still matches the branch's required mode.
