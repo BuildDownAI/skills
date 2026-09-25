@@ -91,17 +91,29 @@ Grouped by skill. One line per landed PR.
 1. **Version.** Confirm `plugin/.claude-plugin/plugin.json` on `testing` is the intended
    release version. `main` is `1.4.0`; the first content PR set the target to `1.5.0`, so the
    tag is `v1.5.x`.
-2. **Catalog repoint.** After the merge and tag, open a `main`-only PR that sets
-   `.claude-plugin/marketplace.json` `ref` to the new tag. `testing` keeps `./plugin`.
+2. **Catalog repoint.** After the merge and tag, open a `main`-only PR. Change only the `builddown` entry's `ref` to the new tag. Leave the `builddown-dev` entry unchanged. `testing` keeps `./plugin`.
 3. **No binding in `CLAUDE.md`.** Since #121 this repo carries no orchestrator or tracker
    binding and no `.mcp.json`; nothing to confirm for `main`. The legacy `kg.*` block is
    retired now, not after a release (ADR 0002): no release ever shipped it.
 4. **README channel text.** *Versions and channels* describes stable vs dev. Confirm it needs
    no change for the new tag.
 5. **GitHub release notes.** Use the *What the release carries* list above as the draft.
-6. **Chat plugin upload.** The release workflow attaches `builddown-skills-<version>.zip` to the
-   release. Upload that asset once at claude.ai Plugins (Organization settings › Plugins, or
-   Customize › Plugins); Claude Code 2.1.273+ syncs it as `builddown@synced`.
+6. **Catalog: add the Dev entry.** Add this entry to `main`'s `.claude-plugin/marketplace.json`, next to the existing `builddown` entry:
+
+   ```json
+   {
+     "name": "builddown-dev",
+     "source": {
+       "source": "git-subdir",
+       "url": "https://github.com/BuildDownAI/skills.git",
+       "path": "plugin",
+       "ref": "testing"
+     },
+     "description": "BuildDown skills, Dev channel: follows the testing branch. Install builddown or builddown-dev, not both."
+   }
+   ```
+
+7. **Auto-sync test.** After the release, test that claude.ai "Sync automatically" updates `builddown-dev` when `testing` changes version. If it does not, update the README to tell Dev users to click "Check for updates".
 
 ## Items to append
 
@@ -114,3 +126,4 @@ Add a dated line here whenever `testing` gains something the release will need.
 - 2026-09-21 — BDS-80 tree landed on `testing` at `1.5.29` (#128, carrying #121–#138). Retire the
   "legacy block read-only for one release" decision above: the block is gone. New release step:
   upload the chat plugin asset (decision 6). Follow-ups live under AII-733 (AII-731/732/734, BDS-86, DOC-47).
+- 2026-09-25 — BDS-89: install and update docs rewritten for repo-based install. `builddown-dev` catalog entry recorded in decision 6. Decisions 2 and 7 updated.
