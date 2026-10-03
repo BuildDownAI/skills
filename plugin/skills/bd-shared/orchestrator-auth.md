@@ -2,6 +2,8 @@
 
 Shared auth-health procedure for orchestrator-calling skills. Apply this procedure immediately after calling `mcp__<prefix>__get_session_identity` — whether that call is for role-checking (admin-only skills) or for health-only (read-only skills).
 
+**Coverage:** This procedure covers two error categories: auth failures (Expiry check and 401 recovery) and the deploy hold (a `deploy-in-progress` error during orchestrator self-deployment).
+
 **Warned-once invariant:** The expiry warning fires at most once per session. If a skill calls `get_session_identity` more than once, apply this procedure only at the first call.
 
 ## Precondition
@@ -40,6 +42,22 @@ If **any** orchestrator tool call in the skill returns a 401 or an `isError` res
      > Orchestrator MCP token expired — re-authenticate via `/mcp` in an interactive session (desktop/CLI) or reconnect the connector in [claude.ai](https://claude.ai) settings and retry.
 
 3. Stop the current step immediately. Do not retry the failed call. Do not continue to subsequent steps.
+
+## Deploy hold
+
+If **any** orchestrator tool call returns an error whose text contains `deploy-in-progress`:
+
+1. If `deployStartedAt` is present in the error body, convert it from a millisecond epoch to a human-readable time. Use it as `<time>`.
+
+2. Print exactly one line:
+   - If `deployStartedAt` is present:
+     > Orchestrator is deploying (since \<time\>); tools and dispatch resume when the deploy finishes. Retry in a few minutes.
+   - If `deployStartedAt` is absent:
+     > Orchestrator is deploying; tools and dispatch resume when the deploy finishes. Retry in a few minutes.
+
+3. Stop the current step. Do not report an outage. Do not retry in a loop.
+
+**Pre-AII-1059 note.** An orchestrator older than AII-1059 answers `restate-unavailable` during a deploy hold instead of `deploy-in-progress`. When you receive `restate-unavailable`, you may check `GET <orchestratorUrl>/`. If the response shows `deploy.held: true`, or shows `restate` ready (meaning Restate is not the cause), treat it as a deploy hold and print the deploy hold line above.
 
 ## Failure tolerance
 

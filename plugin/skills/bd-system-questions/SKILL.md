@@ -85,6 +85,8 @@ Never guess from memory of orchestrator internals.
 **A question with no prior falls through to step 2** — the absence of a prior section does
 not mean the question is unanswerable.
 
+**Deploy hold.** When any orchestrator call returns `deploy-in-progress`, that answer is itself the answer to "is it stuck / why isn't X running": a deploy hold pauses all dispatch, and queued issues dispatch on the first poll after the deploy finishes.
+
 Works from any surface with the orchestrator MCP bound: Claude Code sessions (this binding),
 or claude.ai chat with the connector added.
 
@@ -101,6 +103,7 @@ Call `get_issue_dispatch_status(identifier: "X")`. Interpret, in order:
 
 | Answer shape | Meaning | Tell the user |
 |---|---|---|
+| Every call answers `deploy-in-progress` | Deploy hold | The orchestrator is deploying itself; say so with the start time from `deployStartedAt` (convert from millisecond epoch). All dispatch resumes after the deploy. |
 | `inFlight: true` | It IS running | The phase and elapsed time; long elapsed on `implementation` is usually a big issue, not a stall — check the run before assuming |
 | `dedupEntry` present | Dedup holds it | Dedup has NO time window — the entry clears only on failure, terminal reconcile, or manual delete. A completed prior run means the ticket already shipped |
 | Last dispatch `completed / success` + `prUrl` | It already ran | Give the PR link; the ticket likely needs a new issue, not a re-run |
