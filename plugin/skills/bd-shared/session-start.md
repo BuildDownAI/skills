@@ -96,6 +96,8 @@ every mapping on the orchestrator, each with `team`, `repo`, `defaultBranch`, `t
 `pickupLabel`, and `kg`. Store the whole list as `mappings` for the session. `pickupLabel`
 and `kg` are orchestrator-wide: read them from any entry.
 
+- **Error containing `deploy-in-progress`:** follow the "Deploy hold" rule in `../bd-shared/orchestrator-auth.md`. Stop.
+
 - **Empty list:** print exactly —
   > orchestrator has no project mappings; add one on its admin page.
 
