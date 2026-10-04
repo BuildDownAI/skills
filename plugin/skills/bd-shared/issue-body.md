@@ -111,6 +111,20 @@ until the first merges.
 regardless of overlap and falls back on conflict auto-recovery. Every file the work touches
 belongs in this list. Prose mentions inside `## Task` are invisible to the guard.
 
+### Shared helper files
+
+List a shared helper as `Modify:` in every sibling that extends it. A shared helper is a file
+that one issue creates and sibling issues extend. Examples: a test kit, a contract suite, a
+fixture, a shared type file.
+
+The overlap rule defers the later sibling only when both issues declare the file. A sibling
+that only reads the helper does not need to declare it. A sibling that changes it does.
+
+**Example.** Issue A creates `src/__tests__/helpers/contract.ts`. Issues B and C each extend
+that helper to support their feature. Both B and C must declare
+`Modify: src/__tests__/helpers/contract.ts`. Without that declaration, the guard does not see
+the overlap. It may run B and C in parallel and cause a merge conflict.
+
 ### Verify the list before filing (required — no output, no filing)
 
 Run [`tools/verify-issue-files.py`](./tools/verify-issue-files.py) against the drafted body and

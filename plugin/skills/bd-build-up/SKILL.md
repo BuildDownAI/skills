@@ -326,6 +326,9 @@ criteria — not a step-by-step edit sequence for a capable implementer.
 hits, handoffs, and earlier issues are leads, not verification. `tools/verify-issue-files.py`
 checks the paths in `## Files` only; symbols and routes in prose are checked by hand.
 
+For each sibling that extends a shared helper, list the helper as `Modify:` in the sibling's
+`## Files` — see `§ Shared helper files` in [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md).
+
 ### Stage the waves
 
 **Re-resolve `{{IMPLEMENT_LABEL}}`** — immediately before labelling Wave 1 issues and immediately
