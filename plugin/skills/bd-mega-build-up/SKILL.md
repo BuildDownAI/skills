@@ -250,6 +250,9 @@ body — path, symbol, route, table, key — is opened and grepped before it is 
 ([`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md)); the file linter
 checks paths only.
 
+For each sibling that extends a shared helper, list the helper as `Modify:` in the sibling's
+`## Files` — see `§ Shared helper files` in [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md).
+
 Mega-specific: write the title as one short STE statement of the work. Do not reuse a
 decision's phrasing verbatim as a title.
 
