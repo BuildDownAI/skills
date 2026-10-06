@@ -99,6 +99,8 @@ the resume rule in `../bd-shared/session-state.md` before scanning anything.
 
 **Session start.** Run `../bd-shared/session-start.md` to resolve the orchestrator connector prefix, binding, and tracker connector; its printed lines open the reply. `{{IMPLEMENT_LABEL}}` is `pickupLabel` from the binding (`../bd-shared/pickup-label.md` rule 1). Print the resolved label and its source before proceeding.
 
+**Release planned work first.** If the session is pointed at a parent issue or a set of issues that carry no `{{IMPLEMENT_LABEL}}` yet, release them before you scan: until they start, there is no PR to drive. Follow the active adapter's **Pickup trigger** section. For a parent with sub-issues, label the parent first, then each child, in the order §2i "Staging a tree for dispatch" gives — a child labelled before its parent cuts its PR from the repo base branch. Do not release an issue the user said to hold, or an issue routed to the architect. Print one line that names the issues you released.
+
 Pull current state before assessing anything. Use tracker MCP and GitHub MCP in parallel.
 
 **Tracker scan:**
