@@ -235,7 +235,7 @@ Do not drop gaps silently. If a gap is not agent-fixable and not escalatable, fi
 
 For each Tier 3 item encountered, add it to the running list. Do not interrupt the flow to present.
 
-Running list format (kept in working memory; the state file holds the durable copy):
+Running list format (kept in working memory):
 
 ```
 PR # | Pattern break trigger | Smoke verdict | My recommendation | Draft action
