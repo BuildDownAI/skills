@@ -77,9 +77,6 @@ Pipeline is a running system. Agent-working state is expected, not alarming. Gap
 
 Faster than bd-build-down's orient because bd-super-build-down trusts pipeline state and skips narration.
 
-**Check for an unfinished session first.** If `.bd/session.md` exists with an open `phase`, follow
-the resume rule in `../bd-shared/session-state.md` — this is the one question Phase 1 may ask.
-
 **Resolve `{{IMPLEMENT_LABEL}}` (per `../bd-shared/pickup-label.md`):** Follow the procedure to resolve the pickup label — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source before proceeding.
 
 **Tracker board scan (one batch):**
@@ -107,11 +104,6 @@ PR # | Issue | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
 ```
 
 The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the session summary.
-
-**Write the session state file.** `.bd/session.md` per `../bd-shared/session-state.md`, one `queued`
-row per PR. In an unattended run this file is the only live progress indicator the user has: rewrite
-it on every tier assignment, smoke verdict, comment, merge, escalation, and phase boundary. Mirror
-the queue into the harness plan tool if one exists.
 
 **KG recon (advisory if a KG is bound):** For each PR, run one quiet `mcp__<prefix>__<kg.searchTool>` query (resolved per `../bd-shared/kg-recon.md`, where `<prefix>` is the orchestrator server found by `../bd-shared/session-start.md` step 1) on the issue key + title, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
 
@@ -205,7 +197,7 @@ Work PRs in tier order: Tier 1 first (fast wins), Tier 2 second (handle follow-u
 2. Merge via GitHub MCP `merge_pull_request`, squash by default
 3. Verify PR shows Merged
 4. Update tracker issue to Done
-5. Log one line: `✅ Auto-merged PR #{N} — {title}`; set the row in `.bd/session.md` to `merged`
+5. Log one line: `✅ Auto-merged PR #{N} — {title}`
 6. Continue — no commentary
 
 ### 4b. Tier 2 — act
@@ -241,10 +233,9 @@ Do not drop gaps silently. If a gap is not agent-fixable and not escalatable, fi
 
 ### 4e. Tier 3 — collect for batch
 
-For each Tier 3 item encountered, set its row in `.bd/session.md` to `escalated` with the trigger in
-Last action, and add it to the running list. Do not interrupt the flow to present.
+For each Tier 3 item encountered, add it to the running list. Do not interrupt the flow to present.
 
-Running list format (kept in working memory; the state file holds the durable copy):
+Running list format (kept in working memory):
 
 ```
 PR # | Pattern break trigger | Smoke verdict | My recommendation | Draft action
@@ -365,7 +356,7 @@ Quick check: are Todo issues that had blockers merged today ready to move? They 
 
 ## Phase 7: Session Summary (Autonomous Write)
 
-Write it from `.bd/session.md`; every row lands under the heading its state maps to. Post as a tracker issue assigned to the architect (or to the user, single-operator). Same autonomy rule as bd-build-down — this is informational, not an action, no approval gate.
+Write it from the orientation table built in Phase 1 and live tracker state (GitHub `get_pull_request` + tracker `get_issue`) — each row maps to the outcome taxonomy below. Post as a tracker issue assigned to the architect (or to the user, single-operator). Same autonomy rule as bd-build-down — this is informational, not an action, no approval gate.
 
 **Title:** `Super Build-Down Summary — {Month Day}: {brief focus}`
 
@@ -483,7 +474,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 - Every follow-up issue filed
 - Every pattern observation
 - The `# ai-implement-build-down-learnings` comment posted/updated on each driven parent (outcome incl. `closed-unmerged` failures + harness/model provenance)
-- Every state change, to `.bd/session.md` (`../bd-shared/session-state.md`) — and `phase: closed` after the learnings comment
+
 
 ### Session-abort triggers (critical for unattended runs)
 
@@ -495,7 +486,7 @@ Halt the session immediately and post what you have to the summary when:
 4. **The user explicitly says "stop" or "hold"** — pause all activity, present current state.
 5. **More than 50% of PRs hit pattern-break triggers** — the session's scope is wrong for bd-super-build-down; should have been bd-build-down.
 
-Abort means: finish writing the session summary (including what was completed and why it stopped), post it, exit. Do not keep trying. Leave `.bd/session.md` at its current open phase with the abort reason in the header as `aborted: <reason>` — the next session's resume check surfaces it.
+Abort means: finish writing the session summary (including what was completed and why it stopped), post it, exit. Do not keep trying.
 
 ---
 

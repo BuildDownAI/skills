@@ -128,3 +128,4 @@ Add a dated line here whenever `testing` gains something the release will need.
   upload the chat plugin asset (decision 6, superseded by BDS-89). Follow-ups live under AII-733 (AII-731/732/734, BDS-86, DOC-47).
 - 2026-09-25 — BDS-89: install and update docs rewritten for repo-based install. `builddown-dev` catalog entry recorded in decision 6. Decisions 2 and 7 updated.
 - 2026-09-25 — #144 (`main`, catalog only) added `builddown-dev` at `ref: testing` ahead of the release. Verified: Claude Code installs `builddown-dev@builddown` 1.5.31; claude.ai lists "Builddown dev · 1.5.31". Decision 6 is done; decision 7 is narrowed to a `testing`-only version change.
+- 2026-10-07 — BDS-103: session file (`.bd/session.md`), `bd-shared/session-state.md`, and statusline script (`bd-shared/tools/bd-statusline.sh`) removed from landing skills (build-down, super-build-down, smoke-jumper).
