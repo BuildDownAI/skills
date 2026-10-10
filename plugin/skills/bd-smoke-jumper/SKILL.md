@@ -402,30 +402,12 @@ Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before assig
 
 File autonomously. Do not ask permission — silent drop is not an option, and filing is safer than forgetting.
 
-### 5d. Session summary (multi-PR sessions only)
+### 5d. No session-summary issue
 
-If bd-smoke-jumper ran on multiple PRs in one session, post a session summary as a tracker issue assigned to the architect (or the user, single-operator):
-
-```
-# Smoke-Jumper Session Summary — {date}
-
-## PRs Tested: {count}
-| PR | Issue | Verdict | Key Finding |
-
-## Issues Filed: {count}
-| Issue | PR | Severity | Description |
-
-## Auth Notes
-{How auth was handled, any PRs where auth was skipped}
-
-## Patterns Observed
-{Recurring issues across PRs — useful pipeline-health signal}
-
-## Recommendations
-{Merge order suggestions, blockers to address}
-```
-
-Single-PR invocations don't need a session summary — the PR comment is sufficient.
+Do not file a session-summary issue, not even for a multi-PR session. Each PR's report stays on
+the PR. Fold each learnings-worthy finding into that PR's issue as its build-down learnings
+comment (`../bd-shared/learnings-comments.md`) — the issue copy is the one the KG can see. Give the
+user the cross-PR roll-up (verdicts, issues filed, auth notes, merge order) in chat.
 
 ---
 

@@ -66,7 +66,7 @@ After each merge, check whether the merged issue was listed in any other issue's
 For each issue whose `blockedBy` list is now fully cleared (all blocking issues are in `Done`):
 
 1. Set `state: "Todo"` and add `{{IMPLEMENT_LABEL}}` to the label list via `save_issue`
-2. Log in the session summary under "Unblocked Work": issue ID, what it was blocked by, new state
+2. Record it in the merged issue's build-down learnings comment: the unblocked issue ID and its new state
 
 Do this immediately after each merge — don't batch unblocks to end of session. An unblocked issue gets into the agent queue faster if released as soon as the blocker merges.
 
@@ -92,4 +92,4 @@ Architect-routed issues: set `state: "Backlog"`, assign to `{{ARCHITECT_NAME}}`,
 
 Use `get_issue` with that ID to retrieve the full issue record (acceptance criteria, body, blockedBy, labels).
 
-**Issue URL:** Construct the Linear URL as `https://linear.app/<team>/issue/<issue-id>` for use in session summary comments and PR descriptions. Use this URL when referencing issues in GitHub PR comments or session summaries — do not use bare issue IDs where a link would be clearer.
+**Issue URL:** Construct the Linear URL as `https://linear.app/<team>/issue/<issue-id>` for use in learnings comments and PR descriptions. Use this URL when referencing issues in GitHub PR comments or tracker comments — do not use bare issue IDs where a link would be clearer.

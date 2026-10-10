@@ -52,6 +52,15 @@ only on the PR is invisible to the graph forever. The PR comment remains the rev
 comment is the copy the KG can see. Observed live 2026-08-19 on the KGB-2 chain: four issues'
 merge-time findings existed only as GitHub PR comments, and the graph showed "learnings missing".
 
+## No session-summary issues
+
+A session never files a tracker issue to report on itself ("Session Summary — …", "Super
+Build-Down Summary — …", "Smoke-Jumper Session Summary — …"). Those issues hold no work, carry no
+parent link, and split each finding away from the issue it belongs to. The learnings go into the
+issue itself: the per-issue build-down comment at merge, and the capstone on the parent. Manual
+steps, unblocked dependents, and pending decisions go there too. The session roll-up goes to the
+user in chat.
+
 ## Absence is signal
 
 A build-up comment with **no** build-down sibling means "planned but never landed" — a real, queryable
@@ -155,6 +164,9 @@ Per PR this session drove or observed:
 
 ## Failures & gotchas
 <each closed-unmerged PR with the concrete reason it failed; what bit us during landing>
+
+## Manual steps
+<each step a human must do — owner — source PR; omit the section when there are none>
 
 ## Status
 <landed with these caveats | abandoned because X | superseded by Y>
