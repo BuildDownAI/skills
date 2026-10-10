@@ -59,8 +59,8 @@ After build-down merges a PR, complete the linked Jira issue explicitly:
 5. **Confirm dependents unblock.** Re-check the issues that this one *blocks* —
    the outward side of its `Blocks` links (a dependent's *inward* `Blocks` link is
    what `isBlockedByIncomplete` gates on). Now that it is `done` they are no longer
-   blocked by it. Feed any newly eligible issues to **Unblock dependents** and the
-   session summary's "Unblocked Work".
+   blocked by it. Feed any newly eligible issues to **Unblock dependents** and record
+   them in this issue's build-down learnings comment.
 
 ## Unblock dependents
 For each issue that this one *blocks* (the outward side of its `Blocks` links) and

@@ -13,7 +13,7 @@ A bd-build-down drives open PRs to merge. Mission: fewer open PRs, cleaner track
 
 **Guiding principle — drive to standard.** If a gap is visible and a coding-agent comment can fix it in the existing PR, post the comment now. Don't defer real work to "future bd-build-up" or "follow-up issue" when the fix is one comment away. The park-and-trash rule: if we're walking past it and can pick it up, we pick it up.
 
-**Autonomy default.** This skill runs autonomously by default. Post coding-agent comments, merge clean PRs, file session summaries, and move issues between states without asking. Escalate to the user only for pattern breaks (defined below).
+**Autonomy default.** This skill runs autonomously by default. Post coding-agent comments, merge clean PRs, post learnings comments on the issues, and move issues between states without asking. Escalate to the user only for pattern breaks (defined below).
 
 ---
 
@@ -42,7 +42,7 @@ This skill runs in three environments with different capabilities. Detect which 
 **Chat environment (web/mobile, e.g., claude.ai):**
 - Has: tracker MCP, GitHub MCP (via connector), browser automation MCP (when extension active), project context, conversation memory, past-chat search
 - Lacks: bash, local filesystem, git, ability to run build commands or apply migrations
-- Use for: triage, sequencing, agent comments, merging via GitHub MCP, session summaries, filing issues
+- Use for: triage, sequencing, agent comments, merging via GitHub MCP, learnings comments, filing issues
 - bd-belay-on to a code-execution environment when: a conflict needs local resolution, a migration needs manual application, a test needs to run locally
 
 **Code-execution environment (terminal, e.g., Claude Code):**
@@ -176,7 +176,7 @@ For each gap item, classify:
 - Gap is cosmetic or describes an edge case outside acceptance criteria
 - Gap is explicitly scoped out by the issue body
 
-**Action:** Note in session summary, do not act.
+**Action:** Note it in the issue's build-down learnings comment, do not act.
 
 **Never acceptable as-is — surfaceless flags.** A gap that describes a feature flag or env
 var with no admin surface (the operator must run `fly secrets set` or redeploy to change it)
@@ -195,7 +195,7 @@ introduces a flag or env var.
 Manual steps are by nature not agent-fixable — the agent surfaces them because a human needs to do them (one-time infra setup, secret configuration, dashboard changes).
 
 - Do not treat manual steps as merge blockers — the code can merge and deploy; the manual step happens in parallel or after
-- Log every manual step in the session summary under a "Manual Steps" section
+- Record every manual step in the issue's build-down learnings comment under `## Manual steps`, with its owner
 - If the manual step is something the user would want visibility on before merge (e.g., a secret that must exist before the first cron run), flag it in the pre-merge summary
 
 ### 2c. Verify ✅ Implemented claims (load-bearing only)
@@ -210,7 +210,7 @@ The agent's self-report is usually accurate but not always. Verify specifically 
 For each verification, cross-reference against the actual diff (`get_pull_request_files` or read the specific file). If the claim doesn't hold:
 
 - Post an agent comment requesting the correction (autonomous)
-- Note the discrepancy in session summary — patterns of over-claiming are pipeline signal worth tracking
+- Note the discrepancy in the issue's build-down learnings comment — patterns of over-claiming are pipeline signal worth tracking
 
 Do not verify every ✅ bullet. Cosmetic items, logging additions, minor helper functions don't need verification unless something looks off.
 
@@ -247,7 +247,7 @@ For any PR with a SQL migration:
    - 🔴 **Destructive** — DROP, RENAME, NOT NULL without default, constraint changes
 3. Check if any other open PR touches the same tables — flag collision risk
 4. Include the raw SQL in the escalation so the architect can review directly
-5. Log in the migration queue (Phase 6) with urgency level
+5. Record the migration and its urgency under `## Manual steps` in the issue's build-down learnings comment
 
 Never auto-merge a PR with a migration, even if everything else is clean. The architect's visibility on migration timing is non-negotiable. (For single-operator setups: still surface the migration explicitly, don't merge it silently.)
 
@@ -275,7 +275,7 @@ Escalate per Phase 2d with the conflict details and a resolution recommendation.
 PRs that show "No data" or "Not found" errors in preview usually indicate mock data gaps in the seed/fixture layer, not code defects. Check the issue's acceptance criteria:
 
 - If real data wiring was required → agent comment to wire it
-- If empty state is acceptable → note in summary, don't block merge
+- If empty state is acceptable → note it in the issue's build-down learnings comment, don't block merge
 
 ### 2h. Merge-sequencing analysis
 
@@ -625,59 +625,16 @@ Blocked by: {ISSUE-ID} (if any)
 
 ---
 
-## Phase 6: Session Summary
+## Phase 6: Close — the learnings go into the issue
 
-Write the summary from the orientation table built in Phase 1 and live PR/issue state from the tracker (GitHub `get_pull_request` + tracker `get_issue`) — each row maps to the outcome taxonomy below.
-
-Post the session summary as a new tracker issue assigned to the architect (or the user, single-operator). This is an **autonomous write** — do not ask for approval. Summaries are informational artifacts, not actions.
-
-**Title format:** `Session Summary — {Month Day}: {brief focus}`
-
-**Tone:** Professional, factual. Describe what's broken without alarm language. Do not use "critical," "urgent," or "blocker" unless describing a literal P0.
-
-### Structure (migrations first)
-
-```markdown
-# Session Summary — {date}
-
-## Migration Queue (action needed)
-| File | PR | Tables | Type | Urgency | Status |
-|------|-----|--------|------|---------|--------|
-| {file} | #{N} | {tables} | Additive/Data/Destructive | 🟢/🟡/🔴 | Pending application |
-
-{For any 🔴, include the raw SQL inline so the architect can review and apply directly}
-
-## PRs Merged This Session
-| PR | Issue | What it does |
-
-## PRs Worked But Not Merged
-| PR | Issue | State | Why not merged |
-
-## Agent Comments Posted
-| PR | Gap addressed | Posted at |
-
-## Issues Filed
-| Issue | Source | State | Why filed |
-
-## Manual Steps for {{ARCHITECT_NAME}} or User
-| Step | Source PR | Owner |
-
-## Unblocked Work
-| Issue | Was blocked by | Now in state |
-
-## Board State After Session
-- {working state name — per the active adapter's **Issue scan & states** section}: {count}
-- {ready-for-triage state name}: {count}
-- Open PRs: {count}
-- {pickup queue state name}: {count}
-
-## Observations
-{Patterns noticed — recurring gap types, pipeline health signals, anything worth flagging for next session}
-```
+**Do not file a session-summary issue.** A build-down never creates a tracker issue to report on
+itself. Every finding goes into the issue it belongs to: the merged issue's build-down learnings
+comment at merge time, and the capstone on the parent when a tree completes or the session closes
+(`../bd-shared/learnings-comments.md`). Give the user the session roll-up in chat, not in the tracker.
 
 ### Closing step — post/update the build-down learnings comment (required)
 
-An **autonomous write** — no approval gate, same as the session summary. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
+An **autonomous write** — no approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
 
 **Record the outcome of every PR this session drove or observed**, using this taxonomy:
 
@@ -709,6 +666,9 @@ Per PR this session drove or observed:
 ## Failures & gotchas
 <each closed-unmerged PR with the concrete reason it failed; what bit us during landing>
 
+## Manual steps
+<each step a human must do — owner — source PR; omit the section when there are none>
+
 ## Status
 <landed with these caveats | abandoned because X | superseded by Y>
 ```
@@ -717,7 +677,7 @@ Per PR this session drove or observed:
 
 ## Key Principles (the non-negotiables)
 
-1. **The PR branch belongs to the AI coding agent.** Never edit a PR branch directly. Never push commits to it. All changes go through agent comments. Exceptions: main-branch hotfixes unrelated to any open PR, and session summary issues (which aren't on any PR branch).
+1. **The PR branch belongs to the AI coding agent.** Never edit a PR branch directly. Never push commits to it. All changes go through agent comments. Exception: main-branch hotfixes unrelated to any open PR.
 
 2. **Drive to standard now.** If a gap is scoped and the agent can fix it in-session, post the comment. Don't defer real work to "future bd-build-up."
 

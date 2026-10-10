@@ -11,10 +11,10 @@ metadata:
 
 bd-super-build-down is bd-build-down run at speed and scale. Same mission (fewer open PRs, cleaner board, no gaps left unfixed), same rules, same autonomy model — but tuned for throughput instead of interactive pace.
 
-**The difference from bd-build-down.** bd-build-down is already autonomous-by-default (post agent comments, merge clean PRs, file session summaries without asking). bd-super-build-down layers on:
+**The difference from bd-build-down.** bd-build-down is already autonomous-by-default (post agent comments, merge clean PRs, post learnings comments without asking). bd-super-build-down layers on:
 
 1. **Batch escalations** — gather all pattern-break items and present once at the end, not inline as they appear
-2. **Minimal narration** — log actions, don't explain each one; the session summary is the narrative
+2. **Minimal narration** — log actions, don't explain each one; the learnings comments on the issues are the record
 3. **Mandatory bd-smoke-jumper** — every mergeable PR gets smoke-tested (bd-build-down makes this optional)
 4. **Session-abort triggers** — explicit conditions that halt an unattended run before it causes damage
 5. **Throughput targets** — 10 PRs in under an hour is the benchmark
@@ -54,7 +54,7 @@ Same as bd-build-down. State at session start and adapt.
 
 **Chat (primary for bd-super-build-down):**
 - Has: tracker MCP, GitHub MCP, browser MCP, project context
-- Use for: orientation, triage, agent comments, merges, session summary
+- Use for: orientation, triage, agent comments, merges, learnings comments
 - bd-smoke-jumper runs sequentially in chat (no true parallel dispatch without subagents — it's sequential-but-automatic)
 
 **Code-execution:**
@@ -103,9 +103,9 @@ Faster than bd-build-down's orient because bd-super-build-down trusts pipeline s
 PR # | Issue | Gaps | Checks | Conflicts | Migration | Files | Age | Tier
 ```
 
-The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the session summary.
+The Tier column is filled in Phase 2. No other output in Phase 1 — save the narrative for the final chat report.
 
-**KG recon (advisory if a KG is bound):** For each PR, run one quiet `mcp__<prefix>__<kg.searchTool>` query (resolved per `../bd-shared/kg-recon.md`, where `<prefix>` is the orchestrator server found by `../bd-shared/session-start.md` step 1) on the issue key + title, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that in the session summary, not per-PR narration; silently skip entirely if no KG is bound.
+**KG recon (advisory if a KG is bound):** For each PR, run one quiet `mcp__<prefix>__<kg.searchTool>` query (resolved per `../bd-shared/kg-recon.md`, where `<prefix>` is the orchestrator server found by `../bd-shared/session-start.md` step 1) on the issue key + title, but check KG staleness only once per session — stay silent unless the KG is stale, and surface that once in the final chat report, not per-PR narration; silently skip entirely if no KG is bound.
 
 ### Summit-Push Risk Scan (automatic for 5+ PRs)
 
@@ -311,7 +311,7 @@ Batch-respond options:
   etc.
 ```
 
-If the user responds, execute the batch instructions. If the user is unavailable (overnight run), log everything to the session summary and halt.
+If the user responds, execute the batch instructions. If the user is unavailable (overnight run), record each pending decision in its issue's build-down learnings comment and halt.
 
 ### Special case: migrations
 
@@ -328,7 +328,7 @@ PR #{N} — {title}
   {raw SQL inline}
 ```
 
-Migrations stay in the session summary for the architect to apply manually. Do not ask the user to decide on migrations.
+Record each migration under `## Manual steps` in its issue's build-down learnings comment for the architect to apply manually. Do not ask the user to decide on migrations.
 
 For single-operator setups (no architect): migrations still surface in this section but the user is the recipient. Same urgency, same SQL inline — just routed to the user instead.
 
@@ -346,76 +346,24 @@ If 2+ PRs escalated for the same reason, log the pattern. Examples:
 - "3 PRs escalated for the same gap type: missing security context in new endpoints"
 - "2 PRs escalated for conflicts with the same main-side PR"
 
-Pattern logs go into the session summary "Observations" section and signal pipeline health issues worth addressing in a separate bd-build-up.
+Pattern logs go into the parent's build-down capstone under `## Failures & gotchas` and signal pipeline health issues worth addressing in a separate bd-build-up.
 
 ### 6c. Next wave assessment
 
-Quick check: are Todo issues that had blockers merged today ready to move? They were handled in 6a. Are there Backlog issues whose dependencies are now all Done? Flag them in the session summary — do not auto-promote. Wave promotion decisions are the user's.
+Quick check: are Todo issues that had blockers merged today ready to move? They were handled in 6a. Are there Backlog issues whose dependencies are now all Done? Flag them in the final chat report — do not auto-promote. Wave promotion decisions are the user's.
 
 ---
 
-## Phase 7: Session Summary (Autonomous Write)
+## Phase 7: Close — the learnings go into the issue (Autonomous Write)
 
-Write it from the orientation table built in Phase 1 and live tracker state (GitHub `get_pull_request` + tracker `get_issue`) — each row maps to the outcome taxonomy below. Post as a tracker issue assigned to the architect (or to the user, single-operator). Same autonomy rule as bd-build-down — this is informational, not an action, no approval gate.
-
-**Title:** `Super Build-Down Summary — {Month Day}: {brief focus}`
-
-**Tone:** Professional, factual. No alarm language. "Critical/urgent/blocker" reserved for literal P0.
-
-**Migration-first structure** (matches bd-build-down):
-
-```markdown
-# Super Build-Down Summary — {date}
-
-## Migration Queue (action needed)
-| File | PR | Tables | Type | Urgency | Status |
-| {file} | #{N} | {tables} | Additive/Data/Destructive | 🟢/🟡/🔴 | Pending application |
-
-{Raw SQL for 🔴 items inline}
-
-## Session Stats
-- PRs processed: {total}
-- Auto-merged (Tier 1): {count}
-- Auto-acted (Tier 2): {count}
-- Escalated (Tier 3): {count}
-- Smoke tests run: {count} ({🟢}/{🟡}/{🔴})
-- Session duration: {min}
-- Throughput: {PRs/hour}
-
-## PRs Merged This Session
-| PR | Issue | What it does | Smoke |
-
-## Agent Comments Posted
-| PR | Gap addressed | Posted at |
-
-## Tier 3 Batch (pending decisions)
-| PR | Trigger | Recommendation | Status |
-
-## Issues Filed Mid-Session
-| Issue | Source PR | State | Why filed |
-
-## Manual Steps Surfaced
-| Step | Source PR | Owner |
-
-## Unblocked Work
-| Issue | Was blocked by | Now in state |
-
-## Board State After Session
-- In Progress: {count}
-- In Review: {count}
-- Open PRs: {count}
-- Todo (agent queue): {count}
-
-## Observations / Patterns
-{Pipeline health signals, recurring gap types, anything worth flagging}
-
-## Recommendations for Next Session
-{What to tackle next, blockers to address}
-```
+**Do not file a session-summary issue.** A build-down never creates a tracker issue to report on
+itself. Every finding goes into the issue it belongs to: the merged issue's build-down learnings
+comment at merge time, and the capstone on the parent when a tree completes or the session closes
+(`../bd-shared/learnings-comments.md`). Give the user the session roll-up in chat, not in the tracker.
 
 ### Closing step — post/update the build-down learnings comment (required, autonomous)
 
-Same autonomy rule as the summary — no approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
+No approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
 
 **Record the outcome of every PR this session drove or observed:** `merged` | `closed-unmerged (failure)` (closed without merging — a failure; record the concrete reason; detect from `state=CLOSED` and not merged) | `open / never-landed` | `superseded`. Abandonment is a valid terminal outcome, not a gap.
 
@@ -439,6 +387,9 @@ Per PR this session drove or observed:
 
 ## Failures & gotchas
 <each closed-unmerged PR with the concrete reason it failed; what bit us during landing>
+
+## Manual steps
+<each step a human must do — owner — source PR; omit the section when there are none>
 
 ## Status
 <landed with these caveats | abandoned because X | superseded by Y>
@@ -478,7 +429,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 
 ### Session-abort triggers (critical for unattended runs)
 
-Halt the session immediately and post what you have to the summary when:
+Halt the session immediately and post what you have to the learnings comments when:
 
 1. **3+ consecutive CI failures across different PRs** — main branch is likely broken. Do not keep merging.
 2. **Auto-merge API call fails unexpectedly** — pause all merges, shift remaining PRs to Tier 3, finish with escalation batch.
@@ -486,7 +437,7 @@ Halt the session immediately and post what you have to the summary when:
 4. **The user explicitly says "stop" or "hold"** — pause all activity, present current state.
 5. **More than 50% of PRs hit pattern-break triggers** — the session's scope is wrong for bd-super-build-down; should have been bd-build-down.
 
-Abort means: finish writing the session summary (including what was completed and why it stopped), post it, exit. Do not keep trying.
+Abort means: update the build-down learnings comments (what was completed and why it stopped), report to the user in chat, exit. Do not keep trying.
 
 ---
 
@@ -521,13 +472,13 @@ bd-super-build-down comments include a trailing marker so the architect can filt
 
 - **bd-super-build-down dispatches bd-smoke-jumper** mandatorily. Existing reports <24h old are consumed rather than re-run.
 - **bd-super-build-down uses bd-summit-push Mode 2** automatically for 5+ PRs. Not optional, not asked.
-- **bd-super-build-down does NOT run with bd-build-down.** If the user wants to switch to interactive mode mid-session, the skill presents current state, writes the session summary so far, and hands off.
+- **bd-super-build-down does NOT run with bd-build-down.** If the user wants to switch to interactive mode mid-session, the skill presents current state, updates the learnings comments so far, and hands off.
 
 ---
 
 ## Key Principles
 
-1. **Throughput over narration.** Log, don't explain. The session summary is the narrative.
+1. **Throughput over narration.** Log, don't explain. The learnings comments on the issues are the record.
 2. **Batch Tier 3, don't inline.** Pattern breaks collect; present once at end.
 3. **Migrations always go to the architect, not the user.** Even in batch escalation. (Single-operator: still surface separately, just routed to the user.)
 4. **Drive to standard.** Same as bd-build-down — don't defer scoped gaps when the agent can fix them.
