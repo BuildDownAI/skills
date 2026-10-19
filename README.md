@@ -269,6 +269,9 @@ This only removes skills whose names match this repo's `skills/*/` directories, 
 
 ---
 
+## Credits
+Thank you to Mark Lemmons for the initial design and implementation of these skills.
+
 ## License
 
 Apache 2.0 — same as AI-Implement.
