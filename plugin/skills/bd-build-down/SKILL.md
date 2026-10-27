@@ -571,12 +571,24 @@ File a new tracker issue when:
 
 The filing context determines whether the issue is pickup-ready or parked — set state and labels per the active adapter's **Follow-up filing** section:
 
-- **Mid-session discovery, scoped fix:** pickup-ready. Full context in body. The pipeline picks it up within minutes.
+- **Mid-session discovery, scoped fix:** pickup-ready (outside a grouped tree; inside one, see the subsection below). Full context in body. The pipeline picks it up within minutes.
 - **Mid-session discovery, needs planning:** parked, note in body why it was deferred from immediate pickup.
 - **Out-of-scope gap from a PR:** pickup-ready if it's a clean scoped fix, otherwise parked.
 - **Architectural finding:** parked, assign to the architect, no `{{IMPLEMENT_LABEL}}`.
 
 Default toward pickup-ready when the work is scoped and deterministic. Parked is for planning, not parking.
+
+### Fixes found in a feature-branch tree go through build-up
+
+A fix that a child-PR review, a roll-up review, or a cross-repo review finds in a grouped tree (§2i) is planned work. Run the bd-build-up steps before you file or write anything.
+
+1. Plan the fix with the bd-build-up steps before you file or write anything. Shape it per `../bd-shared/issue-shape.md`. Write the `## Files` block and body per `../bd-shared/issue-body.md`. Verify every anchor per `../bd-shared/anchor-verification.md`. Add acceptance tests at the tier the repo requires.
+2. Show the plan to the user before filing. Wait for approval (bd-build-up Phase 2 "Present and iterate"). A fix that changes a contract, a migration, auth, or stored data is the user's decision.
+3. File each fix as a child of the grouping parent. If the parent is Done, reopen it. Set the roll-up PR to draft until the fixes merge.
+4. A fix that spans two repos is one issue per repo: the producer first, the consumer blocked by it. Paste the producer's contract files (recorded exchanges, argument schema) into the consumer issue before labelling it.
+5. Do not write a fix PR by hand into the feature branch. Hand-written PRs skip the pipeline's independent review. If the user directs local work, use the local fix loop and get an independent review before merge.
+6. After the fixes merge, run the roll-up review again before showing the roll-up PR for merge.
+7. Put the finding and why it happened ("Learnings") in the fix issue body. Update the parent's build-down learnings comment.
 
 ### The local fix loop (work done outside the pipeline)
 
@@ -691,6 +703,8 @@ Per PR this session drove or observed:
 
 7. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Required, not optional — the durable record of outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. A session that ends without it is not done. See `../bd-shared/learnings-comments.md`.
 
+8. **Fixes in a feature-branch tree go through build-up, not direct filing.** A fix found in a child-PR, roll-up, or cross-repo review is planned work. Run the bd-build-up steps, get approval, then file.
+
 ---
 
 ## Common Failure Patterns
@@ -707,6 +721,7 @@ Per PR this session drove or observed:
 | Merging breaks a prod page | Code deployed before migration applied | The Phase 2e escalation exists to prevent this — the most common footgun |
 | PR open >5 days with no activity | Likely stale | Check context before driving; may need rebase or close |
 | A driven PR was closed without merging | Failure outcome, not a silent gap | Record it as `closed-unmerged (failure)` in the parent's `# ai-implement-build-down-learnings` comment with the concrete reason |
+| A hand-written fix PR into a feature branch breaks a contract | Fix was filed as a quick follow-up, skipping the pipeline's independent review | Use the build-up steps in "Fixes found in a feature-branch tree go through build-up" above |
 
 If a symptom doesn't clearly match a row, don't force-fit. Investigate and escalate.
 
