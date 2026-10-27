@@ -229,6 +229,8 @@ Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before assig
 
 bd-super-build-down files follow-up issues same as bd-build-down. Discovery of a scoped fix mid-session → new issue → `state: Todo` with `{{IMPLEMENT_LABEL}}`. Backlog only if the fix needs planning.
 
+**Fixes in a grouped tree (§4f) are different.** A fix that a child-PR review, a roll-up review, or a cross-repo review finds in a grouped tree is planned work. Draft it with the bd-build-up steps before you file it. Plan and verify anchors (bd-build-down item 1). File it as a child of the grouping parent, reopening the parent if Done and setting the roll-up PR to draft (item 3). For a cross-repo fix, file one issue per repo with the producer first and paste the producer's contract files into the consumer issue before labelling (item 4). Put the finding and learnings in the fix issue body and update the parent's build-down learnings comment (item 7). File the issue unlabelled. Add it to the Tier 3 batch (Phase 5) for approval. Label it only after the user approves. Never write it by hand.
+
 Do not drop gaps silently. If a gap is not agent-fixable and not escalatable, file it. Silence is never the default.
 
 ### 4e. Tier 3 — collect for batch
@@ -415,6 +417,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 2. Resolution is ambiguous
 3. Same PR has received 2+ agent comments in this session (possible loop — escalate)
 4. Gap requires a product decision
+5. A fix found in a grouped-tree review has not yet been approved by the user (see §4d)
 
 ### Always log
 
@@ -486,3 +489,5 @@ bd-super-build-down comments include a trailing marker so the architect can filt
 6. **Abort beats damage.** Session-abort triggers exist because unattended runs can cause harm. Honor them.
 7. **Pattern-break list is identical to bd-build-down.** This skill is bd-build-down at speed, not with different rules.
 8. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Autonomous write, required — outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. Not done without it. See `../bd-shared/learnings-comments.md`.
+
+9. **Fixes in a grouped tree are never filed directly.** Draft them with the bd-build-up steps, add to the Tier 3 batch unlabelled, and label only after the user approves.
