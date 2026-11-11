@@ -158,11 +158,12 @@ Escalation triggers (same pattern-break list as bd-build-down):
 4. Touches auth, security middleware, or auth provider config
 5. Fix would modify >5 files or cross PR boundaries
 6. PR age >5 days
-7. bd-smoke-jumper returns 🔴 DO NOT MERGE
-8. CI failing (not transient infra)
-9. Merge conflict involves business logic
-10. File overlap with another open PR (merge ordering decision)
-11. The **top-of-tree `feature → base` roll-up PR** (`[ai-implement] Feature branch ready for review`) — always a human gate, never auto-merged (feature-branch grouping — both trackers)
+7. **Child diff writes data a merge gate or review gate reads** (e.g., a findings ledger, an approval mark, or a merge verdict) — treat as a scope change; escalate before the child merges, unless the issue body names that write
+8. bd-smoke-jumper returns 🔴 DO NOT MERGE
+9. CI failing (not transient infra)
+10. Merge conflict involves business logic
+11. File overlap with another open PR (merge ordering decision)
+12. The **top-of-tree `feature → base` roll-up PR** (`[ai-implement] Feature branch ready for review`) — always a human gate, never auto-merged (feature-branch grouping — both trackers)
 
 **Action for bd-super-build-down:** DO NOT present Tier 3 items as they appear. Collect them all. Present once at the end of Phase 4 as a batch.
 
@@ -280,7 +281,10 @@ PR (`ai-implement/<mode>/<key> → base`) is open + green:
 2. **Post the mandatory `# ai-implement-build-down-learnings` comment on the umbrella/parent issue.** The
    grouped-tree gate is a build-down session close for that tree — the capstone is required at this point,
    same as at the close of any session (Phase 7). This is an explicit, named step so it cannot be skipped.
-3. **Ask before proceeding or handing off.** Smoke-jump the integrated feature branch, surface the
+3. **Run one integrated review of the feature branch** (`base...feature`) before surfacing the top-of-tree
+   PR. Check writer→reader pairs across files — the cross-file issues per-child review cannot see. After
+   one clean full review, record the reviewed SHA; review only the delta since that SHA on subsequent reviews.
+4. **Ask before proceeding or handing off.** Smoke-jump the integrated feature branch, surface the
    top-of-tree PR for human review, and wait for explicit confirmation — in addition to the existing "never
    auto-merge" guardrail.
 
