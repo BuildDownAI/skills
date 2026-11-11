@@ -224,6 +224,7 @@ Escalate to the user (ask before acting) when ANY of these apply:
 4. **Touches auth, row-level security, security middleware, or auth provider config** — never autonomous. **A feature-branch (child-PR) base does not waive this** — the change still rolls up to real users (§2i).
 5. **Fix would modify >5 files or cross PR boundaries**
 6. **PR is >5 days old** — context may have shifted, check before driving (relaxed for child PRs — §2i)
+7. **Child diff writes data a merge gate or review gate reads** — e.g., writing to a findings ledger, an approval mark, or a merge verdict. Treat as a scope change and escalate before the child merges, unless the issue body names that write.
 
 For escalations, present:
 
@@ -358,7 +359,10 @@ changes only where the change lands, not the standard it must meet.
      The grouped-tree gate is a build-down session close for that tree — the capstone is required at this
      point, same as at the end of any session (Phase 6). This step is named and explicit so it cannot be
      skipped when a tree finishes.
-  3. **Ask before proceeding or handing off.** Surface the top-of-tree PR for human review and wait for
+  3. **Run one integrated review of the feature branch** (`base...feature`) before surfacing the top-of-tree
+     PR. Check writer→reader pairs across files — the cross-file issues per-child review cannot see. After
+     one clean full review, record the reviewed SHA; review only the delta since that SHA on subsequent reviews.
+  4. **Ask before proceeding or handing off.** Surface the top-of-tree PR for human review and wait for
      explicit confirmation — in addition to the existing "never auto-merge" guardrail.
 - **Autonomous driving lives in `bd-super-build-down`.** Driving a grouped tree to its gate in an
   unattended loop (poll → verify → merge each child → completion checkpoint) belongs to
