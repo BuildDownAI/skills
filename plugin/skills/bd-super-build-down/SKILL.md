@@ -281,10 +281,7 @@ PR (`ai-implement/<mode>/<key> → base`) is open + green:
 2. **Post the mandatory `# ai-implement-build-down-learnings` comment on the umbrella/parent issue.** The
    grouped-tree gate is a build-down session close for that tree — the capstone is required at this point,
    same as at the close of any session (Phase 7). This is an explicit, named step so it cannot be skipped.
-3. **Run one integrated review of the feature branch** (`base...feature`) before surfacing the top-of-tree
-   PR. Check writer→reader pairs across files — the cross-file issues per-child review cannot see. After
-   one clean full review, record the reviewed SHA; review only the delta since that SHA on subsequent reviews.
-4. **Ask before proceeding or handing off.** Smoke-jump the integrated feature branch, surface the
+3. **Ask before proceeding or handing off.** Smoke-jump the integrated feature branch, surface the
    top-of-tree PR for human review, and wait for explicit confirmation — in addition to the existing "never
    auto-merge" guardrail.
 
