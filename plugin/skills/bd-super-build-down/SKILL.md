@@ -129,7 +129,7 @@ ALL of these must be true:
 - ✅ Not on pattern-break list (Phase 2d)
 
 Additional confidence boosters (not required but speed the decision):
-- PR touches ≤5 files
+- PR stays under the size threshold in `../bd-shared/issue-shape.md`
 - PR is frontend-only
 - PR age <3 days
 
@@ -156,7 +156,7 @@ Escalation triggers (bd-build-down's pattern-break list, items 1–7, plus five 
 2. Agent already failed on this specific gap (prior attempt in comment history)
 3. Any SQL migration — additive, data, or destructive
 4. Touches auth, security middleware, or auth provider config
-5. Fix would modify >5 files or cross PR boundaries
+5. Fix would reach the size threshold in `../bd-shared/issue-shape.md`, or cross PR boundaries
 6. PR age >5 days
 7. **Child diff writes data a merge gate or review gate reads** (e.g., a findings ledger, an approval mark, or a merge verdict) — treat as a scope change; escalate before the child merges, unless the issue body names that write
 8. bd-smoke-jumper returns 🔴 DO NOT MERGE
@@ -344,7 +344,7 @@ For single-operator setups (no architect): migrations still surface in this sect
 
 ### 6a. Unblock downstream work
 
-For each merged PR, check `blockedBy` on tracker issues. Any issue whose blockers are now all Done, and that has `{{IMPLEMENT_LABEL}}` → move to Todo. One batch update via tracker MCP.
+For each merged PR, check `blockedBy` on tracker issues, per `../bd-shared/pipeline.md` § Wave release. An issue that already has `{{IMPLEMENT_LABEL}}` needs nothing; the orchestrator starts it once each blocker is Done, Canceled, or Duplicate. An unlabelled standalone issue whose blockers are now all Done: check its body against what the blocker shipped, then release it (`state: Todo` + `{{IMPLEMENT_LABEL}}`). One batch update via tracker MCP.
 
 ### 6b. Pattern detection
 
@@ -356,7 +356,7 @@ Pattern logs go into the parent's build-down capstone under `## Failures & gotch
 
 ### 6c. Next wave assessment
 
-Quick check: are Todo issues that had blockers merged today ready to move? They were handled in 6a. Are there Backlog issues whose dependencies are now all Done? Flag them in the final chat report — do not auto-promote. Wave promotion decisions are the user's.
+Quick check: 6a released the standalone wave issues whose blockers merged today. Flag in the final chat report any other unlabelled issue whose dependencies are now all Done: one the user said to hold, one routed to the architect, or one whose body needs a decision before release. Those releases are the user's.
 
 ---
 

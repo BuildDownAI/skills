@@ -1,18 +1,21 @@
 # The AI-Implement pipeline — what happens after filing
 
-Shared reference for `bd-build-up` and `bd-mega-build-up`. How the downstream harness
-(https://github.com/BuildDownAI/AI-Implement) picks up work, and the filing mechanics that
-follow from it.
+Shared reference for `bd-build-up`, `bd-mega-build-up`, `bd-summit-push`, and the landing
+skills. How the downstream harness (https://github.com/BuildDownAI/AI-Implement) picks up
+work, and the filing mechanics that follow from it.
 
 ## The loop
 
-1. The orchestrator polls the tracker every ~60s for unblocked issues that carry the pickup
-   signal.
-2. A picked-up issue moves to **In Progress**, runs Claude Code against the issue body via
-   `WORKFLOW.md`, opens a PR, and posts a **gap analysis** comment comparing the diff against
-   the spec.
-3. The issue moves to **Ready for Review** with a PR link.
-4. Commenting `/ai-implement` on the PR re-runs Claude in gap-fill mode on the same branch.
+1. The orchestrator polls the tracker every ~60s for issues that carry the pickup signal and
+   have no unfinished blocker.
+2. When planning is on, the planner posts three comments: an Implementation Map, an Acceptance
+   Bar, and Risks & Open Questions. The reviewer grades each numbered claim of the Acceptance
+   Bar.
+3. The implementer runs against the issue body via `WORKFLOW.md`, opens a PR, and posts a
+   **gap analysis** comment comparing the diff against the spec.
+4. The issue moves to **Ready for Review** with a PR link.
+5. Commenting `/ai-implement` on the PR re-runs the implementer in gap-fill mode on the same
+   branch.
 
 The tracker is the source of truth. An ad-hoc prompt never enters the pipeline.
 
@@ -22,31 +25,41 @@ it. On Linear a parked issue carries no label; the orchestrator holds the park i
 record. An issue that carries the pickup signal and does not move is read with
 `get_issue_dispatch_status` (see `bd-system-questions`), which reports the park and any
 failing setup check. An admin clears a park with `unpark_issue`. Removing and re-adding the
-pickup label does not clear it. This park is the orchestrator's; it is not the "parked"
-Backlog state that wave staging uses below.
+pickup label does not clear it. This park is the orchestrator's; it is not an issue held
+without the pickup signal.
 
-**What this means for issue bodies.** The pipeline reads the body cold and asks no follow-up
-questions, so everything it needs is inline. Gap analysis only catches what the spec
-specified — a vague acceptance criterion produces a vague gap analysis and a bad PR.
+**What this means for issue bodies.** The pipeline reads the body cold, asks no follow-up
+questions, and fixes the acceptance bar when it plans. The body rules are in
+[`issue-body.md`](./issue-body.md).
 
-**The pickup signal is tracker-specific.** Linear uses state plus a label; Jira uses a status
-field. Read the active adapter's **Pickup trigger** section. On Jira, setting only a label is
-a silent no-op.
+**The pickup signal is tracker-specific.** Linear uses a label; Jira uses a status field. Read
+the active adapter's **Pickup trigger** section. On Jira, setting only a label is a silent
+no-op.
 
-## Wave staging
+## Wave release
 
 Build-up launches work. It does not park it.
 
-- **Wave 1** — issues with no unmet blockers → the pickup-ready state with the pipeline
-  signal. The orchestrator takes them within minutes.
-- **Wave 2+** — issues with unmet blockers → parked. bd-build-down promotes them as their
-  blockers merge.
+- **Inside a feature-branch tree**, give every agent-routed issue the pickup signal at filing,
+  in one pass, parent before children. The tracker's blocking relations do the sequencing: the orchestrator
+  skips an issue until each blocker is Done, Canceled, or Duplicate. On Jira only a link type
+  named exactly `Blocks` holds an issue. The tree needs no hand release, because each child
+  lands on the feature branch and the whole tree gets one roll-up review and one human gate.
+- **A standalone dependency chain** keeps hand release. File wave 1 with the pickup signal.
+  File wave 2 and later without it. A session (`bd-build-down`, `bd-super-build-down`)
+  releases each issue when every blocker is Done. A standalone issue merges straight to the
+  default branch with no roll-up review, so the session first checks the dependent's body
+  against what its blocker shipped. The edit must come before release, because the planner
+  fixes the acceptance bar when it plans.
+- **Same-template siblings** follow pilot-first (below), in a tree or out of one.
 - **Architect-routed** — schema, security, and infrastructure work → assigned to the architect
-  with no pipeline signal. The architect sequences their own work.
+  with no pickup signal. The architect sequences their own work.
 
-File in dependency order so each `Blocked by:` resolves to a real issue ID.
+File in dependency order so each `Blocked by:` resolves to a real issue ID. A Canceled blocker
+releases its dependents too. Closing an implementation PR without a merge cancels its issue, so
+point each `Blocked by:` at the replacement issue before you close the PR.
 
-A well-staged build-up has Wave 1 running by the time the session ends. The only exceptions
+A well-staged build-up has wave 1 running by the time the session ends. The only exceptions
 are a user who says "stage everything, do not start," and brief-only modes that file nothing.
 
 ## Parallel dispatch
@@ -56,11 +69,9 @@ mergeable, or they carry `Blocked by:` to serialize them.
 
 - **Two issues that edit the same file are not parallel-safe.** One blocks the other, or they
   merge into one issue.
-- **The dispatch guard reads `## Files`.** The orchestrator parses `- Create|Modify|Test|Delete: `
-  bullets with a backticked path and defers the later of two siblings that declare the same
-  file until the first one's PR merges — turning a guaranteed conflict into clean
-  serialization. An issue with no parseable `## Files` section **fails open**: it dispatches
-  regardless of overlap. Prose file mentions inside `## Task` are not parsed.
+- **The dispatch guard reads `## Files`**, and only between siblings on one feature branch. It
+  defers the later sibling until the first one's PR merges. It skips standalone issues.
+  Details: [`issue-body.md`](./issue-body.md) § `## Files` is machine-read.
 
 ## Feature-node grouping
 
@@ -75,9 +86,10 @@ less — they never collide on base. Normal file-overlap rules still apply betwe
 a matching Repo field on Jira. See the active adapter's **Feature-node grouping** section. The
 Linear pipeline label is resolved at session start — see `./pickup-label.md`.
 
-### Designation order (two observed races)
+### Designation order
 
-**Build the whole tree first. Then designate the parent. Then designate the children.**
+**Build the whole tree first. Then designate the parent and every child in one pass, parent
+first.**
 
 - A parent designated **before its children exist** is classified as a leaf and dispatched
   standalone. So every child, every parent relationship, and every `blocks` relation exists
@@ -109,22 +121,15 @@ unfenced marker is ignored and the parent stays in feature mode. Always write th
 the `(example)` suffix: a bare `# ai-implement.yml` first line is the real marker and gets
 stripped from that issue's own spec.
 
-## The first issue of a chain is the smallest
-
-A chain's first issue is the only one nothing else can start before, and it sets the pattern
-every later issue mirrors. Make it the **smallest** issue in the chain — half the normal shape
-ceiling — even when the "foundation" feels like it wants to be complete. A large first issue
-delays the whole chain by its review rounds and teaches every follow-on its mistakes. The
-foundation is the module; the wiring is the second issue.
-
 ## Pilot-first sequencing
 
 **Trigger:** a wave holds **three or more issues applying the same template to different
 surfaces** — *"enable pagination on `/employees/`"*, *"…on `/assignments/`"*, *"…on
 `/calculations/`"*.
 
-File them all, but release only the **first** for pickup. Pick the pilot with the smallest or
-best-understood surface; it sets the pattern. Park the rest.
+File them all, but give only the **first** the pickup signal. Pick the pilot with the smallest
+or best-understood surface; it sets the pattern. File the rest without the pickup signal, in a
+tree or out of one.
 
 Then in bd-build-down, once the pilot's PR lands:
 
@@ -142,11 +147,9 @@ systemic miss in parallel.
 issues only look alike — different app, different shape, different decisions. The trigger is
 *same task template*, not *same project area*.
 
-## Diagnosing a silent failure
+## Diagnosing a run that hit its limit
 
-When the runner hits the turn cap mid-edit it pushes **nothing** — no partial PR, no branch.
-The issue reads as though it was never picked up.
-
-Check the implement run's result field directly. `result=max_turns` means the run was killed
-mid-edit, not that it is still queued. A wide-and-shallow issue over ~12–15 files is the
-primary trigger; see [`issue-shape.md`](./issue-shape.md).
+A Claude run that reaches its turn limit opens a draft PR, posts a `MAX_TURNS_EXHAUSTED`
+failure, and skips review. Read the failure before you re-run it: the usual cause is an issue
+past the size threshold in [`issue-shape.md`](./issue-shape.md) § Size, and the fix is a
+split.

@@ -7,8 +7,8 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 > unreliable at transitioning an issue to Done when its PR merges. build-down
 > must complete the issue explicitly and verify it — see **Post-merge
 > completion**. An un-completed blocker silently keeps its dependents blocked
-> (the orchestrator's `isBlockedByIncomplete` only clears once the native status
-> category is `done`).
+> (the orchestrator's `isBlockedByIncomplete` clears once the native status
+> category is `done` or the blocker's `AI-Implement Status` is `Merged`).
 
 ## MCP & discovery
 
@@ -63,10 +63,13 @@ After build-down merges a PR, complete the linked Jira issue explicitly:
    them in this issue's build-down learnings comment.
 
 ## Unblock dependents
-For each issue that this one *blocks* (the outward side of its `Blocks` links) and
-that now has all its blockers in a `done` status category: release it via **Pickup trigger**
-(set `AI-Implement-Status = Ready`). The orchestrator's next poll will include it
-once `isBlockedByIncomplete` returns false.
+An issue that already has `AI-Implement-Status = Ready` (every issue in a
+feature-branch tree) needs nothing: the next poll includes it once
+`isBlockedByIncomplete` returns false. For each unset standalone issue that this
+one *blocks* (the outward side of its `Blocks` links) and that now has all its
+blockers in a `done` status category (`../../bd-shared/pipeline.md` § Wave
+release): check its body against what the blocker shipped, then release it via
+**Pickup trigger** (set `AI-Implement-Status = Ready`).
 
 ## Follow-up filing
 File a new Jira issue with the Repo field set and the {{IMPLEMENT_LABEL}}. If

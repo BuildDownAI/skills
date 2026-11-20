@@ -63,10 +63,11 @@ Do not invent a manual transition workflow for Linear. The auto-close is the exp
 
 After each merge, check whether the merged issue was listed in any other issue's `blockedBy` field. Use `get_issue` on candidate issues (identified during orientation or from the tracker's dependency graph).
 
-For each issue whose `blockedBy` list is now fully cleared (all blocking issues are in `Done`):
+An issue that already carries `{{IMPLEMENT_LABEL}}` (every issue in a feature-branch tree) needs nothing: the orchestrator starts it once each blocker is Done, Canceled, or Duplicate. For each unlabelled standalone issue whose `blockedBy` list is now fully cleared (`../../bd-shared/pipeline.md` § Wave release):
 
-1. Set `state: "Todo"` and add `{{IMPLEMENT_LABEL}}` to the label list via `save_issue`
-2. Record it in the merged issue's build-down learnings comment: the unblocked issue ID and its new state
+1. Check its body against what the blocker shipped, and fix it before release — the planner fixes the acceptance bar when it plans
+2. Set `state: "Todo"` and add `{{IMPLEMENT_LABEL}}` to the label list via `save_issue`
+3. Record it in the merged issue's build-down learnings comment: the unblocked issue ID and its new state
 
 Do this immediately after each merge — don't batch unblocks to end of session. An unblocked issue gets into the agent queue faster if released as soon as the blocker merges.
 

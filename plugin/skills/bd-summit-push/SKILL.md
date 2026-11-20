@@ -41,12 +41,11 @@ Same as bd-build-up and bd-build-down.
 **Chat (primary for bd-summit-push):**
 - Has: tracker MCP, GitHub MCP, project context, conversation memory
 - Use for: plan evaluation, issue body hardening, manifest generation, risk reporting
-- Blast radius analysis relies on project knowledge and issue descriptions — slightly more conservative confidence scores than in code-execution
+- Blast radius is an estimate from project knowledge and issue descriptions. An anchor nobody opened holds its issue (Phase 3c), so verify through a code-reading agent or the GitHub connector
 
 **Code-execution:**
 - Has: bash, local filesystem, git — can verify blast radius against actual code
 - Use when: deep convention checks are needed, file overlap must be verified against real repo state
-- Higher confidence scores justified when verified against code
 
 **Code-reading agent:**
 - Useful for: cross-file pattern verification when an issue references patterns that need to be confirmed
@@ -93,7 +92,7 @@ Accept input in any of these forms:
 - A project or milestone filter ("evaluate everything in the X project that's in Backlog or Todo")
 - A raw list of objectives to be decomposed — in this case, run bd-build-up first, then bd-summit-push the result
 
-For each issue, capture: title, description/body, labels, dependencies (`blockedBy`), estimate, routing (assignee or `{{IMPLEMENT_LABEL}}`).
+For each issue, capture: title, description/body, labels, dependencies (`blockedBy`), routing (assignee or `{{IMPLEMENT_LABEL}}`).
 
 ### Phase 1b: KG recon (if a KG is bound)
 
@@ -101,8 +100,8 @@ Before sequencing, consult the project's knowledge graph for prior learnings, de
 issues touching this plan's surfaces. Follow `../bd-shared/kg-recon.md`: derive 1–3 queries from **the
 plan's key nouns + the issue set's shared files/components**, call **only** `mcp__<prefix>__<kg.searchTool>`
 (the resolved hybrid-search tool from `../bd-shared/kg-recon.md`, where `<prefix>` is the orchestrator server from `../bd-shared/session-start.md` step 1), and cite any hit that changes
-a sequencing or one-shot-quality call (e.g. a prior failure class on a surface an issue touches
-lowers its confidence score). Advisory and non-blocking; silent skip when no KG is bound.
+a sequencing or hold call (e.g. a prior failure class on a surface an issue touches). Advisory
+and non-blocking; silent skip when no KG is bound.
 
 ### Phase 2: Dependency Graph Analysis
 
@@ -138,7 +137,7 @@ For each issue, estimate which files it will touch based on description and code
 - Identify file overlap between issues — these will conflict if running in parallel
 - Flag high-overlap pairs explicitly: "Issues {ID-X} and {ID-Y} both modify `{path}` — serialize them or expect conflict resolution"
 
-In chat: blast radius is an estimate from description + project knowledge. In code-execution: verify against actual repo state. State confidence accordingly.
+In chat: blast radius is an estimate from description + project knowledge. In code-execution: verify against actual repo state. Mark each overlap as verified or estimated.
 
 **2e. Feature-branch grouping (both trackers)**
 
@@ -152,15 +151,15 @@ graph is not "all PRs → base." Model the **cascade**:
   that need scheduling**.
 - The **critical path runs *through* the feature node** and ends at the single **top-of-tree
   `feature → base` PR** (the human gate). Time-to-land = longest leaf→…→top chain, plus the human review.
-- **Labelling sequence:** label the whole tree in one pass, parent before children (the race guard keeps a
-  parent from being worked before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
-  before its children.
+- **Labelling sequence:** label the whole tree at filing, in one pass, parent before children
+  (`../bd-shared/pipeline.md` § Wave release). The blocking relations sequence the children. Don't
+  sequence a parent to merge to the Default Branch before its children.
 
 (Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
-### Phase 3: One-Shot Quality Audit
+### Phase 3: Issue Quality Audit
 
-Evaluate each issue description for one-shot success likelihood through the AI coding agent.
+Find what would make each issue fail in the pipeline, and fix it before the agent sees it.
 
 **3a. Failure-mode checklist**
 
@@ -169,13 +168,12 @@ Cross-reference every issue against the full Blindspot Table (see Conventions be
 | Failure Mode | What to Look For | Fix |
 |---|---|---|
 | **API route invention** | Issue says "create an API for X" without specifying the exact path | Add explicit file path, handler function, HTTP method |
-| **Missing codebase context** | Describes what to build but not where it fits | Add "Files to modify" and "Existing patterns to follow" sections |
-| **Ambiguous acceptance criteria** | Criteria subjective ("should work well") or untestable | Rewrite as specific verifiable checks with `{{BUILD_CMD}}` |
-| **Migration without schema context** | "Add a field" without table, column type, or SQL | Add exact SQL migration, reference existing schema source of truth |
+| **Missing codebase context** | Describes what to build but not where it fits | Add the `## Files` list and a pattern anchor |
+| **Ambiguous acceptance criteria** | Criteria subjective ("should work well") or untestable | Rewrite each per body rule 3 in `../bd-shared/issue-body.md` |
+| **Migration without schema context** | "Add a field" without table or column type | Name the table, column, and type; isolate the migration per hard rule 1 in `../bd-shared/issue-shape.md` |
 | **Frontend without API contract** | UI issue doesn't specify the query or response shape | Add exact query or endpoint path and response shape |
 | **Security/RLS gap** | Touches tenant-scoped tables without mentioning row-level security | Add security context note; route policy changes to the architect |
-| **Too large** | Touches 5+ files across multiple concerns | Split into smaller issues with clear boundaries |
-| **Turn-budget overload** | Wide-and-shallow issue with >~12–15 files — at ~2–4 turns/file, risks exhausting the runner's per-pass turn budget (a project Max-Turns setting, commonly ~50) before the agent finishes and pushes; silent failure: `result=max_turns`, nothing pushed, no partial PR | Split (deep core + wide propagation blocked by it) OR raise the project's Max Turns before dispatch and note it on the issue; flag in High-Risk Items |
+| **Too large** | Reaches the size threshold in `../bd-shared/issue-shape.md` with no `Stays whole:` reason | Split, or state why it stays whole |
 | **Snapshot delta — needs accept-new-baseline** | KG-repo issue whose `Snapshot delta:` value includes "needs accept-new-baseline" | Flag in High-Risk Items; note that bd-build-down must sequence the guard dry-run and the acceptance step before the issue merges |
 | **Missing test requirements** | No verification specified | Add `{{BUILD_CMD}}` passes + specific UI/API verification |
 | **Mock data confusion** | Criteria imply real data is available when only mock data exists | Note "empty state acceptable" or specify data wiring |
@@ -183,102 +181,15 @@ Cross-reference every issue against the full Blindspot Table (see Conventions be
 
 **3b. Issue body hardening**
 
-For issues that fail the checklist, draft improved descriptions using this standard:
+Rewrite each issue that fails the checklist in the canonical template and body rules,
+`../bd-shared/issue-body.md`. Keep its `## Files` section in the exact bullet form, because the
+overlap guard reads it.
 
-```
-## Problem / Context
+**3c. The hold check**
 
-Current state, why this issue exists, what it enables.
-File paths and component names for context.
-Existing patterns to follow (link to similar code).
-
-## Task
-
-Specifics:
-- Exact files to create or modify (paths in the codebase)
-- API routes: exact path, HTTP method, request/response shape
-- Database: exact table, columns, query pattern
-- UI: component path, props interface, parent page integration
-
-Reference prototype when applicable:
-Design reference: code-prototype at `/app/path`
-OR
-Design reference: design project "{name}" — screen "{screen}"
-
-## Files
-
-- Create: `exact/path/to/new.ts`
-- Modify: `exact/path/to/existing.ts`
-- Test: `tests/exact/path/test.ts`
-
-## Acceptance Criteria
-
-- [ ] Specific, testable checks
-- [ ] `{{BUILD_CMD}}` passes (if typed code touched)
-- [ ] UI renders correctly at specified route
-
-## Codebase References
-
-- "Follow the pattern in {file}:{component}"
-- "Wire to existing query at {path}"
-
-## What NOT to Do
-
-(Populate from the Blindspot Table — pick the 2-4 most relevant for this issue's type)
-- Do not create new route trees outside existing structure
-- Do not bypass row-level security — all queries must respect tenant scoping
-- Do not create direct file upload endpoints — use the canonical storage layer
-
-## Dependencies
-
-Blocked by: {ISSUE-ID} (brief reason)
-
-## Notes
-
-Edge cases, known gotchas, decisions made during planning.
-```
-
-Keep `## Files` in the exact bullet form of `../bd-shared/issue-body.md`. The orchestrator's
-overlap guard reads that section, and an issue without it dispatches beside any sibling that
-changes the same files. When a hardened issue already has a `## Files` section, keep it.
-
-**3c. One-shot confidence scoring**
-
-Rate each issue 1–5 using concrete criteria:
-
-- **5 — Lock:**
-  - Touches 1-2 files with explicit paths
-  - References an existing pattern in the codebase by name/path
-  - Acceptance criteria are fully objective and runnable
-  - No migrations, no security implications, no schema changes
-  - → Expect to one-shot
-
-- **4 — Strong:**
-  - Touches ≤5 files with explicit paths
-  - References existing patterns OR has very clear task description
-  - Acceptance criteria mostly objective
-  - If migrations present, they're clearly scoped
-  - → 80%+ one-shot rate
-
-- **3 — Coin flip:**
-  - Reasonable description but missing codebase context
-  - OR touches multiple files without explicit paths
-  - OR acceptance criteria have subjective elements
-  - → 50/50 — expect agent follow-ups
-
-- **2 — Risky:**
-  - Ambiguous scope or unclear fit
-  - Requires architectural decisions during implementation
-  - Touches auth/security without explicit routing to the architect
-  - → Will likely need agent comments or rework
-
-- **1 — Send back:**
-  - Too large (6+ files or multi-concern)
-  - Too vague (no specific paths or patterns)
-  - Hits a known failure mode from the blindspot table
-  - → Needs rewrite before the agent picks it up
-
-**Target: every issue ships at 4 or 5. Anything below gets hardened in Phase 3b or split.**
+Run the filing check in `../bd-shared/issue-body.md` on every issue. Mark each one **ready**, or
+**held** with the condition that holds it. Held is yes or no, not a score. Fix a held issue before
+it is filed or labelled. A migration or auth issue keeps its routing to the architect.
 
 ### Phase 4: Push Manifest
 
@@ -287,15 +198,15 @@ Produce the final output:
 ```
 # Summit Push Manifest: {name}
 Generated: {date}
-Scope: {N} issues, {points} story points, {tracks} parallel tracks
+Scope: {N} issues, {tracks} parallel tracks
 
 ## Push Order
 
 **Wave 1 (no dependencies — send immediately):**
-- {ISSUE-ID}: {title} — Confidence: {score}/5 — Track: {track}
+- {ISSUE-ID}: {title} — {ready | held: condition} — Track: {track}
 
 **Wave 2 (depends on Wave 1):**
-- {ISSUE-ID}: {title} — Confidence: {score}/5 — Blocked by: {deps}
+- {ISSUE-ID}: {title} — {ready | held: condition} — Blocked by: {deps}
 
 (continue for Wave 3+)
 
@@ -309,7 +220,8 @@ Scope: {N} issues, {points} story points, {tracks} parallel tracks
 {For each feature node: its feature branch `ai-implement/feature/<key>`, the child issues that PR into it,
 and the parent's deferred closing work. Grouped children form a track whose merges target the feature
 branch, not base. The tree's terminal node is the top-of-tree `feature → base` PR — the human gate, merged
-last, never auto-merged. Omit this section only when there are no feature nodes (either tracker).}
+last, never auto-merged. Every issue in a tree is released at filing; its waves show the order the
+blocking relations enforce. Omit this section only when there are no feature nodes (either tracker).}
 
 ## Migration Sequence
 
@@ -317,7 +229,7 @@ last, never auto-merged. Omit this section only when there are no feature nodes 
 
 ## High-Risk Items
 
-{Issues with confidence < 4, with specific concerns}
+{Held issues, each with the condition that holds it and the fix}
 
 ## Blast Radius Map
 
@@ -339,13 +251,13 @@ After the user approves the manifest:
 **If pre-filing (bd-build-up hasn't filed yet):**
 - Update the in-session plan with hardened descriptions and optimized sequencing
 - Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before handing back.
-- Hand back to bd-build-up Phase 3 for filing (with the bd-build-up default: Wave 1 → Todo + `{{IMPLEMENT_LABEL}}`, Wave 2+ → Backlog)
+- Hand back to bd-build-up Phase 3 for filing, which releases per `../bd-shared/pipeline.md` § Wave release
 
 **If post-filing (issues already in tracker):**
 - Update issue descriptions in the tracker via `save_issue` with hardened versions
 - Only update the `description` field — preserve existing labels, state, assignee, estimate
-- If Wave 1 issues are currently in Backlog and should now move → promote to Todo
-- Do NOT promote Wave 2+ to Todo yet — let Wave 1 land first to reveal conflicts and inform sequencing
+- A description edit after the orchestrator planned the issue does not change its acceptance bar (`../bd-shared/issue-body.md` body rule 5)
+- Release any issue that the release rule says should already carry the pickup signal. Leave standalone wave 2+ held until its blockers land, so their lessons reach its body
 
 ---
 
@@ -390,7 +302,7 @@ Given open PRs:
 **2d. Dependency gap detection**
 
 - Any in-progress issue working on something that depends on an unmerged PR?
-- Any queued issue about to be picked up by the agent before its dependency lands? (Should be held in Backlog until the blocker merges.)
+- Any queued issue about to be picked up by the agent before its dependency lands? Check that a native blocking relation holds it; the body's `Blocked by:` line alone does not.
 
 **2e. Codebase drift detection**
 
@@ -405,7 +317,7 @@ As of: {date/time}
 
 ## Immediate Actions Needed
 
-(Things that should be done now, in priority order. "Immediate" means: an action that, if delayed, will cause rework or damage. Examples: a queued Todo issue that should be held because its blocker isn't merged; a merge order that must be enforced today to avoid conflicts compounding.)
+(Things that should be done now, in priority order. "Immediate" means: an action that, if delayed, will cause rework or damage. Examples: a queued issue whose blocker has no native blocking relation; a merge order that must be enforced today to avoid conflicts compounding.)
 
 ## Predicted Conflicts
 
@@ -425,7 +337,7 @@ As of: {date/time}
 
 ## Hold
 
-(Queued issues that should NOT be promoted to Todo yet, with reason)
+(Issues to keep without the pickup signal, with reason)
 ```
 
 ---
@@ -446,18 +358,6 @@ This table captures known failure modes the AI coding agent has hit on this code
 | **Convention drift** | Frontend patterns deviate from existing component library usage | Issue describes UI without referencing existing component patterns | Reference existing component by name/path |
 | **Auth config drift** | Changes to auth flow without routing to the architect | Issue touches auth provider, middleware, or session handling | Route to the architect; do not label `{{IMPLEMENT_LABEL}}` |
 
-### Confidence scoring calibration
-
-When scoring issues 1-5, anchor on concrete properties:
-
-- File count (1-2 = 5, ≤5 = 4, multiple without paths = 3, 6+ = 2)
-- Path specificity (exact paths = 5, named patterns = 4, vague = 3, missing = 2 or 1)
-- Acceptance criteria (testable + `{{BUILD_CMD}}` = 5, mostly objective = 4, subjective elements = 3, untestable = 2)
-- Codebase references (explicit = 5, implicit via pattern naming = 4, missing = 3)
-- Risk factors (none = +0, migration present = -1 unless crisp, security/auth = -1 unless routed to the architect)
-
-Two scorers using this rubric should land within 1 point of each other on the same issue. If they don't, the rubric failed and the issue description is probably the problem.
-
 ### Tracker MCP patterns (Linear-style)
 
 - `save_issue` for create/update, label arrays replace (always pass full list)
@@ -472,21 +372,16 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 
 ### Filing states (aligned with bd-build-up)
 
-- Wave 1 (no dependencies) → `state: Todo` with `{{IMPLEMENT_LABEL}}` — triggers pipeline pickup
-- Wave 2+ (waiting on blockers) → `state: Backlog` — promote as blockers merge
-- Architect-routed → `state: Todo`, assigned to architect, no `{{IMPLEMENT_LABEL}}`
-- Exception: user explicitly says "stage only, don't start" → all → Backlog
-
-bd-summit-push respects these defaults when applying changes. Do not move issues to Todo that should be waiting.
+Follow `../bd-shared/pipeline.md` § Wave release and the active tracker adapter's **Wave staging** section. Exception: the user says "stage only, don't start" → file everything without the pickup signal.
 
 ---
 
 ## Key Principles
 
 1. **bd-summit-push is strategic, not mechanical.** The manifest is an analytical artifact — the user reviews it and decides. bd-summit-push does not file or promote without the user's approval.
-2. **Target 4 or 5 on every issue.** Anything below gets hardened or split before the agent sees it.
+2. **Mark each issue ready or held.** A held issue is fixed or split before the agent sees it.
 3. **Migrations serialize.** Two migrations touching the same tables are not independent — flag and sequence.
-4. **Wave 1 sends, Wave 2+ waits.** Mirror bd-build-up's default.
+4. **Release per the wave rule.** A feature-branch tree goes out whole at filing; a standalone chain goes out one wave at a time.
 5. **Cross-reference the blindspot table.** Phase 3 auditing isn't complete without it.
 6. **Pipeline timing is measured, not assumed.** Use recent actual performance, not fixed hours-per-issue estimates.
 7. **Mode 2 is automatic inside bd-super-build-down.** Standalone invocation only when the user wants a risk scan outside a bd-build-down.

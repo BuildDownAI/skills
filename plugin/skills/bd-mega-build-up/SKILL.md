@@ -242,16 +242,10 @@ revision, not approval.
 One unit of parallelizable work = one issue. Every issue passes
 [`../bd-shared/issue-shape.md`](../bd-shared/issue-shape.md) before it reaches the manifest.
 
-Use [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md) for the body. Declare the
-surface — exact paths, contracts, acceptance criteria, pattern anchors — and do not script the
-work. Link the ADR as design reference for the human reviewer, and inline anything the agent
-needs, because the pipeline reads the body cold and does not follow links. Every anchor in the
-body — path, symbol, route, table, key — is opened and grepped before it is written
-([`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md)); the file linter
-checks paths only.
-
-For each sibling that extends a shared helper, list the helper as `Modify:` in the sibling's
-`## Files` — see `§ Shared helper files` in [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md).
+Write each body per [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md), and run its
+filing check on every body before Gate 2: the linter when a shell exists, the same checks by
+reading otherwise. Link the ADR as design reference for the human reviewer, and inline anything
+the agent needs, because the pipeline does not follow links.
 
 Mega-specific: write the title as one short STE statement of the work. Do not reuse a
 decision's phrasing verbatim as a title.
@@ -295,12 +289,14 @@ Work through the committed actions from the Overlap Inventory **before** filing 
 Present the manifest before filing. Never file and then ask.
 
 ```
-| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing | Snapshot delta |
+| # | Title | Shape | Migration? | Wave | Labels | Blocked by | Parallel-safe with | Files overlap | Routing | Snapshot delta | Check |
 ```
 
 **Files overlap** carries the Step 2 verdict per issue: `∅`, or `sibling-key: paths` with the
 `Blocked by:` that resolves it. `UNPARSEABLE` means the audit failed — fix the `## Files`
 block before filing.
+
+**Check** is `ready`, or `held:` with the filing-check condition. The gate files no held issue.
 
 **Snapshot delta** — for KG-repo emitter-change issues, carries the `Snapshot delta:` value
 from the issue's `## Shape` block. Leave blank for issues that are not emitter changes. **The
@@ -309,22 +305,23 @@ before filing.
 
 ### Step 5 — file
 
-**Re-resolve `{{IMPLEMENT_LABEL}}`** — immediately before labelling Wave 1 issues and immediately
+**Re-resolve `{{IMPLEMENT_LABEL}}`** — immediately before releasing issues and immediately
 before designating a feature node, re-resolve the pickup label per
 [`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md) rule 3 (rules 1–2 in order). Use
 the freshly resolved value for both the label assignment and the feature-node designation call.
 
-File in dependency order so each `Blocked by:` resolves to a real ID. Wave staging, feature-node
-designation order, and pilot-first sequencing all follow
-[`../bd-shared/pipeline.md`](../bd-shared/pipeline.md), with the concrete mechanics in the
-adapter's **Pickup trigger**, **Wave staging**, and **Feature-node grouping** sections.
+File in dependency order so each `Blocked by:` resolves to a real ID. The release rule — a
+feature-branch tree at filing, a standalone chain one wave at a time — designation order, and
+pilot-first sequencing all follow [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md)
+§ Wave release, with the concrete mechanics in the adapter's **Pickup trigger**, **Wave
+staging**, and **Feature-node grouping** sections.
 
 ### Step 6 — the post-filing manifest
 
 Container URL, ADR paths, the manifest with real issue IDs (`# | Title | Wave | Label used |
-Blocked by | State`), which issues are in Wave 1 and running, and the critical path — the
+Blocked by | State`), which issues carry the pickup signal, and the critical path — the
 longest dependency chain, so the user sees the minimum time to complete. The `Label used`
-column shows the resolved `{{IMPLEMENT_LABEL}}` value actually applied to Wave 1 issues.
+column shows the resolved `{{IMPLEMENT_LABEL}}` value actually applied to the released issues.
 
 ### Step 7 — the learnings comment (required capstone)
 
@@ -380,44 +377,17 @@ authoritative. Do not reconstruct the decision from issue bodies.
 - **A decision that is hard to reverse, surprising, and a real trade-off, with no draft in the
   parent's `## Decision records` section.** → It lives only in the session. Draft it before
   Gate 1.
-- **An issue that is wide AND deep.** → Shape violation. Split into a deep core plus a wide
-  propagation blocked by it.
-- **A per-touch decision rule whose inputs are not in the spec** — *"for each viewset, decide
-  whether to paginate based on what the frontend expects"*. → Hard rule 7: wide-and-deep in
-  disguise. Inline the heuristic, or split per surface.
-- **Schema and UI in one issue.** → Backend-before-frontend violation. Split.
-- **A migration or backfill bundled with the code that consumes it.** → Hard rules 1 and 2.
-  The migration becomes its own issue; the consumer is blocked by it.
-- **A schema-tightening plan with no writer census.** → Hard rule 9. The cleanup PR detonates
-  against unmigrated writers and surfaces only as CI failures. Run the census in the grill.
-- **An Atlas-style project with a "rename column X to Y" issue.** → Refuse to file it for the
-  pipeline. Recommend the scripted manual cutover.
-- **A new file whose path is given by description** — *"create a pagination test file"*. →
-  Pattern-anchor violation. Three agents produce three paths and one collides. Cite an exact
-  sibling by full path.
+- **An issue that breaks a shared rule.** → Fix it before Gate 2. Wide AND deep, a per-touch
+  rule with no inlined inputs, schema or a migration bundled with its consumer, a skipped writer
+  or reader census, a missing state table, an Atlas rename, or a new file named by description:
+  [`../bd-shared/issue-shape.md`](../bd-shared/issue-shape.md). A held issue, an unopened
+  anchor, or a body that says "see the ADR": [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md).
 - **A grouped tree filed with no stated file-intersection verdict.** → Step 2 failed silently.
   The guard fail-opens on unparseable files, so the audit is the only protection.
-- **A feature-node tree designated out of order.** → Both races are observed. Build the whole
-  tree, then the parent, then the children — [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md).
-- **Three or more same-template siblings all released at once.** → They will repeat the same
-  omission in parallel. Run the pilot first.
-- **A wide-and-shallow issue over ~12–15 files with no turn-budget check.** → Split it, or
-  raise Max Turns before dispatch and note it on the issue.
-- **An issue body that says "see the ADR" without inlining the spec.** → The pipeline does not
-  follow links.
+- **A tree released out of order, or three same-template siblings released together.** →
+  [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md) § Wave release.
 - **No Overlap Inventory from Phase 1.** → The scan was skipped or too narrow. A mature
   backlog always has hits.
-- **A file described without being opened.** → The path existing is not evidence it is the
-  file you think it is. Run `tools/verify-issue-files.py` and read the inventory, not just the
-  exit code.
-- **A function, route, or module named from a doc, a memory, a KG hit, or a handoff without
-  opening the file.** → Anchor-verification violation. Docs go stale: a deleted vending module
-  stayed in a reference doc for a week. Grep the symbol; correct or drop the name.
-- **Branching logic specified with some of its states.** → Hard rule 11. Write the state
-  table; a three-state model specified as two states fails silently in the third.
-- **A shared value's shape changed with no reader census.** → Hard rule 10. Search the
-  underlying state, not only the accessor — consumers that bypass the accessor are the ones
-  that break quietly.
 - **An Overlap Inventory row with no committed action.** → Silent overlap. Force the decision
   in the grill.
 - **Issues filed with no learnings comment.** → Step 7 is the capstone, not an extra.

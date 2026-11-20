@@ -96,7 +96,7 @@ If the agent in use doesn't produce a structured gap analysis, build the equival
 
 **Session start.** Run `../bd-shared/session-start.md` to resolve the orchestrator connector prefix, binding, and tracker connector; its printed lines open the reply. `{{IMPLEMENT_LABEL}}` is `pickupLabel` from the binding (`../bd-shared/pickup-label.md` rule 1). Print the resolved label and its source before proceeding.
 
-**Release planned work first.** If the session is pointed at a parent issue or a set of issues that carry no `{{IMPLEMENT_LABEL}}` yet, release them before you scan: until they start, there is no PR to drive. Follow the active adapter's **Pickup trigger** section. For a parent with sub-issues, label the parent first, then each child, in the order §2i "Staging a tree for dispatch" gives — a child labelled before its parent cuts its PR from the repo base branch. Do not release an issue the user said to hold, or an issue routed to the architect. Print one line that names the issues you released.
+**Release planned work first.** If the session is pointed at a parent issue or a set of issues that carry no `{{IMPLEMENT_LABEL}}` yet, release them before you scan: until they start, there is no PR to drive. Follow `../bd-shared/pipeline.md` § Wave release and the active adapter's **Pickup trigger** section. For a parent with sub-issues, label the parent first, then every child — a child labelled before its parent cuts its PR from the repo base branch. For standalone issues, release only those whose blockers are Done. Do not release an issue the user said to hold, or an issue routed to the architect. Print one line that names the issues you released.
 
 Pull current state before assessing anything. Use tracker MCP and GitHub MCP in parallel.
 
@@ -222,7 +222,7 @@ Escalate to the user (ask before acting) when ANY of these apply:
 2. **Agent has already failed on this specific gap** in this PR (one prior attempt in the comment history)
 3. **Any SQL migration** — additive, data-only, or destructive. The architect (if defined) owns migration application. **A feature-branch (child-PR) base does not waive this** — the migration still rolls up to the real database (§2i).
 4. **Touches auth, row-level security, security middleware, or auth provider config** — never autonomous. **A feature-branch (child-PR) base does not waive this** — the change still rolls up to real users (§2i).
-5. **Fix would modify >5 files or cross PR boundaries**
+5. **Fix would reach the size threshold in `../bd-shared/issue-shape.md`, or cross PR boundaries**
 6. **PR is >5 days old** — context may have shifted, check before driving (relaxed for child PRs — §2i)
 7. **Child diff writes data a merge gate or review gate reads** — e.g., writing to a findings ledger, an approval mark, or a merge verdict. Treat as a scope change and escalate before the child merges, unless the issue body names that write.
 
@@ -370,21 +370,11 @@ changes only where the change lands, not the standard it must meet.
   completion checkpoint, and capstone above — but for the autonomous driving loop, invoke
   `bd-super-build-down` rather than recreating it here.
 
-**Staging a tree for dispatch — label the parent BEFORE the children.** Grouping is
-ordering-sensitive and the failure is silent: a child resolves its PR base by walking up to the
-nearest ancestor that *currently carries* `{{IMPLEMENT_LABEL}}`; if no ancestor is labeled when the
-child dispatches, it cuts its PR **directly from the repo base branch**, bypassing grouping with no
-error. Always stage in this exact order:
-
-1. **Create the parent UNLABELED** — a labeled issue with zero children is indistinguishable from a
-   leaf and dispatches standalone (seconds are enough to lose this race).
-2. **Create all children** as sub-issues, with every `blockedBy` relation.
-3. **Label the PARENT.** A labeled parent whose children exist but carry no label is a *waiting
-   parent* — the pipeline skips it until labeled children reach terminal states.
-4. **Then label the children.** Each now resolves its base to the parent's feature branch.
-
-If you find child PRs already based on the repo base branch, tear them down (close PR + delete
-branch), fix labels in the order above, and re-release — retargeting after the fact is error-prone.
+**Staging a tree for dispatch.** Create the parent unlabelled, create every child with its
+`blockedBy` relations, then label the parent and every child in one pass, parent first
+(`../bd-shared/pipeline.md` § Wave release and § Designation order). If you find child PRs already
+based on the repo base branch, tear them down (close PR + delete branch), fix labels in that order,
+and re-release — retargeting after the fact is error-prone.
 
 **Cascade operational knowledge (from live grouped-tree campaigns):**
 
@@ -633,31 +623,9 @@ ingests both the same way.
 
 ### Issue body standard
 
-```
-## Problem / Context
-{current state, why this issue exists, what triggered it}
-
-## Task
-{specifics — components, API shapes, schema if relevant}
-
-## Files
-- Modify: `exact/path/to/existing.ts`
-- Test: `tests/exact/path/test.ts`
-
-## Acceptance Criteria
-- [ ] {testable checks}
-- [ ] `{{BUILD_CMD}}` passes (if typed code touched)
-
-## Dependencies
-Blocked by: {ISSUE-ID} (if any)
-
-## Notes
-{surfaced-from-PR #N, related architectural context, known gotchas}
-```
-
-`## Files` is required, in the exact bullet form of `../bd-shared/issue-body.md`. The
-orchestrator's overlap guard reads it. A follow-up with no `## Files` section dispatches beside
-any sibling that changes the same files.
+Write every follow-up in the canonical template, `../bd-shared/issue-body.md`, and run its filing
+check before you label it. Put `surfaced from PR #N` in `## Notes`. `## Files` is required, because
+a follow-up without it dispatches beside any sibling that changes the same files.
 
 ---
 
