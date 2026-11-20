@@ -26,7 +26,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
    - Use ToolSearch to check whether `mcp__<prefix>__get_session_identity` is in the
      session's tool list. If the tool is absent:
      - Print: "This orchestrator has no `get_session_identity` tool; it predates the MCP write
-       tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
+       tier (AII-381).
        Update the orchestrator, then retry."
      - Stop.
    - Call `mcp__<prefix>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
@@ -70,7 +70,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
         "base drift: none". A hint of `derivative is N commits behind base; …` means N behind:
         print the hint. A hint of `base drift unknown` means the compare could not run: print it.
      2. If no `base:drift` row is present, print: "base drift unknown — this orchestrator
-        predates [AII-598](https://linear.app/eudoxus/issue/AII-598/kg-refresh-preflight-advisory-basedrift-row-how-far-the-kg-repo-is);
+        predates AII-598;
         run `bd-mega-kg-refresh` to check and merge the base template" and continue.
      Advisory only — the refresh continues regardless of the result. Do not run
      `git merge upstream`, do not create a `kg-upstream/` branch, and do not open any PR

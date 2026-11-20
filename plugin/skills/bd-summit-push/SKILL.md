@@ -465,7 +465,7 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 - `blockedBy` relations hold dispatch: the orchestrator does not pick up an issue until each blocker is Done, Canceled, or Duplicate. They also drive bd-summit-push's dependency analysis
 - `relatedTo` accepts arrays of issue ID strings
 
-**Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
+**Jira-style (projected — full adaptation tracked in AII-149):**
 - MCP binding: the Atlassian connector found by session-start step 4 (`tracker.kind: jira` in the binding)
 - Description updates: `editJiraIssue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
 - Wave state: no direct `state` field — use `transitionJiraIssue` + `AI-Implement-Status` custom field for pipeline gating. Human-set values are exactly two: `Ready` (dispatch now) or **unset** (held). `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting them hides the issue from pickup and burns a concurrency slot
