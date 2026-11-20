@@ -123,7 +123,7 @@ smoke-report comment.
 
 ## Cross-tracker
 
-Both markers are plain comments. Linear (`save_comment`) and Jira (`addComment`) both support comment
+Both markers are plain comments. Linear (`save_comment`) and Jira (`addCommentToJiraIssue`) both support comment
 writes, so the convention is identical on both providers — zero new API surface.
 
 ## Templates

@@ -60,7 +60,7 @@ old)" or "KG is fresh (4 hours old)".
 - Tracker issues **updated** since the build time — query the project's bound tracker MCP (Linear "updated after `<ISO timestamp>`", Jira likewise) and report the count.
 - PRs **merged** since — `gh pr list --state merged --search "merged:>=<YYYY-MM-DDTHH:MM:SSZ>" --limit 20` — and report the count.
 
-Present the gap explicitly ("graph as of `<date>` (`<age>` ago); since then `N` issues changed, `M` PRs merged — treat results as missing these") and nudge the operator: run `bd-kg-refresh` (rail) for a fresh orchestrator graph; run `bd-mega-kg-refresh` (forthcoming — see BDS-49) if a source repo is missing from the ingest.
+Present the gap explicitly ("graph as of `<date>` (`<age>` ago); since then `N` issues changed, `M` PRs merged — treat results as missing these") and nudge the operator: run `bd-kg-refresh` (rail) for a fresh orchestrator graph; run `bd-mega-kg-refresh` if a source repo is missing from the ingest.
 
 **If the KG is fresher than 24 hours**, skip these delta queries — stay fast. A recent build is good enough; no need to dig into tracker history.
 

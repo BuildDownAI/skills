@@ -21,7 +21,7 @@ does **not** reach an installed skill.
 | `overlap-scan.md` | Backlog overlap scan, classification, and reconciliation | build-up, mega-build-up |
 | `anchor-verification.md` | Every path, symbol, route, table, or key named in a plan or body is opened and grepped before it is written; docs, memories, KG hits, and handoffs are leads, not verification | high-plan, build-up, mega-build-up |
 | `decision-docs.md` | ADR and glossary format, and the test for when a decision earns an ADR | mega-build-up |
-| `feature-branch-grouping.md` | The full feature-branch model, both providers — operator reference | build-down, super-build-down, smoke-jumper, summit-push, project-setup, mega adapters |
+| `feature-branch-grouping.md` | The full feature-branch model, both providers — operator reference | build-down, super-build-down, smoke-jumper, summit-push, mega adapters |
 | `learnings-comments.md` | The `# ai-implement-*-learnings` comment convention | build-up, mega-build-up, build-down, super-build-down, belay-on |
 | `VERSION` | Present only inside the chat bundle: the plugin version, one line, written by the release workflow from `plugin.json`; `session-start.md` reads it when `.claude-plugin/plugin.json` is not mounted (chat) | session-start |
 | `session-start.md` | Session start — Step 0 client and required-tool check (stops with a named message if `client: claude-code` in chat or a required tool is absent), then orchestrator discovery by tool suffix, repo slug, binding, tracker workspace check, per-repo facts; every skill except bd-belay-on runs it first | all skills except bd-belay-on |

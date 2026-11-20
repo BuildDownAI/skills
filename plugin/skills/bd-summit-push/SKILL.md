@@ -205,6 +205,12 @@ Design reference: code-prototype at `/app/path`
 OR
 Design reference: design project "{name}" — screen "{screen}"
 
+## Files
+
+- Create: `exact/path/to/new.ts`
+- Modify: `exact/path/to/existing.ts`
+- Test: `tests/exact/path/test.ts`
+
 ## Acceptance Criteria
 
 - [ ] Specific, testable checks
@@ -231,6 +237,10 @@ Blocked by: {ISSUE-ID} (brief reason)
 
 Edge cases, known gotchas, decisions made during planning.
 ```
+
+Keep `## Files` in the exact bullet form of `../bd-shared/issue-body.md`. The orchestrator's
+overlap guard reads that section, and an issue without it dispatches beside any sibling that
+changes the same files. When a hardened issue already has a `## Files` section, keep it.
 
 **3c. One-shot confidence scoring**
 
@@ -348,7 +358,7 @@ This mode is usually invoked automatically from bd-super-build-down for 5+ open 
 Pull state of everything in flight:
 
 - **Open PRs** via GitHub MCP (`list_pull_requests`, `get_pull_request`, `get_pull_request_status`, `get_pull_request_files`)
-- **Issues in `In Progress`** or agent-working state via tracker MCP
+- **Issues in `In Progress`** or carrying the `AI-Working` label, via tracker MCP
 - **Issues in `Todo`** with `{{IMPLEMENT_LABEL}}` (queued but not yet picked up)
 
 ### Phase 2: Architectural Risk Scan
@@ -452,13 +462,13 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 
 - `save_issue` for create/update, label arrays replace (always pass full list)
 - When hardening an issue description, update ONLY the `description` field — preserve labels, state, assignee, estimate
-- `blockedBy` arrays are informational (don't block automation but do drive bd-summit-push's dependency analysis)
+- `blockedBy` relations hold dispatch: the orchestrator does not pick up an issue until each blocker is Done, Canceled, or Duplicate. They also drive bd-summit-push's dependency analysis
 - `relatedTo` accepts arrays of issue ID strings
 
 **Jira-style (projected — full adaptation tracked in [AII-149](https://linear.app/eudoxus/issue/AII-149/adapt-builddown-best-practice-skills-to-jira)):**
 - MCP binding: the Atlassian connector found by session-start step 4 (`tracker.kind: jira` in the binding)
-- Description updates: `update_issue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
-- Wave state: no direct `state` field — use `transition_issue` + `AI-Implement-Status` custom field for pipeline gating. Human-set values are exactly two: `Ready` (dispatch now) or **unset** (held). `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting them hides the issue from pickup and burns a concurrency slot
+- Description updates: `editJiraIssue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
+- Wave state: no direct `state` field — use `transitionJiraIssue` + `AI-Implement-Status` custom field for pipeline gating. Human-set values are exactly two: `Ready` (dispatch now) or **unset** (held). `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting them hides the issue from pickup and burns a concurrency slot
 
 ### Filing states (aligned with bd-build-up)
 

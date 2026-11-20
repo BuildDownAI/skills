@@ -41,7 +41,7 @@ this session:
 | `requires` entry | Availability check |
 |---|---|
 | `orchestrator` | ToolSearch with the query `get_project_binding` returns at least one tool whose name ends in `__get_project_binding` |
-| `tracker` | ToolSearch with the query `list_teams` (Linear) or `list_projects` (Jira) returns at least one tool whose name ends in that suffix, outside the orchestrator prefix |
+| `tracker` | ToolSearch with the query `list_teams` (Linear) or `getVisibleJiraProjects` (Jira) returns at least one tool whose name ends in that suffix, outside the orchestrator prefix |
 | `github` | Either a GitHub connector (ToolSearch with the query `get_pull_request` returns a tool whose name ends in `__get_pull_request`; a hit whose name merely contains the words does not count) or, in Claude Code, a shell where `gh auth status` succeeds. A chat session has no shell, so the connector is the only way there |
 | `browser` | ToolSearch with the query `navigate` returns at least one tool whose name ends in `__navigate` or `__read_page` |
 
@@ -160,9 +160,9 @@ Use ToolSearch with the query `list_teams`. Count the tools whose name ends in `
 
 For **`tracker.kind = jira`**:
 
-Use ToolSearch with the query `list_projects`. Count the tools whose name ends in
-`__list_projects` and whose prefix is not `<prefix>` from Step 1; the orchestrator has its own
-`list_projects`, which does not count.
+Use ToolSearch with the query `getVisibleJiraProjects`. Count the tools whose name ends in
+`__getVisibleJiraProjects`. The orchestrator's `list_projects` is a different tool and does not
+count.
 
 - **None found — no connector at all:** print exactly —
   > No Atlassian connector is enabled in this session; this repo's orchestrator mapping expects project \<team\>. Add or enable it at claude.ai connectors.
@@ -174,7 +174,7 @@ Use ToolSearch with the query `list_projects`. Count the tools whose name ends i
 
   Stop.
 
-- **Exactly one found:** call `list_projects`. Check whether a project with key `tracker.team`
+- **Exactly one found:** call `getVisibleJiraProjects`. Check whether a project with key `tracker.team`
   is present.
 
   - **Not found — wrong workspace:** print exactly —
