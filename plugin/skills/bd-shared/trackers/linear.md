@@ -60,20 +60,16 @@ goal is to surface every overlap and force a decision before any new issue gets 
 
 ## Pickup trigger
 
-- **Wave 1** (no `Blocked by`) → `state: Todo` + label `{{IMPLEMENT_LABEL}}` (resolved per `../pickup-label.md`). Pipeline picks up within minutes.
-
-**Linear MCP patterns:**
-- `state: Todo` + `{{IMPLEMENT_LABEL}}` label = pipeline pickup.
+Release an issue with `state: Todo` + label `{{IMPLEMENT_LABEL}}` (resolved per `../pickup-label.md`). The pipeline picks it up within minutes. The orchestrator reads the label and any non-terminal state, so a Backlog issue with the label is picked up too. Hold an issue by leaving the label off, not by its state.
 
 ## Wave staging
 
-The shared wave model (`../pipeline.md`), in Linear terms:
+The release rule is `../pipeline.md` § Wave release. In Linear terms:
 
-- **Wave 1** (no `Blocked by`) → `state: Todo` + label `{{IMPLEMENT_LABEL}}` (resolved per `../pickup-label.md`). Pipeline picks up within minutes.
-- **Wave 2+** (has `Blocked by`) → `state: Backlog`. Promote to `Todo` during bd-build-down as blockers merge.
-- **Architect-routed** (schema, security, infra) → `state: Todo`, assigned to `{{ARCHITECT_NAME}}`, **no** `{{IMPLEMENT_LABEL}}` label.
-
-File in dependency order so `Blocked by:` references resolve to real issue IDs.
+- **Feature-branch tree** → every agent-routed issue `state: Todo` + `{{IMPLEMENT_LABEL}}` at filing: the parent first, then every child. The native `blocks` relations hold each child until its blockers are Done, Canceled, or Duplicate.
+- **Standalone wave 1** → `state: Todo` + `{{IMPLEMENT_LABEL}}`.
+- **Standalone wave 2+** and **pilot-first siblings after the pilot** → `state: Backlog`, no label. A session releases each one per **Pickup trigger**.
+- **Architect-routed** → see **Architect routing**.
 
 ## Architect routing
 
@@ -81,9 +77,9 @@ File in dependency order so `Blocked by:` references resolve to real issue IDs.
 
 ## Dependencies
 
-**Dependency phrasing:** Always `Blocked by: {ISSUE-ID} (reason)`. Not "Depends on," not "Requires." One phrase, one pattern.
+**Dependency phrasing:** Always `Blocked by: {ISSUE-ID} (reason)` in the body's Dependencies section (`../issue-body.md`).
 
-**Linear relation mechanic:** use the native blocked-by relation. Add `Blocked by: {ISSUE-ID} (reason)` in the issue body's Dependencies section.
+**Linear relation mechanic:** set the native blocked-by relation too. The relation holds dispatch; the body line does not.
 
 ## Required create fields
 
@@ -92,7 +88,6 @@ The issue body itself follows the shared template in `../issue-body.md`.
 **Linear MCP patterns:**
 - `save_issue` handles create + update (pass `id` to update).
 - Label arrays replace — always pass the full desired list.
-- `state: Todo` + `{{IMPLEMENT_LABEL}}` label = pipeline pickup.
 - Documents attach to projects, not to individual issues. One project per bd-build-up.
 
 File via `save_issue` (or Linear MCP equivalent) after explicit approval of the issue manifest.
@@ -138,12 +133,8 @@ branch path segment. The selector lives in the description, not a label; write e
 
 **Designation = the `{{IMPLEMENT_LABEL}}` label.** Terminal = the issue is Done or Cancelled.
 
-**Build the whole tree first, then label the parent BEFORE the children.** Create children + parent, set
-every `parent` relationship and every `Blocked by:` relation — then label the parent, then the children.
-A labelled parent with *no children yet* is classified as a leaf and dispatched standalone (observed
-failure), so the complete tree must exist before any label goes on. And a child labelled while its parent
-is *unlabelled* resolves an empty ancestor chain and cuts its PR from the repo base branch, silently
-bypassing grouping — so the parent is labelled first. The race guard makes that safe: a labelled parent
-whose children carry no label yet is a *waiting parent* and is skipped until its children release.
+**Build the whole tree first, then label it in one pass, parent first.** Create children + parent, and set
+every `parent` relationship and every `Blocked by:` relation. Then label the parent, then every child. The
+two races this order avoids are in `../pipeline.md` § Designation order.
 
 Full model: `../feature-branch-grouping.md`.

@@ -1,6 +1,7 @@
 # Issue body — the canonical template
 
-Shared reference for `bd-build-up` and `bd-mega-build-up`. Every filed issue uses this shape.
+Shared reference for `bd-build-up`, `bd-mega-build-up`, `bd-summit-push`, and the follow-up
+issues `bd-build-down` files. Every filed issue uses this shape.
 
 The body has two audiences in this order: a **human** skimming the board, then a **coding
 agent** reading cold. The opening paragraph serves the human. Everything after it serves the
@@ -20,7 +21,8 @@ Current state, and what this issue enables.
 ## Task
 
 What to build, precisely: routes and request/response shapes, schema columns and types,
-UI layout and interaction detail, component names as they exist in the codebase.
+UI layout and interaction detail, component names as they exist in the codebase, and every
+adjacent change the work needs.
 
 Design reference: {ADR path, prototype route, or design screen — for the human reviewer}
 
@@ -33,7 +35,7 @@ Design reference: {ADR path, prototype route, or design screen — for the human
 
 ## Acceptance Criteria
 
-- [ ] Independently verifiable outcome
+- [ ] One claim, checkable from the diff or by a command in the implementer's sandbox
 - [ ] `{{BUILD_CMD}}` passes
 
 ## Dependencies
@@ -44,9 +46,10 @@ Parallel-safe with: {ISSUE-IDs}
 ## Shape
 
 Shape: {wide-and-shallow | deep-and-targeted}
+Stays whole: {omit below 7 countable files and 7 criteria | why the issue stays whole}
 Migration/backfill: {no | yes — isolated, no consumers in this issue}
 Pattern anchor: {exact file or PR, or "novel"}
-Test fixture: {test path, or "full test inlined above"}
+Test fixture: {test path, or the cases a first-of-its-kind test covers}
 Trust boundary: {none | crosses X, handled by Y}
 Rollback: {mechanical | flag `name` | revert}
 Observability: {none | `metric.name`}
@@ -58,24 +61,56 @@ Snapshot delta: {none | per-part: `<part.nt>` <direction> <rough size>[; needs a
 Edge cases, gotchas, and the decisions from the grill that bear on this issue.
 ```
 
+## How the orchestrator reads the body
+
+When planning runs, the planner reads the body and posts an Acceptance Bar comment: numbered
+claims taken from the criteria. The implementer builds from the body and the plan. The reviewer
+reads only the source and the diff, runs no commands, and grades each numbered claim as written.
+The rules below follow from that.
+
+## Body rules
+
+1. **Verify every fact, count, and anchor against the code**, per
+   [`anchor-verification.md`](./anchor-verification.md). The reviewer grades each criterion as a
+   literal claim and enforces the body's text over correct code. Observed: a body said one
+   component reads a token, two did, and a correct run failed review three times. Count call
+   sites with a search, not from memory.
+2. **Name every file and every adjacent change the task needs.** The reviewer reverts needed
+   work that the body does not name as unrequested scope. A config allowance, a second reader,
+   or a doc line the work needs belongs in `## Task` and `## Files`.
+3. **Write six or fewer criteria where the work allows**, because each one is a claim the
+   reviewer grades (see [`issue-shape.md`](./issue-shape.md) § Size). Make no criterion
+   contradict another: one criterion's grep forbade a name that another's test required, and the
+   implementer built the name from fragments to pass both. Make each one checkable from the diff
+   or by a command that runs in the implementer's sandbox. The sandbox has no live service,
+   deployed environment, or browser, so a criterion that needs one loops the run until a person
+   supplies the evidence. Put that evidence in an operator
+   issue instead: no pickup signal, `Blocked by:` the implementation issue, closed by a person.
+   Inside a tree, an open operator child also holds the parent's closing run.
+4. **Close every decision before filing.** An open choice leaves the implementer to pick, and
+   the reviewer grades the pick against text that did not decide it.
+5. **Settle the body before the orchestrator plans the issue.** The planner fixes the acceptance
+   bar when it plans. A body edit after that does not change the bar, so the reviewer keeps
+   grading the old claims. To change the bar after planning, post a new comment that starts with
+   the exact header `## ✅ AI Planning: Acceptance Bar`. The next run reads the newest one.
+
 ## Declare the surface. Do not script the work.
 
 The implementer is a capable model. It does not need its edits dictated step by step, and a
-scripted plan goes stale the moment the codebase moves under it.
+scripted plan goes stale the moment the codebase moves under it. The most prescriptive bodies
+in a sample had trouble 2 times in 6, no better than the rest.
 
-**Declare** — exact file paths, the schema and API contract, testable acceptance criteria,
-the pattern anchor to mirror, the trust boundary, and any decision the agent could not
-reasonably reach on its own.
+**Declare** — exact file paths, the schema and API contract (a type shape or a state table is
+fine as a code block), the criteria, the pattern anchor to mirror, the trust boundary, and every
+decision.
 
-**Do not script** — a numbered `read this, then edit that, then run the test` sequence, full
-implementation code for work the agent can write, or a restatement of the repo's own
-conventions.
+**Do not script** — a numbered `read this, then edit that, then run the test` sequence, code for
+work the agent can write, or a restatement of the repo's own conventions.
 
-Two carve-outs, where a code block beats prose:
-
-- **A first-of-its-kind test.** Nothing in the repo to mirror, so inline the whole test.
-- **A snippet that encodes a decision more precisely than prose** — a state machine, a
-  reducer, a schema, a type shape. Inline the decision-rich part, not a working demo.
+**The one exception is an exact string or value the reviewer will grade**: an error message, a
+log line, a constant, a header name. Verify it against the code before you quote it, because the
+reviewer grades a quoted string as the requirement. Observed: a body prescribed wrong comment
+text, and the reviews flip-flopped between that text and the correct behaviour.
 
 ## Every constraint carries the failure it prevents
 
@@ -90,47 +125,43 @@ State the constraint, then the concrete thing that breaks without it:
 | "Resolve the IDs once." | "Resolve the IDs once — this endpoint already issues many queries per request, and a second resolve per predicate makes a known slow path worse." |
 | "Do not use an embedded `!inner` join." | "Do not use an embedded `!inner` join — an entity in two selected projects returns twice, and every count downstream is wrong." |
 
-**Why this matters more than it looks.** An implementer weighing "required vs optional" with no
-stated consequence will reasonably pick the one that compiles against today's callers — and
-optional-with-a-fallback compiles. The spec was followed in letter, the constraint evaporated,
-and nothing failed loudly enough to notice. Observed: a `required` argument shipped as
+With no stated consequence, an implementer weighing "required or optional" picks the one that
+compiles against today's callers. Observed: a required argument shipped as
 `opts?: { entity?: T }` with `if (!opts?.entity) return query`, which turned "filter by project"
-into "return everything" for any caller that forgot it.
-
-This applies with most force to constraints whose violation is **silent** — a dropped filter, a
-truncated result, a widened scope. Where the violation is loud, prose is enough.
+into "return everything". The reason matters most where the violation is **silent**: a dropped
+filter, a truncated result, a widened scope.
 
 ## `## Files` is machine-read
 
 Keep the exact bullet form. The orchestrator's dispatch guard parses
-`- Create|Modify|Test|Delete: ` followed by a backticked path — a `:line-range` suffix inside
-the backticks is fine. Declared overlap between two dispatchable siblings defers the later one
-until the first merges.
+`- Create|Modify|Test|Delete: ` followed by a backticked path. A `:line-range` suffix inside the
+backticks is fine.
 
-**An issue with no parseable `## Files` section fails open.** It dispatches in parallel
-regardless of overlap and falls back on conflict auto-recovery. Every file the work touches
-belongs in this list. Prose mentions inside `## Task` are invisible to the guard.
+**The guard compares only siblings on one feature branch.** Declared overlap defers the later
+sibling until the first merges. The guard skips standalone issues, so two standalone issues that
+edit one file need a `Blocked by:` between them.
+
+**An issue with no parseable bullets fails open.** It dispatches beside any sibling that edits
+the same files. Every file the work touches belongs in this list. Prose mentions inside
+`## Task` are invisible to the guard.
 
 ### Shared helper files
 
 List a shared helper as `Modify:` in every sibling that extends it. A shared helper is a file
-that one issue creates and sibling issues extend. Examples: a test kit, a contract suite, a
-fixture, a shared type file.
+that one issue creates and sibling issues extend: a test kit, a contract suite, a fixture, a
+shared type file. The guard defers the later sibling only when both issues declare the file. A
+sibling that only reads the helper does not declare it.
 
-The overlap rule defers the later sibling only when both issues declare the file. A sibling
-that only reads the helper does not need to declare it. A sibling that changes it does.
+**Example.** Issue A creates `src/__tests__/helpers/contract.ts`. Issues B and C each extend it.
+Both B and C declare `Modify: src/__tests__/helpers/contract.ts`. Without that declaration, the
+guard can run B and C in parallel and cause a merge conflict.
 
-**Example.** Issue A creates `src/__tests__/helpers/contract.ts`. Issues B and C each extend
-that helper to support their feature. Both B and C must declare
-`Modify: src/__tests__/helpers/contract.ts`. Without that declaration, the guard does not see
-the overlap. It may run B and C in parallel and cause a merge conflict.
+## The filing check
 
-### Verify the list before filing (required — no output, no filing)
+Run it on every drafted body before you file it, and again before you label a filed issue.
 
-Run [`tools/verify-issue-files.py`](./tools/verify-issue-files.py) against the drafted body and
-the repo, and paste its output into the session before the approval gate. A red result blocks
-filing; a green result is the evidence the plan was checked. It is a few seconds, and it checks
-what review reliably does not:
+**When a shell exists**, run [`tools/verify-issue-files.py`](./tools/verify-issue-files.py)
+against the body and the repo, and paste its output into the session:
 
 ```sh
 verify-issue-files.py draft.md --repo /path/to/repo
@@ -138,20 +169,27 @@ verify-issue-files.py draft.md --repo /path/to/repo
 gh issue view 123 --json body --jq .body | verify-issue-files.py - --repo .
 ```
 
-It fails on a `Modify`/`Delete` target that does not exist, a `Create` target that already
-does, a body with no parseable bullets at all, and any `"<n> lines"` claim that disagrees with
-the file. It also prints each file's real line count and first meaningful line.
+It fails on a `Modify:` or `Delete:` target that does not exist, a `Create:` target that does, a
+body with no parseable bullets, a `"<n> lines"` claim that disagrees with the file, and the shape
+rules in [`issue-shape.md`](./issue-shape.md). It warns at 7 countable entries. Read the
+inventory it prints, not only the exit code. Observed: a body called a page "1367 lines", and the
+inventory showed 40, because the long file was one path segment away.
 
-It also enforces the shape rules from [`issue-shape.md`](./issue-shape.md): a `Create:` entry
-with more than three `Modify:` consumers, more than 12 declared entries, or a contract surface
-(migrations, schema, API/callback/envelope definitions — extend with `--contract`) modified in
-the same issue as a `Create:`. Each of those is a split, not a warning to note and file past.
+**When no shell exists** (chat), apply the same checks by reading. Open each `## Files` path
+through the GitHub connector or a code-reading agent (`bd-belay-on`). Confirm each `Create:` path
+is new, count the countable entries, and check each line-count claim. Say in the session that the
+check ran by reading.
 
-**Read that inventory, not just the exit code.** The exit code catches wrong paths; the
-inventory catches the more common error — a path that exists and is not the file you think it
-is. One issue described a page as "1367 lines" with a metadata block to extend; the inventory
-showed 40 lines, because the 1367-line file was a sibling one path segment away. Every
-existence check had passed.
+**Hold the issue**, and fix it before you file or label it, when any of these is true:
+
+1. It reaches the size threshold in [`issue-shape.md`](./issue-shape.md) § Size with no
+   `Stays whole:` reason.
+2. A criterion cannot be checked by reading source or by a command in the implementer's sandbox
+   (body rule 3).
+3. A stated fact, count, or anchor is not verified against the code (body rule 1), or a design
+   decision is left open (body rule 4).
+4. It carries a migration or an auth change. Route it to the architect with no pickup signal
+   (below). A PR that carries one still escalates in `bd-build-down`.
 
 ## Labels, routing, and metadata
 
@@ -177,8 +215,9 @@ user's own queue.
 ## Dependency phrasing
 
 Always `Blocked by: {ISSUE-ID} (reason)`. Never "Depends on", "Requires", or "After". One
-phrase, one pattern — bd-build-down reads it to sequence merges. The tracker-native relation
-mechanism is per-adapter; see the adapter's **Dependencies** section.
+phrase, one pattern — bd-build-down reads it to sequence merges. The tracker-native relation is
+what holds dispatch; the body line does not. Its mechanics are in the adapter's
+**Dependencies** section.
 
 ## Setting surface
 

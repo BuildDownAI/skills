@@ -243,11 +243,7 @@ The core creative work. The output is a structured plan, presented and not filed
 ### Issue design
 
 Every issue passes [`../bd-shared/issue-shape.md`](../bd-shared/issue-shape.md) — the shape
-rule, the hard rules, and the soft signals. Split anything that fails.
-
-Shape is the sizing test. An issue is right-sized when it is **either** wide-and-shallow
-**or** deep-and-targeted, holds one primary concern, can be described without knowledge of the
-whole system, and has testable acceptance criteria.
+rule, the size threshold, the hard rules, and the soft signals. Split anything that fails.
 
 **Prototype reference** — Mode 1 issues carry the prototype route
 (`Design reference: code-prototype at /app/path/to/feature`). Mode 2 handoff-bundle issues
@@ -262,7 +258,7 @@ A numbered sequence. For each issue:
 2. **Type** — Bug / Feature / Improvement
 3. **Labels**
 4. **Priority** — High / Medium / Low
-5. **Shape** — wide-and-shallow or deep-and-targeted, and the file count
+5. **Shape** — wide-and-shallow or deep-and-targeted, the countable file count, and the criteria count
 6. **Dependencies** — which issues in this plan must land first
 7. **Brief description** — 2–3 sentences. The full body comes at filing time.
 8. **Routing** — agent / architect / needs user decision
@@ -313,48 +309,34 @@ queryable as a unit.
 
 ### Write the bodies
 
-Use [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md) — the template, the `## Files`
-contract, labels, and routing. Write the body at filing time, not in the plan. The adapter's
-**Required create fields**, **Issue type**, and **Issue URL** sections carry what the tracker
-demands on top of the template.
+Use [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md) — the template, the body rules,
+the `## Files` contract, labels, and routing. Write the body at filing time, not in the plan. The
+adapter's **Required create fields**, **Issue type**, and **Issue URL** sections carry what the
+tracker demands on top of the template.
 
-Declare the surface; do not script the work. Exact paths, contracts, and testable acceptance
-criteria — not a step-by-step edit sequence for a capable implementer.
-
-**Every anchor is verified before it is written.** Open the file, grep the symbol, cite the path —
-[`../bd-shared/anchor-verification.md`](../bd-shared/anchor-verification.md). Docs, memories, KG
-hits, handoffs, and earlier issues are leads, not verification. `tools/verify-issue-files.py`
-checks the paths in `## Files` only; symbols and routes in prose are checked by hand.
-
-For each sibling that extends a shared helper, list the helper as `Modify:` in the sibling's
-`## Files` — see `§ Shared helper files` in [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md).
+**Run the filing check on every body before you file it** — `issue-body.md` § The filing check.
+Run the linter when a shell exists; otherwise apply the same checks by reading. Fix every held
+issue before it is filed or labelled.
 
 ### Stage the waves
 
-**Re-resolve `{{IMPLEMENT_LABEL}}`** — immediately before labelling Wave 1 issues and immediately
+**Re-resolve `{{IMPLEMENT_LABEL}}`** — immediately before releasing issues and immediately
 before designating a feature node, re-resolve the pickup label per
 [`../bd-shared/pickup-label.md`](../bd-shared/pickup-label.md) rule 3 (rules 1–2 in order). Use
 the freshly resolved value for both the label assignment and the feature-node designation call.
 
-The wave model, feature-node designation order, and pilot-first sequencing are in
-[`../bd-shared/pipeline.md`](../bd-shared/pipeline.md); the concrete mechanics are the
-adapter's **Pickup trigger**, **Wave staging**, **Architect routing**, **Dependencies**, and
-**Feature-node grouping** sections. File in dependency order so each `Blocked by:` resolves to
-a real issue ID.
+Release per [`../bd-shared/pipeline.md`](../bd-shared/pipeline.md) § Wave release: a
+feature-branch tree at filing, a standalone chain one wave at a time, pilot-first for
+same-template siblings. The mechanics are the adapter's **Pickup trigger**, **Wave staging**,
+**Architect routing**, **Dependencies**, and **Feature-node grouping** sections.
 
 **Tracker links are direction-sensitive, and a backwards link blocks the wrong issue.** Follow
 the adapter's **Dependencies** section for the exact call, then verify each link by reading the
 blocked issue back before filing anything that depends on it. This applies to a build-down or
 split that files follow-ups too, not only to a full build-up.
 
-**The pickup signal is tracker-specific.** Linear uses state plus a label; Jira uses the
-`AI-Implement-Status` field, where setting only a label is a silent no-op. On Jira the only
-value ever set by hand is `Ready` (or the field stays unset for held issues) — `Planning`
-and `Implementing` are orchestrator-owned states that hide the issue from pickup and burn
-a concurrency slot if set manually.
-
 **Exceptions, and the user must signal them:** *"stage only, don't start"* files everything
-parked; *"brief only"* (Mode 3) files nothing. If the signal is ambiguous, ask one clear
+with no pickup signal; *"brief only"* (Mode 3) files nothing. If the signal is ambiguous, ask one clear
 question: *"Do we file Wave 1 to start the pipeline, or stage everything for later?"*
 
 A mid-session discovery during bd-build-down is that skill's concern — it files scoped fixes
@@ -363,8 +345,8 @@ directly. bd-build-up launches a coordinated wave.
 ### After filing
 
 Present a manifest: `Issue # | Title | Labels | Dependencies | Priority | State | Label used`.
-The `Label used` column shows the resolved `{{IMPLEMENT_LABEL}}` value actually applied to Wave 1
-issues. This is the reference point for later status checks and bd-build-down sessions.
+The `Label used` column shows the resolved `{{IMPLEMENT_LABEL}}` value actually applied to the
+released issues. This is the reference point for later status checks and bd-build-down sessions.
 
 ### Closing step — the learnings comment (required)
 
@@ -502,11 +484,12 @@ identically against the same tracker.
    this is close".
 3. **Mode defaults from framing.** Infer first; ask only on conflicting signals.
 4. **Two clarifying questions, then draft.** After that, state assumptions.
-5. **Shape is the sizing test.** Wide-and-shallow or deep-and-targeted, never both. See
+5. **Shape and size are the sizing test.** Wide-and-shallow or deep-and-targeted, never both,
+   and split at 7 unless the body says why not. See
    [`../bd-shared/issue-shape.md`](../bd-shared/issue-shape.md).
-6. **Declare the surface, do not script the work.** Exact paths and testable criteria, not a
-   step-by-step edit sequence.
-7. **Stage waves, do not park.** Wave 1 goes live — get the agents going.
+6. **Declare the surface, do not script the work.** Per
+   [`../bd-shared/issue-body.md`](../bd-shared/issue-body.md).
+7. **Release at filing, do not park.** Wave 1 and every issue in a feature-branch tree go live.
 8. **Suggest bd-build-down only when there is something to drive down.**
 9. **bd-build-up plans; bd-build-down drives.** Do not mix their autonomy models. This skill
    asks permission to file; that one acts and reports.

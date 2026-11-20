@@ -16,16 +16,21 @@ Two failure modes this catches, both observed in real build-ups:
    correctly skipped the work, and the reviewer wrongly called it a silent drop.
 
 3. An issue whose shape violates issue-shape.md: a new module plus more than a
-   few consumers (wide-and-deep), too many declared entries for one implement
-   pass, or a contract surface changed in the same issue as a new module. The
-   observed case: one "foundation" issue creating a classifier and wiring it
-   into eight call sites, a callback body, and a database column. Three review
-   rounds; every blocking finding at a seam. The rubric said to split it; prose
-   is walked past, a non-zero exit is not.
+   few consumers (wide-and-deep), too many countable entries, or a contract
+   surface changed in the same issue as a new module. The observed case: one
+   "foundation" issue creating a classifier and wiring it into eight call sites,
+   a callback body, and a database column. Three review rounds; every blocking
+   finding at a seam. The rubric said to split it; prose is walked past, a
+   non-zero exit is not.
 
 So this prints what each file *actually is* next to what the issue claims, fails
 on any numeric line-count claim that does not match, and fails on a shape
 violation unless --no-shape is given.
+
+Size (issue-shape.md, "Size"): only Create: and Modify: entries count. Tests,
+fixture data, deletions, and moves (a Create: whose file name a Delete: also
+names) do not. At 7 countable entries it warns and exits 0: split the issue, or
+add a `Stays whole:` line to `## Shape` that says why. At 12 it fails.
 
 Usage:
     verify-issue-files.py BODY.md --repo /path/to/repo
@@ -53,9 +58,11 @@ LINE_CLAIM = re.compile(r"(?:~|approximately\s+|about\s+)?([\d,]{2,})\s+lines?\b
 # Any backticked path-looking token, so a claim can be attributed to a file.
 INLINE_PATH = re.compile(r"`([^`\s]*/[^`\s]*\.[A-Za-z0-9]+)(?::\d+(?:-\d+)?)?`")
 
-# Shape thresholds (issue-shape.md, "The shape rule"). Overridable per invocation.
+# Shape thresholds (issue-shape.md). Overridable per invocation.
 DEFAULT_MAX_CONSUMERS = 3   # Modify: source files alongside a Create: source file
-DEFAULT_MAX_ENTRIES = 12    # every declared bullet, tests and docs included
+DEFAULT_WARN_ENTRIES = 7    # countable entries: warn, exit 0
+DEFAULT_MAX_ENTRIES = 12    # countable entries: fail
+STAYS_WHOLE = re.compile(r"^\s*Stays whole:\s*\S", re.IGNORECASE | re.MULTILINE)
 # Paths that are contract surfaces: readers and validators live on the other side
 # of a process boundary. A Create: in the same issue as a Modify: here is hard
 # rule 13 (contract change isolation). Substring match on the declared path;
@@ -66,6 +73,7 @@ DEFAULT_CONTRACT_MARKERS = (
 )
 DOC_SUFFIXES = (".md", ".mdx", ".rst", ".txt")
 TEST_MARKERS = ("__tests__/", "/tests/", "/test/", ".test.", ".spec.", "_test.", "spec/")
+FIXTURE_MARKERS = ("fixtures/", "__fixtures__/", "testdata/", "__snapshots__/")
 
 
 def is_doc(path: str) -> bool:
@@ -76,22 +84,52 @@ def is_test(path: str) -> bool:
     return any(m in path for m in TEST_MARKERS)
 
 
+def is_fixture(path: str) -> bool:
+    return any(m in path for m in FIXTURE_MARKERS)
+
+
+def countable(entries: list[tuple[str, str, int]]) -> list[str]:
+    """Paths that count toward the size threshold: Create: and Modify: entries that
+    are not tests, not fixture data, and not the new half of a move."""
+    deleted = {Path(p).name for v, p, _ in entries if v == "Delete"}
+    return [
+        p for v, p, _ in entries
+        if v in ("Create", "Modify") and not is_test(p) and not is_fixture(p)
+        and not (v == "Create" and Path(p).name in deleted)
+    ]
+
+
 def check_shape(
     entries: list[tuple[str, str, int]],
+    body: str,
     max_consumers: int,
+    warn_entries: int,
     max_entries: int,
     contract_markers: tuple[str, ...],
-) -> list[str]:
-    """Shape violations per issue-shape.md. Each one is a split, not a note."""
+) -> tuple[list[str], list[str]]:
+    """Shape violations and size warnings per issue-shape.md. A violation is a split."""
     problems: list[str] = []
+    warnings: list[str] = []
     creates = [p for v, p, _ in entries if v == "Create" and not is_doc(p) and not is_test(p)]
     modifies = [p for v, p, _ in entries if v == "Modify" and not is_doc(p) and not is_test(p)]
 
-    if len(entries) > max_entries:
+    counted = len(countable(entries))
+    if counted >= max_entries:
         problems.append(
-            f"shape: {len(entries)} declared entries (limit {max_entries}, tests and docs count). "
-            "Split: deep core + wide propagation blocked by it."
+            f"shape: {counted} countable entries (fails at {max_entries}; tests, fixtures, "
+            "deletions and moves do not count). Split: deep core + wide propagation blocked by it."
         )
+    elif counted >= warn_entries:
+        if STAYS_WHOLE.search(body):
+            warnings.append(
+                f"size: {counted} countable entries (threshold {warn_entries}). The body states "
+                "why it stays whole; check that the reason holds."
+            )
+        else:
+            warnings.append(
+                f"size: {counted} countable entries (threshold {warn_entries}). Split the issue, "
+                "or add a `Stays whole:` line to `## Shape` that says why. Without one the issue is held."
+            )
     if creates and len(modifies) > max_consumers:
         problems.append(
             f"shape: {len(creates)} new module(s) plus {len(modifies)} modified source file(s) — "
@@ -106,7 +144,7 @@ def check_shape(
                 + ", ".join(f"`{p}`" for p in contract_hits)
                 + ". The producer and the contract are different reviews — split them."
             )
-    return problems
+    return problems, warnings
 
 
 def find_files_section(body: str) -> list[tuple[str, str, int]]:
@@ -187,8 +225,10 @@ def main() -> int:
     ap.add_argument("--no-shape", action="store_true", help="skip the issue-shape checks")
     ap.add_argument("--max-consumers", type=int, default=DEFAULT_MAX_CONSUMERS,
                     help=f"Modify: source files allowed alongside a Create: (default {DEFAULT_MAX_CONSUMERS})")
+    ap.add_argument("--warn-entries", type=int, default=DEFAULT_WARN_ENTRIES,
+                    help=f"countable entries that warn (default {DEFAULT_WARN_ENTRIES})")
     ap.add_argument("--max-entries", type=int, default=DEFAULT_MAX_ENTRIES,
-                    help=f"declared ## Files entries allowed (default {DEFAULT_MAX_ENTRIES})")
+                    help=f"countable entries that fail (default {DEFAULT_MAX_ENTRIES})")
     ap.add_argument("--contract", action="append", default=[],
                     help="extra path substring that marks a contract surface (repeatable)")
     args = ap.parse_args()
@@ -237,15 +277,17 @@ def main() -> int:
         )
 
     problems.extend(check_line_claims(body, repo))
+    warnings: list[str] = []
     if not args.no_shape:
-        problems.extend(
-            check_shape(
-                entries,
-                args.max_consumers,
-                args.max_entries,
-                DEFAULT_CONTRACT_MARKERS + tuple(m.lower() for m in args.contract),
-            )
+        shape_problems, warnings = check_shape(
+            entries,
+            body,
+            args.max_consumers,
+            args.warn_entries,
+            args.max_entries,
+            DEFAULT_CONTRACT_MARKERS + tuple(m.lower() for m in args.contract),
         )
+        problems.extend(shape_problems)
 
     if not args.quiet:
         width = max(len(r[1]) for r in rows)
@@ -253,6 +295,9 @@ def main() -> int:
         for verb, path, size, hint in rows:
             print(f"  {verb:<7} {path:<{width}}  {size:>11}   {hint}")
         print()
+
+    for w in warnings:
+        print(f"WARNING: {w}\n")
 
     if problems:
         print(f"{len(problems)} violation(s):\n")

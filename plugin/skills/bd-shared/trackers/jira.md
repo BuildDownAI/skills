@@ -77,11 +77,15 @@ Concretely, on create:
    operator or the orchestrator mapping.
 
 ## Wave staging
-- **Wave 1** (no blockers): `AI-Implement-Status = Ready` (see Pickup trigger).
-- **Wave 2+** (has blockers): create with `AI-Implement-Status` **unset** —
+The release rule is `../pipeline.md` § Wave release. In Jira terms:
+- **Feature-branch tree:** every agent-routed issue `AI-Implement-Status = Ready`
+  at filing, the Story first, then every sub-task. The `Blocks` links hold each one until
+  its blockers are done.
+- **Standalone wave 1:** `AI-Implement-Status = Ready` (see Pickup trigger).
+- **Standalone wave 2+:** create with `AI-Implement-Status` **unset** —
   literally empty, not `Planning` or any other placeholder (those are
   orchestrator-owned and burn concurrency slots). The pipeline ignores an unset
-  field. Promote to `Ready` during bd-build-down as blockers merge.
+  field. A session sets it `Ready` when every blocker is done.
 - Pilot-first sequencing (`../pipeline.md`) maps to: file all siblings but set
   `AI-Implement-Status = Ready` on **only the pilot**; leave the rest unset until
   the pilot's PR lands, then set them `Ready`.
@@ -95,7 +99,8 @@ Status field is the gate.
 Create a Jira **"Blocks" issue link**. For "Issue B blocked by Issue A", create
 the link so that **A is the inward (blocker) issue and B is outward** — i.e. "A
 blocks B". The pipeline (`isBlockedByIncomplete`) skips an issue that has an
-inward "Blocks" link to a non-`done` issue. Get the direction right or the
+inward "Blocks" link to a blocker whose status category is not `done` and whose
+`AI-Implement Status` is not `Merged`. Get the direction right or the
 dependency will not serialize.
 
 **The exact call.** With the Atlassian MCP `createIssueLink` tool, the argument
@@ -218,12 +223,9 @@ needs team-managed native Story→Story parenting; classic Jira can't parent Sto
 instances use multiple independent single-level feature-node Stories under one tracking Epic. Both are fine
 — the orchestrator caps chains at depth 5 regardless.
 
-**Build the whole tree first, then designate the parent BEFORE the children.** Create every child and wire
-every `parent` link and every `Blocks` link first — a designated parent with no children yet looks like a
-childless leaf and dispatches its closing work onto base. Then designate the **parent**, then the children:
-a child designated while its parent is undesignated resolves an empty ancestor chain and PRs against the
-repo base branch, silently bypassing grouping. A designated parent whose children exist but are not yet
-designated is a *waiting parent* and is skipped (the Jira translation of Linear's parent-first rule).
+**Build the whole tree first, then designate it in one pass, parent first.** Create every child and wire
+every `parent` link and every `Blocks` link. Then designate the **parent**, then every child. The two races
+this order avoids are in `../pipeline.md` § Designation order.
 
 **Roll-ups (shared):** an internal roll-up (parent is itself a feature node) is a direct `git merge`, **no
 PR**, with an identifier-free commit so GitHub-for-Jira / Smart Commits don't auto-close the parent early. A

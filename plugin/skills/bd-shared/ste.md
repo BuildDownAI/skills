@@ -52,12 +52,9 @@ compress by dropping information.
 2. **Opening paragraph — STE.** The body starts with 2–4 plain sentences, before any heading,
    that say what the ticket is and why it exists. A human skimming the board must understand
    the ticket from this paragraph alone.
-3. **Rest of the body — maximally legible to AI agents.** After the opening paragraph,
-   optimize for a coding agent reading cold: exact file paths in backticks, complete code
-   blocks instead of descriptions of code, explicit values instead of "appropriate" ones, the
-   exact section headings the skill's body template names (they are parsed), consistent names
-   for every type/function/route across sections, and no information that exists only behind
-   a link. The prose sentences in the rest of the body also use STE.
+3. **Rest of the body — for a coding agent reading cold.** Follow the template and body rules
+   in [`issue-body.md`](./issue-body.md). Use one name for each type, function, and route
+   across sections. The prose sentences in the rest of the body also use STE.
 
 ## Decision style — questions to the user
 

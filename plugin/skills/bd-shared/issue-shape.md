@@ -1,10 +1,9 @@
 # Issue shape — the decomposition rubric
 
-Shared reference for `bd-build-up` and `bd-mega-build-up`. Every issue passes this rubric or
-gets split before it is filed.
+Shared reference for `bd-build-up`, `bd-mega-build-up`, and `bd-summit-push`. Every issue
+passes this rubric or gets split before it is filed.
 
-Shape replaces abstract sizing. A story-point estimate never predicted whether a cold agent
-one-shots an issue. Shape does, because shape is what the runner actually feels: how many
+Shape and size replace abstract estimates, because they are what the runner feels: how many
 files it must open, and how much it must reason at each one.
 
 ## The shape rule (hard constraint)
@@ -12,8 +11,8 @@ files it must open, and how much it must reason at each one.
 Every issue is **either** wide-and-shallow **or** deep-and-targeted. Never both.
 
 - **Wide & shallow** — many files, each touch mechanical: rename, propagate a type, add the
-  same import, add a tracking call. Low cognitive load per file. Two risks. *Missing a file* —
-  mitigate with an explicit `## Files` list. *Turn-budget exhaustion* — see below.
+  same import, add a tracking call. Low cognitive load per file. Risk: *missing a file* —
+  mitigate with an explicit `## Files` list.
 - **Deep & targeted** — few files, each touch requires reasoning: a new algorithm, a state
   machine, component logic. Concentrated load. Risk: wrong logic. Mitigate with testable
   acceptance criteria.
@@ -28,29 +27,31 @@ wired into eight call sites, a callback contract, and a database column was file
 "deep-and-targeted, ~9 files". It took three review rounds, and every blocking finding was at a
 seam, not in the module. A reviewer looking only at wiring would have caught them in one.
 
-**Count every entry.** The file limit counts `Test:` and `Modify:` docs entries too, not only
-source files. The same issue above was "9 files" counted as source and 14 as declared; the PR
-touched 15, then 24.
+## Size
 
-**Turn budget, by shape.** The runner caps Claude turns per implement pass (a project Max-Turns
-setting, commonly ~50). Budget by shape, not by a flat per-file number:
+At **7 countable files or 7 acceptance criteria**, split the issue, or add a `Stays whole:` line
+to `## Shape` that says why it stays whole. Countable files are the `Create:` and `Modify:`
+entries. Tests, moves, deletions, and fixture data do not count, because most large PRs that
+merged clean were large for those reasons.
 
-| Shape | Turns per file | Ceiling |
-|---|---|---|
-| Wide & shallow | 2–4 (read, edit, verify) | ~12–15 files |
-| Deep & targeted | 8–15 (read, reason, edit, test, re-read) | ~5 files |
+The threshold comes from a small sample, so read it as a threshold with a reason, not a law. In
+35 random Done issues, all 6 with 7 or more files and 9 of the 12 with 7 or more criteria
+needed a fix round or a person. Below 7, a little over a third did. Each criterion is one more
+literal claim the reviewer grades, and each file is one more place a seam can break.
 
-Observed: a 14-file deep issue ran 130–139 turns per pass; the flat 2–4 estimate predicted 30–60.
-When an issue approaches its ceiling, either **split** (deep core + wide propagation blocked by
-it) or **raise the project's Max Turns** before dispatch and note it on the issue.
+Each run also has a turn or time limit set per project. A run that reaches its turn limit opens a
+draft PR and skips review. At 12 countable files, split; no stated reason keeps the issue whole.
 
-**The shape linter checks all three.** `tools/verify-issue-files.py` fails on a `Create:` with more
-than three consumers, on more than 12 declared entries, and on a contract surface changed in the
-same issue as a new module (hard rule 13). Run it before filing; do not file over a red result.
+**The linter checks the files.** `tools/verify-issue-files.py` warns at 7 countable entries and
+fails at 12. It also fails on a `Create:` with more than three consumers and on a contract
+surface changed in the same issue as a new module (hard rule 13). It reads a `Delete:` and a
+`Create:` of the same file name as a move. Count the criteria yourself.
+How to run it, and what to do without a shell: [`issue-body.md`](./issue-body.md) § The filing
+check.
 
 ## Hard rules
 
-A violation splits the issue. No exceptions.
+A violation splits the issue.
 
 1. **Migration isolation.** A schema migration is its own issue and its own PR. Consumers —
    API, UI — are downstream issues with `Blocked by:`.
@@ -61,11 +62,11 @@ A violation splits the issue. No exceptions.
    rejected.
 4. **Scope matches the title.** The issue touches only what its title claims. A drive-by
    refactor is a separate issue.
-5. **Spec readable cold.** Title, files, steps, and acceptance criteria all live in the issue
-   body. The pipeline reads the body cold and does not follow links. "See the design doc" with
-   nothing inlined is a filing failure.
-6. **Acceptance criteria are testable.** Each criterion is a checkbox with a verifiable
-   outcome. "Works correctly" is rejected.
+5. **Spec readable cold.** Title, files, decisions, and acceptance criteria all live in the
+   issue body. The pipeline reads the body cold and does not follow links. "See the design doc"
+   with nothing inlined is a filing failure.
+6. **Acceptance criteria are checkable.** Each criterion meets the criteria rule in
+   [`issue-body.md`](./issue-body.md) § Body rules. "Works correctly" is rejected.
 7. **Information-coupled work counts as deep.** If a per-touch decision needs context outside
    the issue's named files — *"for each viewset, decide whether to paginate based on what the
    frontend expects"* — the issue is deep-and-targeted on a smaller surface, not
@@ -195,12 +196,12 @@ is not.
 | Signal | Question | Action when the answer is "no" |
 |---|---|---|
 | **Pattern anchor** | Is there a file or PR the agent can mirror? | Name the closest analog. **For a new file, cite an existing sibling file by exact path** — *"create `django/x/tests_pagination.py`, sibling to `tests_lifecycle.py`"* — never by description. Agents do not infer path conventions: three parallel agents pick three different paths. Parallel siblings each anchor inside their own surface, not in a peer issue's. |
-| **Test fixture** | Is there an analogous test to copy? | If it is first of its kind, inline the full test in the issue body. |
+| **Test fixture** | Is there an analogous test to copy? | If it is first of its kind, name the cases it must cover and the file it sits beside. |
 | **Trust boundary** | Does this cross user input, an external API, or a tenant edge? | Name what is validated where, and what is authorized where. |
 | **Rollback path** | If this breaks in production, what is the recovery? | Risky changes need a flag or a revert note. Mechanical changes need neither. |
 | **Observability** | What log or metric confirms it works in production? | If the issue adds behaviour worth verifying, name the signal. |
 | **Parallel safety** | Does this share file edits with another unblocked issue? | One blocks the other, or they merge into one issue. |
-| **Chain position** | Is this the first issue in a dependency chain? | Make it the **smallest** issue in the chain, not the largest. It sets the pattern every later issue mirrors, and it is the one issue nothing else can start before. Cap it at half the normal ceiling. |
+| **Chain position** | Is this the first issue in a dependency chain? | Make it the **smallest** issue in the chain, not the largest. It sets the pattern every later issue mirrors, and it is the one issue nothing else can start before. Keep it to half the size threshold or less. |
 
 
 ## A worked split
@@ -228,7 +229,7 @@ unclassified error, the callback validator rejecting the whole body.
 Issue 1 reviews as an algorithm. Issue 2 reviews as wiring, and a wiring reviewer would have
 caught all four seam defects in one round. Issue 3 reviews as a contract: validator, readers,
 version skew. Issues 2 and 3 run in parallel. Total cost is lower, not higher, because each pass
-fits its turn budget and no pass repeats work a reviewer rejected.
+fits its run limit and no pass repeats work a reviewer rejected.
 
 The tell was available before filing: the `Create:` entry had eight consumers, and the chain's
 first issue was its largest.
