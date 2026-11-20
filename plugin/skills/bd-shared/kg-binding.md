@@ -9,16 +9,17 @@ for the server name.
 
 ## Binding call — get_project_binding
 
-When `kg.present: true` and the orchestrator MCP is in the session tool list, resolve the full
-binding with one call:
+When the orchestrator MCP is in the session tool list, `./session-start.md` resolves the binding
+with one call that takes no arguments:
 
 ```
-mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")
+mcp__<prefix>__get_project_binding()
 ```
 
-where `<prefix>` is the orchestrator connector prefix resolved by `./session-start.md` step 1.
+where `<prefix>` is the orchestrator connector prefix from `./session-start.md` step 1. The
+answer lists every mapping. Use the one whose `repo` is this session's repo.
 
-Response shape:
+Shape of one mapping:
 
 ```json
 {

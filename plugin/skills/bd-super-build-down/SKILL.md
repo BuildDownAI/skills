@@ -37,7 +37,7 @@ bd-super-build-down is bd-build-down run at speed and scale. Same mission (fewer
 
 Same as bd-build-down. The skill assumes the user has these set up:
 
-- `{{TRACKER}}` — issue tracker (Linear, Jira, GitHub Issues)
+- `{{TRACKER}}` — issue tracker. **Linear only.** This skill names Linear states and calls directly and loads no tracker adapter. On a Jira project, use `bd-build-down`, which loads `trackers/jira.md`
 - `{{REPO}}` — GitHub repo, owner/name format
 - `{{PREVIEW_HOST}}` — preview deploy URL pattern
 - `{{IMPLEMENT_LABEL}}` — label that triggers the AI coding agent pipeline. Resolved at session start per `../bd-shared/pickup-label.md`.
@@ -150,7 +150,7 @@ Clean enough to handle autonomously but has one manageable issue:
 
 ### Tier 3: Escalate (batch, not inline)
 
-Escalation triggers (same pattern-break list as bd-build-down):
+Escalation triggers (bd-build-down's pattern-break list, items 1–7, plus five for unattended runs):
 
 1. Gap requires a product decision
 2. Agent already failed on this specific gap (prior attempt in comment history)
@@ -381,7 +381,7 @@ No approval gate. For each parent/umbrella issue driven this session, post or up
 # ai-implement-build-down-learnings
 
 **Feature:** <one line>
-**Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
+**Driven by:** <harness · model>           e.g. Claude Code · Opus 5.5
 **PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
 
 ## Outcome
@@ -419,7 +419,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 
 1. Conflict involves business logic (not just imports/config)
 2. Resolution is ambiguous
-3. Same PR has received 2+ agent comments in this session (possible loop — escalate)
+3. The PR has reached the round cap: three gap-fill rounds, counted as in bd-build-down's **Round cap**. Escalate; do not post a fourth
 4. Gap requires a product decision
 5. A fix found in a grouped-tree review has not yet been approved by the user (see §4d)
 
@@ -438,7 +438,7 @@ Same pattern-break list as Phase 2 Tier 3 (above), plus:
 
 Halt the session immediately and post what you have to the learnings comments when:
 
-1. **3+ consecutive CI failures across different PRs** — main branch is likely broken. Do not keep merging.
+1. **3+ consecutive CI failures across different PRs** — the base branch is likely broken. Do not keep merging.
 2. **Auto-merge API call fails unexpectedly** — pause all merges, shift remaining PRs to Tier 3, finish with escalation batch.
 3. **bd-smoke-jumper repeatedly returns 🔴 on PRs that should be clean** — something is wrong with the preview environment, not the PRs.
 4. **The user explicitly says "stop" or "hold"** — pause all activity, present current state.
@@ -491,7 +491,7 @@ bd-super-build-down comments include a trailing marker so the architect can filt
 4. **Drive to standard.** Same as bd-build-down — don't defer scoped gaps when the agent can fix them.
 5. **Silence is never the default.** Every gap is fixed, escalated, or filed.
 6. **Abort beats damage.** Session-abort triggers exist because unattended runs can cause harm. Honor them.
-7. **Pattern-break list is identical to bd-build-down.** This skill is bd-build-down at speed, not with different rules.
+7. **The pattern-break list starts from bd-build-down's and removes nothing.** This skill adds triggers for unattended runs. It is bd-build-down at speed, not with different rules.
 8. **Every session closes with a `# ai-implement-build-down-learnings` comment on each driven parent.** Autonomous write, required — outcome (incl. `closed-unmerged` failures), deltas, and harness/model provenance. Not done without it. See `../bd-shared/learnings-comments.md`.
 
 9. **Fixes in a grouped tree are never filed directly.** Draft them with the bd-build-up steps, add to the Tier 3 batch unlabelled, and label only after the user approves.

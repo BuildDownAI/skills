@@ -276,8 +276,8 @@ whose action it affects, stored in settings, with the env var as the seed on fir
 Record the answer as the `Setting surface:` value in that issue's `## Shape` block. A plan
 with a surfaceless flag is not ready for approval.
 
-**Snapshot delta check (required for KG-repo emitter changes).** If the repo's `CLAUDE.md`
-has a `## Knowledge graph` block and any issue's `## Files` list touches `sources.yml`,
+**Snapshot delta check (required for KG-repo emitter changes).** If the binding has
+`kg.present: true` and any issue's `## Files` list touches `sources.yml`,
 classifier rules, node types, or `doc_exclude`, that issue must carry a `Snapshot delta:`
 value in its `## Shape` block before the plan is presented. Ask: *"What is the expected
 change per snapshot part, and does it need accept-new-baseline?"* `"None"` is accepted
@@ -381,7 +381,7 @@ The marker is an exact-match first line. Never reuse `# ai-implement.yml` — op
 and it gets stripped from the spec.
 
 **Provenance:** self-report the harness and model you planned under, e.g. `Claude Code ·
-Opus 5`. If you cannot determine the model, ask the operator once. Never guess, never omit.
+Opus 5.5`. If you cannot determine the model, ask the operator once. Never guess, never omit.
 
 ```
 # ai-implement-build-up-learnings

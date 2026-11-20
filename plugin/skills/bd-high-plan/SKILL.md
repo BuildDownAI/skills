@@ -36,8 +36,8 @@ ever applied by this skill — see Filing.
   still open — especially when an outside analysis, vendor doc, or brainstorm needs to be
   reduced to a simple plan.
 - **Don't use** when the shape is already settled and the need is implementable issues → that is
-  bd-build-up. When the design itself needs adversarial deep review with a full implementation
-  plan → that is bd-mega-build-up. bd-high-plan can precede either.
+  bd-build-up. When the design itself needs adversarial deep review with decision
+  records → that is bd-mega-build-up. bd-high-plan can precede either.
 
 ## The Process
 

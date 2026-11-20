@@ -38,7 +38,7 @@ snapshot. A refresh takes about 13 minutes on GitHub Actions.
      - Stop.
 
 **2b. Check search tool availability.** Use ToolSearch to confirm `mcp__<prefix>__<searchTool>`
-   (the resolved search tool name from Step 1, e.g. `mcp__orch-ai-implement-testing__kg_hybrid_search`)
+   (the resolved search tool name from Step 1, e.g. `mcp__<prefix>__kg_hybrid_search`)
    is present in the session's tool list. Query for that exact tool name.
    - If present: proceed normally; Step 7 will run the full verification including the live query.
    - If absent: print "The bound server lists no KG search tools this session — the sidecar is not

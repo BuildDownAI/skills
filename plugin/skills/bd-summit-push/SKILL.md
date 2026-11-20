@@ -23,7 +23,7 @@ bd-summit-push is the strategic layer between bd-build-up and bd-build-down. bd-
 
 ## Configuration
 
-- `{{TRACKER}}` — the issue tracker (Linear, Jira, GitHub Issues)
+- `{{TRACKER}}` — the issue tracker (Linear or Jira)
 - `{{REPO}}` — the GitHub repo, owner/name format
 - `{{IMPLEMENT_LABEL}}` — label that triggers the AI coding agent pipeline. Resolved at session start per `../bd-shared/pickup-label.md`.
 - `{{ARCHITECT_NAME}}` — the human who owns risky changes (migrations, auth, infra). Optional.
@@ -152,8 +152,8 @@ graph is not "all PRs → base." Model the **cascade**:
   that need scheduling**.
 - The **critical path runs *through* the feature node** and ends at the single **top-of-tree
   `feature → base` PR** (the human gate). Time-to-land = longest leaf→…→top chain, plus the human review.
-- **Labelling sequence:** whole-tree labelling is safe (the race guard keeps a parent from being worked
-  before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
+- **Labelling sequence:** label the whole tree in one pass, parent before children (the race guard keeps a
+  parent from being worked before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
   before its children.
 
 (Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)

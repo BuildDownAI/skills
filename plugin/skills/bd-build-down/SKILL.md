@@ -63,7 +63,7 @@ This skill runs in three environments with different capabilities. Detect which 
 
 Pick the active tracker at session start and load its adapter:
 
-- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (a `linear-*` MCP → Linear, an `atlassian-*` MCP → Jira). If ambiguous, ask once.
+- Take `{{TRACKER}}` from `tracker.kind` in the binding that `../bd-shared/session-start.md` resolved (`linear` or `jira`).
 - Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (issue scan, pickup trigger, post-merge completion, unblock, follow-up filing) follows that adapter's matching `## ` section.
 - State the tracker in the opening declaration.
 
@@ -689,7 +689,7 @@ Abandonment is a valid, valuable terminal outcome — "killed because X" is a le
 # ai-implement-build-down-learnings
 
 **Feature:** <one line>
-**Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
+**Driven by:** <harness · model>           e.g. Claude Code · Opus 5.5
 **PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
 
 ## Outcome
