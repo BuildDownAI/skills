@@ -26,7 +26,7 @@ A bd-smoke-jumper is an autonomous agent that parachutes onto PRs, figures out w
 | 🟡 functional-caveat | Boot passes but a non-acceptance-criteria feature is broken | Escalate (Tier 3) | Recommend hold or agent fix |
 | 🔴 DO NOT MERGE | Boot fails OR acceptance criteria feature broken | Escalate (Tier 3) | Hold, agent fix, or close |
 
-This mapping is the contract between bd-smoke-jumper and the host skills. Verdicts must be one of these four exactly.
+This mapping is the contract between bd-smoke-jumper and the host skills. Verdicts must be one of these four exactly, or `⚠️ auth-required` when the preview needs a login and no active session exists.
 
 ---
 
@@ -121,7 +121,7 @@ Before testing, understand what this PR actually does.
 
 ### 2a-pre. KG recon (if a KG is bound)
 
-Before reading the gap analysis, run 2–3 `kg_hybrid_search` queries (procedure:
+Before reading the gap analysis, run 2–3 queries with the resolved KG search tool (`mcp__<prefix>__<kg.searchTool>`; procedure:
 `../bd-shared/kg-recon.md` — advisory, hybrid-search only, silent skip when no KG), in two classes:
 
 1. **Surface priors** — the PR's linked issue key + title: known-fragile surfaces, past

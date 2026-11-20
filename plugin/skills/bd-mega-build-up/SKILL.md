@@ -337,7 +337,7 @@ The marker is an exact-match first line. Never reuse `# ai-implement.yml` — op
 and it gets stripped from the spec.
 
 **Provenance:** self-report the harness and model you planned under, e.g. `Claude Code ·
-Opus 5`. If you cannot determine the model, ask the operator once. Never guess, never omit.
+Opus 5.5`. If you cannot determine the model, ask the operator once. Never guess, never omit.
 
 ```
 # ai-implement-build-up-learnings

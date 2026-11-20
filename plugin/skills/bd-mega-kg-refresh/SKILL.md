@@ -41,7 +41,7 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
    - Use ToolSearch to check whether `mcp__<prefix>__get_session_identity` is in the
      session's tool list. If the tool is absent:
      - Print: "This orchestrator has no `get_session_identity` tool; it predates the MCP write
-       tier ([AII-381](https://linear.app/eudoxus/issue/AII-381/mcp-declared-write-list-with-a-role-per-tool-get-session-identity-and)).
+       tier (AII-381).
        Update the orchestrator, then retry."
      - Stop.
    - Call `mcp__<prefix>__get_session_identity`. Apply `../bd-shared/orchestrator-auth.md`
@@ -77,7 +77,7 @@ are manifest/ingest changes on a `kg-ingest/*` branch through a PR.
       it and carry N to Q0. A hint of `base drift unknown` means the compare could not run:
       print it and carry unknown to Q0.
    2. If no `base:drift` row is present, print: "base drift unknown — this orchestrator
-      predates [AII-598](https://linear.app/eudoxus/issue/AII-598/kg-refresh-preflight-advisory-basedrift-row-how-far-the-kg-repo-is);
+      predates AII-598;
       upgrade the orchestrator to obtain the `base:drift` advisory row." and continue.
 
    Advisory only — the drift count is used by Q0 in Phase 3 to decide whether to offer the
@@ -162,7 +162,7 @@ you explicitly defer to a later session.
    git fetch upstream
    ```
    Then run `git log --oneline HEAD..upstream/main` and group commits by path prefix.
-   *(Note: `upstream/main` is the hardcoded base target; [BDS-54](https://linear.app/eudoxus/issue/BDS-54/bd-kg-refresh-and-bd-mega-kg-refresh-track-the-base-branch-from) will replace it with the value from `sources.yml base_repo.branch`.)*
+   *(Note: `upstream/main` is the hardcoded base target; BDS-54 will replace it with the value from `sources.yml base_repo.branch`.)*
 
    | Bucket | Path prefix |
    |---|---|

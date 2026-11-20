@@ -72,7 +72,7 @@ is running is not auto-captured (see PR-outcome, below), but the missing build-d
 
 ## Provenance — harness + model
 
-Every learnings comment records the **harness** (Claude Code, OpenCode, …) and **model** (Opus 4.8,
+Every learnings comment records the **harness** (Claude Code, OpenCode, …) and **model** (Opus 5.5,
 GLM 5.2, …) behind the work, on a `harness · model` line (middle dot).
 
 - **Self-report + ask-if-unknown.** State the harness + model you are running under. If you genuinely
@@ -134,7 +134,7 @@ writes, so the convention is identical on both providers — zero new API surfac
 # ai-implement-build-up-learnings
 
 **Feature:** <one line + tree shape>
-**Planned by:** <harness · model>          e.g. Claude Code · Opus 4.8
+**Planned by:** <harness · model>          e.g. Claude Code · Opus 5.5
 
 ## Decisions & why
 - <decision> — <why; what was rejected and the concrete failure it avoids>
@@ -152,7 +152,7 @@ writes, so the convention is identical on both providers — zero new API surfac
 # ai-implement-build-down-learnings
 
 **Feature:** <one line>
-**Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
+**Driven by:** <harness · model>           e.g. Claude Code · Opus 5.5
 **PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
 
 ## Outcome
