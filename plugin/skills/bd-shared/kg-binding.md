@@ -82,7 +82,7 @@ coupling loose.
 - `bd-kg-refresh` keeps the **orchestrator's** graph current: it triggers the refresh rail
   through the `trigger_kg_refresh` MCP tool (the rail clones, ingests, guards, and serves the
   updated graph). The laptop never pushes `snapshot/`. For local iteration on the ingest, use
-  `bd-mega-kg-refresh` (forthcoming — see BDS-49).
+  `bd-mega-kg-refresh`.
 - The graph stamps its own age at ingest (`dcterms:modified` on the spine IRI) — recon states
   "graph as of {date}" and flags staleness worth a refresh.
 

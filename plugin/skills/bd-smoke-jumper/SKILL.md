@@ -399,6 +399,7 @@ Re-resolve `{{IMPLEMENT_LABEL}}` per `../bd-shared/pickup-label.md` before assig
 - **Labels:** `Bug`, plus workstream label
 - **Priority:** Urgent if boot failure, High if acceptance-criteria feature broken, Medium otherwise
 - **Dependency link:** Reference the source PR's issue as `relatedTo`
+- **Body:** the canonical template in `../bd-shared/issue-body.md`, with a `## Files` section that lists the files the fix changes. The orchestrator's overlap guard reads that section
 
 File autonomously. Do not ask permission — silent drop is not an option, and filing is safer than forgetting.
 

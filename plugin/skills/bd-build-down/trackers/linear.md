@@ -19,7 +19,7 @@ no direct API calls or browser-based Linear access.
 
 ## Issue scan & states
 
-**Resolve `{{IMPLEMENT_LABEL}}`:** Per `../bd-shared/pickup-label.md` — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source. Use the resolved value for all `list_issues` label filters and `save_issue` label assignments in this session.
+**Resolve `{{IMPLEMENT_LABEL}}`:** Per `../../bd-shared/pickup-label.md` — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source. Use the resolved value for all `list_issues` label filters and `save_issue` label assignments in this session.
 
 Pull current board state using three parallel `list_issues` calls:
 

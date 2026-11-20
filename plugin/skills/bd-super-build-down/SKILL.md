@@ -369,7 +369,7 @@ comment at merge time, and the capstone on the parent when a tree completes or t
 
 ### Closing step — post/update the build-down learnings comment (required, autonomous)
 
-No approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
+No approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addCommentToJiraIssue`). Full convention: `../bd-shared/learnings-comments.md`.
 
 **Record the outcome of every PR this session drove or observed:** `merged` | `closed-unmerged (failure)` (closed without merging — a failure; record the concrete reason; detect from `state=CLOSED` and not merged) | `open / never-landed` | `superseded`. Abandonment is a valid terminal outcome, not a gap.
 

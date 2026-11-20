@@ -16,6 +16,15 @@ follow from it.
 
 The tracker is the source of truth. An ad-hoc prompt never enters the pipeline.
 
+**A stopped issue is not always visible in the tracker.** After three counted failures of one
+phase, or at the PR's gap-fill limit, the orchestrator parks the issue and stops dispatching
+it. On Linear a parked issue carries no label; the orchestrator holds the park in its own
+record. An issue that carries the pickup signal and does not move is read with
+`get_issue_dispatch_status` (see `bd-system-questions`), which reports the park and any
+failing setup check. An admin clears a park with `unpark_issue`. Removing and re-adding the
+pickup label does not clear it. This park is the orchestrator's; it is not the "parked"
+Backlog state that wave staging uses below.
+
 **What this means for issue bodies.** The pipeline reads the body cold and asks no follow-up
 questions, so everything it needs is inline. Gap analysis only catches what the spec
 specified — a vague acceptance criterion produces a vague gap analysis and a bad PR.

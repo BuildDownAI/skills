@@ -13,7 +13,7 @@ The core (`../SKILL.md`) delegates tracker-touching steps to this file when
 ## MCP & discovery
 
 The Atlassian connector is the one found by `../../bd-shared/session-start.md` step 4
-(the one tool outside the orchestrator prefix whose name ends in `__list_projects`); the project key is `tracker.team` from the binding.
+(the one tool whose name ends in `__getVisibleJiraProjects`); the project key is `tracker.team` from the binding.
 Discover the Jira tools at runtime with ToolSearch (`jira search jql`, `jira get issue`,
 `jira transition issue`, `jira edit issue`, `jira add comment`). Two distinct status concepts:
 `AI-Implement-Status` (the orchestrator's custom-field state machine: Ready →
@@ -37,7 +37,7 @@ the orchestrator mapping), not the display name.
 To release an issue for pickup: set `AI-Implement-Status = Ready`, set the Repo
 field to the mapping's `repoFieldValue`, and ensure the issue satisfies the
 mapping's scope JQL. The {{IMPLEMENT_LABEL}} alone does **not** trigger pickup —
-the Status field does. (Jira pickup is field-driven; labels are not the signal — see `../bd-shared/pickup-label.md` rule 5.)
+the Status field does. (Jira pickup is field-driven; labels are not the signal — see `../../bd-shared/pickup-label.md` rule 5.)
 
 ## Post-merge completion
 After build-down merges a PR, complete the linked Jira issue explicitly:
