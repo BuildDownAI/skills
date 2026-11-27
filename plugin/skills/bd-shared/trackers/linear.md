@@ -37,7 +37,7 @@ Create one project document titled `Design Decisions` holding a short index: one
 written for this build-up, each with its repo path, its one-line decision statement, and a
 permalink to the file on the default branch. Add any glossary terms this build-up introduced.
 
-Use the Linear MCP's document creation tool (`create_document` or equivalent). If the available
+Use the Linear connector's document tool (`save_document`). If the available
 MCP version has no document support, put the index in the project description instead.
 
 The index travels with the project, so anyone who picks up an issue can reach the design from
@@ -51,7 +51,7 @@ goal is to surface every overlap and force a decision before any new issue gets 
 
 **Search strategy:**
 
-1. **Keyword search.** Extract 5–10 domain terms from the objective (entity names, feature names, route paths, table names). Search Linear via `search_issues` (or `list_issues` + filter) across **all states** including Backlog. Don't restrict to In Progress — stale Backlog issues are exactly the overlap that gets missed.
+1. **Keyword search.** Extract 5–10 domain terms from the objective (entity names, feature names, route paths, table names). Search Linear via `list_issues` with its `query` parameter, across **all states** including Backlog. Don't restrict to In Progress — stale Backlog issues are exactly the overlap that gets missed.
 2. **Label search.** If the bd-build-up touches a known feature area with a label (e.g., `billing`, `auth`, `onboarding`), list all open issues with that label.
 3. **Project search.** Check related existing projects via `list_projects`. Pull the issue list for any project whose scope plausibly overlaps.
 4. **File-path heuristic.** If Phase 1 codebase research identified specific files this bd-build-up will modify, search issue bodies for those paths.

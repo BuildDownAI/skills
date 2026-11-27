@@ -11,3 +11,7 @@
 
 # Local install symlinks created by ./install.sh --project .
 .claude/skills/
+
+# Python
+__pycache__/
+*.pyc

@@ -51,11 +51,11 @@ Parachutes onto one or more PRs, reads the gap analysis to figure out what to te
 
 Trigger: *"smoke-jump"*, *"smoke test"*, *"test this PR"*, *"verify the preview"*.
 
-### `bd-mega-build-up` — deep bd-build-up with adversarial grilling and plan documents
+### `bd-mega-build-up` — deep bd-build-up with adversarial grilling and decision records
 
-bd-build-up's heavier cousin. Same AI-Implement pipeline awareness and issue-shape discipline, but adds an adversarial design-review phase (senior-engineer pushback before any issues get filed), a detailed implementation plan with exact file paths, and design + plan documents attached to the tracker project/epic so they travel with the work. Supports both Linear and Jira via swappable tracker adapters (`trackers/linear.md`, `trackers/jira.md`).
+bd-build-up's heavier cousin. Same AI-Implement pipeline awareness and issue-shape discipline, but adds an adversarial design-review phase (senior-engineer pushback before any issues get filed), and decision records (ADRs and glossary terms) that travel with the work. Supports both Linear and Jira via swappable tracker adapters (`trackers/linear.md`, `trackers/jira.md`).
 
-Use bd-mega-build-up when scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture) or when the plan needs to live as documentation. Use plain `bd-build-up` for smaller, well-trodden work.
+Use bd-mega-build-up when scope is non-trivial (≥ 8 issues, multi-system, schema changes, or new architecture) or when the decisions need to live as documentation. Use plain `bd-build-up` for smaller, well-trodden work.
 
 Trigger: *"bd-mega-build-up"*, *"deep bd-build-up"*, *"grill me on this"*, *"thorough bd-build-up"*, *"I want the senior eng review"*.
 
@@ -114,7 +114,7 @@ its `ai-implement/feature/<key>` branch, and the tree rolls up to one human-revi
 These skills assume a workflow with:
 
 - **[Claude Code](https://docs.claude.com/en/docs/claude-code)** — the harness that loads and runs skills.
-- **An issue tracker MCP** — Linear is the assumed default; substitute Jira / GitHub Issues if you have an equivalent MCP.
+- **An issue tracker MCP** — Linear is the assumed default; Jira is supported through the Atlassian connector.
 - **GitHub MCP** — for PR survey, comment posting, and merging.
 - **Browser automation MCP** — for bd-smoke-jumper and inline preview checks (Chrome DevTools MCP, Playwright MCP, etc.).
 - **An AI coding agent that responds to PR comments** — [AI-Implement](https://github.com/cpope/AI-Implement) is the reference implementation; anything that opens a PR from a labeled ticket and re-runs from a `/ai-implement` (or equivalent) comment will work.

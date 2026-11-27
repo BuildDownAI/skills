@@ -24,14 +24,14 @@ After this skill, the project has a working, queryable KG.
 | KG repo name | `knowledge-graph-<project-slug>` |
 | Org | the project repo's owner |
 | Namespace | `https://kg.<org>.dev/` (convention; confirm with the operator) |
-| Tracker | from the project's `CLAUDE.md` (`tracker.kind` + team), if bound |
+| Tracker | from the binding (`tracker.kind` + `tracker.team`), if bound |
 | Docs URL | two-part ask (BDS-38): (a) "What is the published docs root for this project? Skip if none." (b) for a versioned site (stable/latest areas): "Which docs version/area documents the branch this KG ingests?" — the answer selects the crawl root and is recorded as `documents_branch:` |
 | Orchestrator | the orchestrator URL — the app whose projects define scope (confirmed by `get_project_binding` after Step 6 binds it) |
 | Visibility | private |
 
 ## Steps
 
-1. **Preflight.** If `kg repo view <org>/<kg-name>` finds an existing repo, or if running
+1. **Preflight.** If `gh repo view <org>/<kg-name>` finds an existing repo, or if running
    `../bd-shared/session-start.md` returns `kg.present: true` in the binding (i.e. a KG is
    already bound for this project), stop — never create a duplicate (use bd-kg-refresh to
    rebuild an existing KG).

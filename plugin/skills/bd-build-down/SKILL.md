@@ -63,7 +63,7 @@ This skill runs in three environments with different capabilities. Detect which 
 
 Pick the active tracker at session start and load its adapter:
 
-- Infer `{{TRACKER}}` from the connected MCP / orchestrator mapping (a `linear-*` MCP → Linear, an `atlassian-*` MCP → Jira). If ambiguous, ask once.
+- Take `{{TRACKER}}` from `tracker.kind` in the binding that `../bd-shared/session-start.md` resolved (`linear` or `jira`).
 - Read `trackers/{{TRACKER}}.md`. Every tracker-touching step below (issue scan, pickup trigger, post-merge completion, unblock, follow-up filing) follows that adapter's matching `## ` section.
 - State the tracker in the opening declaration.
 
@@ -469,7 +469,7 @@ Treat an agent comment as a dispatch, not passive prose. Before posting, capture
 2. **Wait for the active cycle to finish.** Do not post while implementation, post-push review, review-fix, or gap analysis for that PR is queued or running.
 3. **Require current-head terminal evidence.** Confirm that no agent run or relevant check is active and that the configured pipeline reports review/gap analysis complete or ready for follow-up on the captured head SHA.
 4. **Restart on head changes.** If the PR head SHA changes while waiting, discard the prior observation and repeat the gate for the new head.
-5. **Post once and record it.** Post the resolved instruction once, then record the PR number, head SHA, and posting time in the session log.
+5. **Post once.** Post the resolved instruction once. The comment on the PR is the record of the head SHA and the posting time.
 
 For agents other than AI-Implement, map the same gate to that agent's ready and terminal signals. If the state is not observable, wait for an explicit ready-for-triage or completed gap-analysis signal instead of guessing.
 
@@ -485,6 +485,12 @@ finding changes a retry decision, a credential or authorization posture, or data
 and every remaining finding goes into **one** follow-up issue, filed pickup-ready. Doc wording,
 test hygiene, naming, and consistency nits are never merge blockers past round three.
 
+The orchestrator keeps a separate limit: four automatic gap-fill runs per PR in a rolling 24
+hours (the project's `prDispatchBudget`). At that limit it parks the issue and posts one
+notice on the PR and the issue. A `{{AGENT_MENTION}}` comment from a person
+still dispatches, and it counts toward the limit. The three-round cap is lower so that this
+session stops and files the follow-up before the orchestrator parks the issue.
+
 Why: two thorough reviewers re-review every delta, and on a PR with an under-specified contract
 each fix produces the next finding indefinitely. Observed: a 3-file push-retry PR took five
 rounds, all inside one first-match regex table; a 9-file comment-rendering PR took eight, all on
@@ -497,10 +503,17 @@ open issue turned an 11-file issue into 22 files and ten rounds — the wide-and
 build-up rubric exists to prevent, recreated during build-down.
 
 **Split signal at round one.** If the first review's blocking findings sit mostly at seams
-between a new module and its consumers, the PR is over-shaped. Do not drive it: close the PR,
-keep the branch as reference, and re-file as module / wiring / contract issues per
-`../bd-shared/issue-shape.md`. The linter would have flagged it before filing; the first review
-is the last cheap moment to act on it.
+between a new module and its consumers, the PR is over-shaped. Do not drive it. First file the
+module / wiring / contract issues per `../bd-shared/issue-shape.md`, and name the old branch in
+each as reference. Then close the PR. The linter would have flagged it before filing; the first
+review is the last cheap moment to act on it.
+
+Closing an implementation PR without a merge ends its issue: the orchestrator moves the issue
+to Canceled on Linear, or sets Implementation Failed on Jira, and posts a comment that says so.
+That is the wanted result for a split, because the new issues carry the work. It is the wrong
+tool for a retry. To run the same issue again on the same PR, comment `{{AGENT_MENTION}}`.
+The orchestrator leaves the issue alone when the closed PR is a roll-up, when the issue is a
+grouping parent, or when the issue has another open or merged PR or a run in flight.
 
 ### Posting rules
 
@@ -514,7 +527,6 @@ is the last cheap moment to act on it.
 ### After posting
 
 - Verify that the configured agent accepted or queued the trigger for the recorded head (for example, a reaction, status comment, job, or check). If it reports that the PR is unknown, execute the registration-race recovery in the trigger readiness gate.
-- Note in session log: "Agent comment posted on PR #N for gap: {one-line summary}"
 - Do not merge the PR yet — wait for the agent to resolve, then the PR re-enters triage when CI goes green
 
 ---
@@ -626,7 +638,11 @@ ingests both the same way.
 {current state, why this issue exists, what triggered it}
 
 ## Task
-{specifics — file paths, components, API shapes, schema if relevant}
+{specifics — components, API shapes, schema if relevant}
+
+## Files
+- Modify: `exact/path/to/existing.ts`
+- Test: `tests/exact/path/test.ts`
 
 ## Acceptance Criteria
 - [ ] {testable checks}
@@ -639,6 +655,10 @@ Blocked by: {ISSUE-ID} (if any)
 {surfaced-from-PR #N, related architectural context, known gotchas}
 ```
 
+`## Files` is required, in the exact bullet form of `../bd-shared/issue-body.md`. The
+orchestrator's overlap guard reads it. A follow-up with no `## Files` section dispatches beside
+any sibling that changes the same files.
+
 ---
 
 ## Phase 6: Close — the learnings go into the issue
@@ -650,7 +670,7 @@ comment at merge time, and the capstone on the parent when a tree completes or t
 
 ### Closing step — post/update the build-down learnings comment (required)
 
-An **autonomous write** — no approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addComment`). Full convention: `../bd-shared/learnings-comments.md`.
+An **autonomous write** — no approval gate. For each parent/umbrella issue driven this session, post or update its `# ai-implement-build-down-learnings` comment (**one canonical comment per issue, edited in place**; exact-match marker; never reuse `# ai-implement.yml`). Distilled, not a copy of the session log. Works on Linear (`save_comment`) and Jira (`addCommentToJiraIssue`). Full convention: `../bd-shared/learnings-comments.md`.
 
 **Record the outcome of every PR this session drove or observed**, using this taxonomy:
 
@@ -669,7 +689,7 @@ Abandonment is a valid, valuable terminal outcome — "killed because X" is a le
 # ai-implement-build-down-learnings
 
 **Feature:** <one line>
-**Driven by:** <harness · model>           e.g. Claude Code · Opus 4.8
+**Driven by:** <harness · model>           e.g. Claude Code · Opus 5.5
 **PRs implemented by:** <harness · model>  the AI-Implement runner (from the PR body's `harness · model · provider` line)
 
 ## Outcome
@@ -737,7 +757,7 @@ If a symptom doesn't clearly match a row, don't force-fit. Investigate and escal
 
 **Label conventions (adapt names to your tracker):**
 - `{{IMPLEMENT_LABEL}}` — the AI coding agent should implement this
-- `agent-working` — the AI coding agent is actively running (set by pipeline, don't set manually)
+- `AI-Planning`, `AI-Working`, `Plan-Complete`, `Ready for Review` — lifecycle labels the orchestrator writes on Linear. Do not set them by hand. `AI-Working` can stay on a Done issue, so read run state from the orchestrator, not from this label
 - `backend` — API, schema, or infrastructure work
 - `frontend` — UI components, pages, styling
 - `full-stack` — touches both

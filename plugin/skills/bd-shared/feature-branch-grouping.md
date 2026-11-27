@@ -112,14 +112,16 @@ above — the `{{IMPLEMENT_LABEL}}` label on Linear, a non-empty `AI-Implement-S
   dispatches.
 - **Feature node, all children terminal** → its own closing work dispatches onto its feature branch.
 - **Parent with children but none *designated* yet** → **race guard**: skipped, *not* worked as a leaf.
-  This is why you can designate a whole tree at once (or top-down) without the parent being implemented
-  prematurely. ("Designate" = apply the `{{IMPLEMENT_LABEL}}` label on Linear, or set `AI-Implement-Status` + Repo
+  This is why you can designate a whole tree in one pass, parent before children, without the parent being
+  implemented prematurely. ("Designate" = apply the `{{IMPLEMENT_LABEL}}` label on Linear, or set `AI-Implement-Status` + Repo
   on Jira.)
 
 "Terminal" means **Done or Cancelled** (on Jira, any status whose `statusCategory` is `done`) — a cancelled
 child doesn't block its parent forever.
 
-**Planning consequence:** designate the whole tree at once and let the gates sequence it. A parent's own
+**Planning consequence:** designate the whole tree in one pass, parent before children, and let the gates
+sequence it. A child designated while its parent carries no designation opens its PR against the repo base
+branch, outside the tree. A parent's own
 closing work is effectively `Blocked by:` all its designated children. Never write a parent that must merge
 to the Default Branch *before* its children — children PR into the parent's branch, not the reverse.
 

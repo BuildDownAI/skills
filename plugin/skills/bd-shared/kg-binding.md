@@ -9,16 +9,17 @@ for the server name.
 
 ## Binding call — get_project_binding
 
-When `kg.present: true` and the orchestrator MCP is in the session tool list, resolve the full
-binding with one call:
+When the orchestrator MCP is in the session tool list, `./session-start.md` resolves the binding
+with one call that takes no arguments:
 
 ```
-mcp__<prefix>__get_project_binding(repo: "<owner>/<repo>")
+mcp__<prefix>__get_project_binding()
 ```
 
-where `<prefix>` is the orchestrator connector prefix resolved by `./session-start.md` step 1.
+where `<prefix>` is the orchestrator connector prefix from `./session-start.md` step 1. The
+answer lists every mapping. Use the one whose `repo` is this session's repo.
 
-Response shape:
+Shape of one mapping:
 
 ```json
 {
@@ -82,7 +83,7 @@ coupling loose.
 - `bd-kg-refresh` keeps the **orchestrator's** graph current: it triggers the refresh rail
   through the `trigger_kg_refresh` MCP tool (the rail clones, ingests, guards, and serves the
   updated graph). The laptop never pushes `snapshot/`. For local iteration on the ingest, use
-  `bd-mega-kg-refresh` (forthcoming — see BDS-49).
+  `bd-mega-kg-refresh`.
 - The graph stamps its own age at ingest (`dcterms:modified` on the spine IRI) — recon states
   "graph as of {date}" and flags staleness worth a refresh.
 

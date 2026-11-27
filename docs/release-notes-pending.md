@@ -13,7 +13,7 @@ procedure itself is in `CLAUDE.md` → *Cutting a release*.
 | Item | Value |
 |---|---|
 | `main` plugin version | `1.4.0`, tag `v1.4.0` |
-| `testing` plugin version | `1.5.29` |
+| `testing` plugin version | `1.5.38` at `c63a386`; see the notes at the end for later changes |
 | Commits on `testing` not on `main` | 141 |
 | Release tag the merge will need | `vX.Y.Z` where `X.Y.Z` is what `testing` carries at merge time |
 
@@ -130,3 +130,5 @@ Add a dated line here whenever `testing` gains something the release will need.
 - 2026-09-25 — #144 (`main`, catalog only) added `builddown-dev` at `ref: testing` ahead of the release. Verified: Claude Code installs `builddown-dev@builddown` 1.5.31; claude.ai lists "Builddown dev · 1.5.31". Decision 6 is done; decision 7 is narrowed to a `testing`-only version change.
 - 2026-10-07 — BDS-103: session file (`.bd/session.md`), `bd-shared/session-state.md`, and statusline script (`bd-shared/tools/bd-statusline.sh`) removed from landing skills (build-down, super-build-down, smoke-jumper).
 - 2026-10-10 — Session-summary issues removed from build-down, super-build-down, and smoke-jumper. A session never files a tracker issue to report on itself; findings, manual steps, migrations, and unblocked dependents go into the issue's build-down learnings comment, and the roll-up goes to the user in chat (`bd-shared/learnings-comments.md` § No session-summary issues).
+- 2026-11-19 — Orchestrator facts corrected at `1.5.39`: closing an implementation PR cancels its issue; a Linear park carries no label and is read with `get_issue_dispatch_status`; `blockedBy` holds dispatch; the PR gap-fill limit (4 in 24 h); `## Files` added to the follow-up, hardening, and smoke-failure bodies; Linear and Atlassian connector tool names; two broken adapter paths; the tracked `.pyc` removed.
+- 2026-11-19 — Remaining inaccuracies corrected at `1.5.40`: one loop limit (three rounds) in `bd-build-down` and `bd-super-build-down`; `bd-super-build-down` declared Linear-only; the "GitHub Issues" tracker option removed; designation is one pass, parent before children; `get_project_binding` takes no arguments in `kg-binding.md`; private workspace links removed from shipped text.
