@@ -115,7 +115,7 @@ The "reference design context" link is for humans reviewing the PR, not for the 
 
 Match the user's reference to a Linear project via `list_projects`, list its issues via
 `list_issues` grouped by state, surface blockers, and identify bd-build-down readiness (issues
-in In Review or with open PRs).
+carrying the `Ready for Review` label or with open PRs).
 
 If the user asks "where's the design for X?" — fetch the project's `Design Decisions` document
 and follow it to the ADRs. Don't reconstruct the design from issue bodies.

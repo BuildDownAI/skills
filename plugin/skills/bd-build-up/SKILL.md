@@ -401,7 +401,7 @@ Opus 5.5`. If you cannot determine the model, ask the operator once. Never guess
 
 ### When to suggest a bd-build-down handoff
 
-Only once at least one issue has reached In Review, or at least one PR from this build-up is
+Only once at least one issue carries the `Ready for Review` label, or at least one PR from this build-up is
 open. Not mid-filing, and not while everything sits in Backlog or Todo without PRs — there is
 nothing to drive down yet.
 
@@ -471,7 +471,7 @@ Follow the adapter's **Status check** section for the tracker mechanics.
    days.
 5. **Report:** X of Y issues done, critical-path status, and any unblocked backlog work ready
    for promotion.
-6. **Flag bd-build-down readiness** — issues in review or with open PRs.
+6. **Flag bd-build-down readiness** — issues carrying the `Ready for Review` label or with open PRs.
 
 If PRs are ready, say *"there are N PRs ready for bd-build-down — want to switch modes?"*
 without assuming the answer. If everything sits in Backlog with dependencies already met,

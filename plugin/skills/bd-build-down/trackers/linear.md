@@ -24,12 +24,12 @@ no direct API calls or browser-based Linear access.
 Pull current board state using three parallel `list_issues` calls:
 
 1. `list_issues` filtered by `state: "In Progress"` — agent is actively working; pipeline is running
-2. `list_issues` filtered by `state: "In Review"` — PR is open and ready for triage
+2. `list_issues` filtered by `label: "Ready for Review"` — PR is open and ready for triage
 3. `list_issues` filtered by `state: "Todo"` and label `{{IMPLEMENT_LABEL}}` — queued for agent pickup
 
 **State semantics:**
 - `In Progress` — agent has picked up the issue and is working; a PR branch exists or is being opened. Expected, not alarming.
-- `In Review` — agent has finished its pass and the PR is ready. This is the primary triage queue.
+- `Ready for Review` (label) — the orchestrator has finished its pass, added this label alongside the PR link, and the PR is ready. This is the primary triage queue. (`In Review` is not set by the orchestrator; a workspace may use that state for its own work.)
 - `Todo` + `{{IMPLEMENT_LABEL}}` — in the agent queue; pickup happens within minutes of the label being present.
 
 Any custom working state (e.g., a team-specific "Working" column) is treated the same as `In Progress`. Note it at orientation if present.
