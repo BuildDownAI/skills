@@ -360,8 +360,7 @@ Opus 5.5`. If you cannot determine the model, ask the operator once. Never guess
 ## Status check mode
 
 Match the user's reference to a container per the adapter's **Container** section, list issues
-grouped by state, surface blockers, and flag bd-build-down readiness — issues in review or
-with open PRs.
+grouped by state, surface blockers, and flag bd-build-down readiness — issues carrying the `Ready for Review` label or with open PRs.
 
 When the user asks *"what was the design for X?"*, check the parent issue's `## Decision
 records` first. Once the child that settles the decision has landed, the repo file is

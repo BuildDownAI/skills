@@ -90,7 +90,7 @@ Determine which PRs to smoke-test.
 3. Standalone: present list and confirm. Invoked autonomously: proceed without confirmation.
 
 **Auto-detect:** the user says "smoke-jump" with no args:
-1. Tracker MCP `list_issues` with `state: "In Review"`
+1. Tracker MCP `list_issues` with `label: "Ready for Review"`
 2. Cross-reference with open PRs via GitHub MCP
 3. These are the PRs most likely to need smoke testing
 4. Standalone: confirm the list. Autonomous: proceed.
