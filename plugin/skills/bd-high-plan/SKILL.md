@@ -193,7 +193,7 @@ The parent must be visible to the pipeline's tracker but invisible to its pickup
   node) is the *later opt-in*, not a planning-time action: never label the planning parent to
   "group" its children during planning — labelling it later, parent-first, is exactly how the
   user turns the extracted set into a feature-set run (bd-build-up Mode 4).
-- **Jira:** file the parent with **`AI-Implement-Status` unset** (the field, not the label, is
+- **Jira:** file the parent with **`AI-Implement Status` unset** (the field, not the label, is
   the trigger). Children are sub-tasks or linked issues under the tracking Epic per the
   bd-build-up Jira conventions; they get a Status value only when ready.
 

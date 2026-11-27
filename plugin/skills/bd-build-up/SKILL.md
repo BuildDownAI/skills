@@ -348,10 +348,11 @@ blocked issue back before filing anything that depends on it. This applies to a 
 split that files follow-ups too, not only to a full build-up.
 
 **The pickup signal is tracker-specific.** Linear uses state plus a label; Jira uses the
-`AI-Implement-Status` field, where setting only a label is a silent no-op. On Jira the only
-value ever set by hand is `Ready` (or the field stays unset for held issues) — `Planning`
-and `Implementing` are orchestrator-owned states that hide the issue from pickup and burn
-a concurrency slot if set manually.
+`AI-Implement Status` field, where setting only a label is a silent no-op. On Jira the values
+a person ever sets are `Ready` (dispatch now) and `Plan Approved` (start implementation after
+`Awaiting Approval`, only when the mapping's `autoApprovePlans` is `false`); the field stays
+unset for held issues. `Planning` and `Implementing` are orchestrator-owned states that hide the
+issue from pickup and burn a concurrency slot if set manually.
 
 **Exceptions, and the user must signal them:** *"stage only, don't start"* files everything
 parked; *"brief only"* (Mode 3) files nothing. If the signal is ambiguous, ask one clear

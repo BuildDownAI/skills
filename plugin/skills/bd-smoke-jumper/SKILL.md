@@ -202,7 +202,7 @@ targets a feature branch, not the repo base. Two implications for what you're ac
   for review`) is the highest-value smoke target: smoke-test the **whole integrated feature branch** before
   a human merges it. bd-super-build-down dispatches exactly this before surfacing that PR for human merge.
 
-(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement Status` + matching `AI-Implement Repo` field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 

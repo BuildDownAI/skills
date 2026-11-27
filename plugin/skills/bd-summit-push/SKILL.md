@@ -156,7 +156,7 @@ graph is not "all PRs → base." Model the **cascade**:
   parent from being worked before a child carries `{{IMPLEMENT_LABEL}}`). Don't sequence a parent to merge to the Default Branch
   before its children.
 
-(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement Status` + matching `AI-Implement Repo` field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ### Phase 3: One-Shot Quality Audit
 
@@ -468,7 +468,7 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 **Jira-style (projected — full adaptation tracked in AII-149):**
 - MCP binding: the Atlassian connector found by session-start step 4 (`tracker.kind: jira` in the binding)
 - Description updates: `editJiraIssue` scoped to `description` field; `issuelinks` for `blockedBy`/`relatedTo`
-- Wave state: no direct `state` field — use `transitionJiraIssue` + `AI-Implement-Status` custom field for pipeline gating. Human-set values are exactly two: `Ready` (dispatch now) or **unset** (held). `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting them hides the issue from pickup and burns a concurrency slot
+- Wave state: no direct `state` field — use `transitionJiraIssue` + `AI-Implement Status` custom field for pipeline gating. Human-set values are `Ready` (dispatch now), `Plan Approved` (advance past `Awaiting Approval`, only when `autoApprovePlans` is `false` in the mapping), or **unset** (held). `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting them hides the issue from pickup and burns a concurrency slot
 
 ### Filing states (aligned with bd-build-up)
 

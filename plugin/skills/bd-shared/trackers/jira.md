@@ -8,17 +8,19 @@ Sections marked **(mega only)** describe artifacts plain `bd-build-up` does not 
 Everything else applies to both.
 
 > **The trigger is a field, not a label.** A Jira issue carrying the
-> `AI-Implement` label but **without `AI-Implement-Status = Ready`** is never
+> `AI-Implement` label but **without `AI-Implement Status = Ready`** is never
 > picked up by the pipeline. This is the single most common Jira filing mistake.
 
-> **The only values you ever set by hand are `Ready` or unset.** `Planning`,
+> **The only values you ever set by hand are `Ready` or `Plan Approved`.** `Planning`,
 > `Implementing`, and `PR Ready` are **orchestrator-owned** lifecycle states —
-> the pipeline writes them as it works an issue. Hand-setting one (e.g. filing an
-> issue at `Planning`) both **hides the issue from pickup** (it fails the dispatch
-> predicate) and **burns a pipeline concurrency slot** (the orchestrator counts
-> `Planning`/`Implementing` as in-flight work). To hold an issue back, leave the
-> field **unset** and sequence with `Blocks` links — never park it in an
-> intermediate status.
+> the pipeline writes them as it works an issue. `Plan Approved` is the human
+> action that starts implementation when the mapping's `autoApprovePlans` is
+> `false` (see the state machine in **MCP & discovery**). Hand-setting an
+> orchestrator-owned value (e.g. filing an issue at `Planning`) both
+> **hides the issue from pickup** (it fails the dispatch predicate) and **burns a
+> pipeline concurrency slot** (the orchestrator counts `Planning`/`Implementing`
+> as in-flight work). To hold an issue back, leave the field **unset** and
+> sequence with `Blocks` links — never park it in an intermediate status.
 
 ## MCP & discovery
 
@@ -27,6 +29,16 @@ Run `../../bd-shared/session-start.md`. The Atlassian connector is the one found
 Tool names are not hardcoded — discover them at runtime with ToolSearch (`jira create issue`,
 `jira search jql`, `jira edit issue`, `jira add comment`, `jira issue link`, `jira attachment`).
 The MCP covers both Jira and Confluence; this adapter uses Jira only.
+
+**State machine for `AI-Implement Status`:**
+`Ready → Planning → Awaiting Approval → Plan Approved → Implementing → PR Ready`
+
+`Awaiting Approval` appears only when the mapping's `autoApprovePlans` is `false`
+(check `list_projects` — the default is `true`, so most deployments skip it). When
+`autoApprovePlans` is `false`, a finished plan sets `Awaiting Approval`; a person
+then sets `Plan Approved` to start implementation. The values a person ever sets
+are **`Ready`** and **`Plan Approved`** (the latter only on a mapping whose
+`autoApprovePlans` is `false`). All other values are orchestrator-owned.
 
 ## Container
 The container is a **Jira Epic** under a fixed Jira project (e.g. epic
@@ -37,7 +49,7 @@ exists for this bd-build-up, create one Epic-type issue in the project and use i
 the parent.
 
 The Epic is a long-lived **tracking container** and MUST stay **un-designated** — never set
-`AI-Implement-Status` on it. Grouping is opt-in *below* the Epic: to run a cohesive subset as a feature
+`AI-Implement Status` on it. Grouping is opt-in *below* the Epic: to run a cohesive subset as a feature
 node, promote it into a designated **Story with designated sub-task children** (see **Feature-node
 grouping**). Designating the Epic itself would collapse the entire epic into one feature branch — an
 anti-pattern, not an option.
@@ -64,30 +76,49 @@ Run the shared Backlog Overlap Scan (`../overlap-scan.md`) with JQL:
 Feed every hit into the core's classification table.
 
 ## Pickup trigger
-On Jira, the pickup signal is the `AI-Implement-Status` field, not a label — see `../pickup-label.md` rule 5.
+On Jira, the pickup signal is the `AI-Implement Status` field, not a label — see `../pickup-label.md` rule 5.
 
 To make Wave-1 issues get picked up, every one must satisfy the orchestrator
-mapping's poll: `(<mapping JQL>) AND cf[AI-Implement-Status] in (Ready, "Plan
-Approved")` **and** the Repo field equals the mapping's `repoFieldValue`.
+mapping's poll: `(<mapping JQL>) AND cf[NNNNN] in (Ready, "Plan Approved")`
+(where `cf[NNNNN]` is the `AI-Implement Status` field's numeric id — see **Field
+discovery** below) **and** the `AI-Implement Repo` field equals the mapping's
+Repo Field Value (a blank value means the project's own `owner/repo` — confirm
+with the operator if unsure).
 Concretely, on create:
-1. Set **`AI-Implement-Status` = `Ready`**.
-2. Set the **Repo field** to the mapping's `repoFieldValue` (e.g. `owner/repo`).
+1. Set **`AI-Implement Status` = `Ready`**.
+2. Set the **`AI-Implement Repo` field** to the mapping's Repo Field Value. If
+   the Repo Field Value is blank, use the project's `owner/repo`. Ask the
+   operator if the value is not shown by `list_projects`.
 3. Ensure the issue satisfies the mapping's **scope JQL** (commonly the project +
    the `AI-Implement` label + the epic parent). Confirm the live scope with the
    operator or the orchestrator mapping.
 
+### Field discovery
+Before writing any JQL that references `AI-Implement Status` or `AI-Implement
+Repo`, find each field's numeric id in Jira's field list:
+
+1. Call the Jira fields-list tool (e.g. `jira_list_fields` or equivalent).
+2. Find the entry whose `name` equals `AI-Implement Status` exactly. Extract the
+   numeric id from its `id` or `key` (`customfield_NNNNN` → use `NNNNN`).
+3. Use `cf[NNNNN]` in all JQL references to that field.
+4. Repeat for `AI-Implement Repo`.
+
+If no field has that name, the mapping may carry a Status Field override with the
+field's id — ask the operator. Do **not** guess: a scan on the wrong field
+reports an empty queue and no error.
+
 ## Wave staging
-- **Wave 1** (no blockers): `AI-Implement-Status = Ready` (see Pickup trigger).
-- **Wave 2+** (has blockers): create with `AI-Implement-Status` **unset** —
+- **Wave 1** (no blockers): `AI-Implement Status = Ready` (see Pickup trigger).
+- **Wave 2+** (has blockers): create with `AI-Implement Status` **unset** —
   literally empty, not `Planning` or any other placeholder (those are
   orchestrator-owned and burn concurrency slots). The pipeline ignores an unset
   field. Promote to `Ready` during bd-build-down as blockers merge.
 - Pilot-first sequencing (`../pipeline.md`) maps to: file all siblings but set
-  `AI-Implement-Status = Ready` on **only the pilot**; leave the rest unset until
+  `AI-Implement Status = Ready` on **only the pilot**; leave the rest unset until
   the pilot's PR lands, then set them `Ready`.
 
 ## Architect routing
-Create the issue assigned to the architect with `AI-Implement-Status` **unset**
+Create the issue assigned to the architect with `AI-Implement Status` **unset**
 so the pipeline never picks it up. Do not rely on the label for exclusion — the
 Status field is the gate.
 
@@ -126,13 +157,16 @@ unblock the whole chain.
 > dependencies don't hold.
 
 ## Required create fields
-Jira create demands more than Linear. Provide all of: `project`, `parent` (epic),
-issue type (see Issue type), `summary`, `description`, `priority`, **`Assigned
-Team`** (a required custom field), the Repo field, `AI-Implement-Status` (for
-Wave 1), and labels (`AI-Implement` + any sync key). Custom-field IDs
-(`Assigned Team`, `AI-Implement-Status`, `Repo`) are **instance-specific** — read
-them from the orchestrator mapping or the deployment's Jira-mirror design doc.
-Never hardcode field IDs in a filed issue.
+Jira create demands more than Linear. Always provide: `project`, `parent` (epic),
+issue type (see Issue type), `summary`, `description`, `priority`, the
+`AI-Implement Repo` field, `AI-Implement Status` (for Wave 1), and labels
+(`AI-Implement` + any sync key). Custom-field IDs are **instance-specific** —
+read them from the orchestrator mapping (see **Field discovery**). Never hardcode
+field IDs in a filed issue.
+
+Each Jira instance may require additional fields on create. If a create call
+fails citing a required field, ask the operator for the value and retry — do not
+guess.
 
 ## Issue type
 Derive from the work kind: **Feature → Story · Improvement → Task · Bug → Bug.**
@@ -143,27 +177,28 @@ Use this for the human "reference design context" link in issue bodies.
 
 ## Status check
 For Status Check Mode: list the epic's children (`parent = <epic>`), group by
-`AI-Implement-Status`, surface blockers via "Blocks" links. When asked "where's the design?",
+`AI-Implement Status`, surface blockers via "Blocks" links. When asked "where's the design?",
 read the epic description's `Design Decisions` index and follow it to the ADRs in the repo.
 
 ## Red flags (Jira-specific)
-- **Filed with the `AI-Implement` label but no `AI-Implement-Status = Ready`.** →
+- **Filed with the `AI-Implement` label but no `AI-Implement Status = Ready`.** →
   Never picked up. Set the Status field.
-- **Filed with `AI-Implement-Status = Planning` (or `Implementing`/`PR Ready`).** →
+- **Filed with `AI-Implement Status = Planning` (or `Implementing`/`PR Ready`).** →
   Orchestrator-owned states. The issue is invisible to pickup **and** counts as
-  in-flight work, burning a concurrency slot. Human-set values are exactly two:
-  `Ready` or unset.
-- **Feature-node child filed without `AI-Implement-Status` set, or with the wrong Repo value.** →
+  in-flight work, burning a concurrency slot. Human-set values are `Ready` and
+  `Plan Approved` (the latter only when the mapping's `autoApprovePlans` is
+  `false`).
+- **Feature-node child filed without `AI-Implement Status` set, or with the wrong `AI-Implement Repo` value.** →
   Silently **excluded from the group**: it neither gates its parent nor rolls up — it just quietly PRs to
   the Default Branch on its own. Designate every intended child (non-empty Status + matching Repo). "It's
   just a sub-task" and "the epic groups it" are the rationalizations that cause this.
-- **`AI-Implement-Status` set on the container Epic.** → Collapses the whole epic into a single feature
+- **`AI-Implement Status` set on the container Epic.** → Collapses the whole epic into a single feature
   branch. Keep tracking Epics un-designated; designate the Story feature node instead.
 - **Issue description rendered as raw markdown.** → Jira uses ADF; rely on the
   MCP's markdown conversion and **verify rendering on the pilot issue** before
   filing the wave.
 - **Hardcoded custom-field IDs.** → Instance-specific; read them from the mapping
-  / mirror doc.
+  (see **Field discovery**). Never hardcode.
 - **"Blocks" link created in the wrong direction.** → `inwardIssue` is the
   blocker, `outwardIssue` is the blocked issue. Fetch the blocked issue's
   `issuelinks` after every link and confirm the blocker is under `inwardIssue`;
@@ -176,18 +211,19 @@ and hierarchy differ.
 
 **Designation is a field, not a label — and there are two predicates. Keep them separate:**
 - **Group designation** (counts toward grouping — gates its parent, joins the ancestor chain, rolls up, can
-  be an auto-merge parent) = `AI-Implement-Status` **set to any non-empty value** *and* the Repo field =
-  the mapping's `repoFieldValue`. This is **broader** than dispatch: a child already at `Implementing` /
+  be an auto-merge parent) = `AI-Implement Status` **set to any non-empty value** *and* `AI-Implement Repo`
+  = the mapping's Repo Field Value. This is **broader** than dispatch: a child already at `Implementing` /
   `PR Ready` / `Done` is *still designated*, so a parent whose designated children are all terminal is
   **feature-node-ready**, not "none designated → skip."
-- **Candidate dispatch** (worked *this* poll) = `AI-Implement-Status` ∈ {`Ready`, `Plan Approved`} + Repo
+- **Candidate dispatch** (worked *this* poll) = `AI-Implement Status` ∈ {`Ready`, `Plan Approved`} + Repo
   match. Do **not** tell operators grouping needs Status = Ready — Ready is only for this poll's dispatch.
 
 The "any non-empty value" designation predicate describes how the orchestrator **reads** state — children
 it has already advanced to `Planning`/`Implementing`/`PR Ready` stay designated. It is **not** a menu of
-values you may write: when *you* designate an issue by hand, the only value you set is **`Ready`** (or the
-field stays unset for a held issue, with `Blocks` links doing the sequencing). Hand-parking a child in
-`Planning` to "designate without dispatching" hides it from pickup *and* burns a concurrency slot.
+values you may write: when *you* designate an issue by hand, set **`Ready`** (or leave the field unset for
+a held issue, with `Blocks` links doing the sequencing). `Plan Approved` is also human-settable but only
+when the mapping's `autoApprovePlans` is `false` and a finished plan is awaiting approval. Hand-parking a
+child in `Planning` to "designate without dispatching" hides it from pickup *and* burns a concurrency slot.
 
 **Terminal** = `fields.status.statusCategory.key === 'done'` (Done/Closed + Won't-Do/Cancelled).
 **Hierarchy** = `effectiveParentKey = native parent ?? Epic Link` (classic Epic Link is the best-effort
@@ -203,11 +239,11 @@ stays un-designated, which halts the ancestor walk at the Story — so the Epic 
 **Multi-issue mode.** A Story whose **description** carries a **fenced** `# ai-implement.yml` block with
 `feature_branch.mode: "multi-issue"` owns `ai-implement/multi-issue/<slug(STORY-KEY)>` instead — for
 grouping *otherwise-unrelated* issues as one reviewable unit. Identical to the above except the branch
-path segment; the `AI-Implement-Status` / Repo designation and Epic rules are unchanged. Write examples as
-`# ai-implement.yml (example)` (a bare marker is stripped from that issue's spec).
+path segment; the `AI-Implement Status` / `AI-Implement Repo` designation and Epic rules are unchanged.
+Write examples as `# ai-implement.yml (example)` (a bare marker is stripped from that issue's spec).
 
 **Two sub-task prerequisites (config, not code — the provider hardcodes no issuetype filter):**
-1. **Field context:** `AI-Implement-Status`, `Repo`, and `Assigned Team` must be available on the
+1. **Field context:** `AI-Implement Status` and `AI-Implement Repo` must be available on the
    **sub-task** issue type, or sub-task children cannot be designated.
 2. **Scope JQL:** the mapping's scope JQL must **not** exclude sub-tasks (no `issuetype != Sub-task`, no
    Story/Task/Bug-only allowlist). Otherwise designated sub-tasks are *discovered* as gating children but

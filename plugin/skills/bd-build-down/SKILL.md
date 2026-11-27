@@ -408,7 +408,7 @@ branch), fix labels in the order above, and re-release — retargeting after the
   the old so dependents are never transiently unblocked. Symptom: `Found N needing planning`
   repeating across polls with no run starting.
 
-(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement Status` + matching `AI-Implement Repo` field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 

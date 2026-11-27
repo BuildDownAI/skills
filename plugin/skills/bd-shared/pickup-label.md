@@ -34,7 +34,10 @@ spelling, or whitespace.
 
 ## Jira carve-out (rule 5)
 
-On Jira, the pickup signal is the `AI-Implement-Status` **field**, not a label. The field name
-`AI-Implement-Status` is defined in the orchestrator mapping; skills do not resolve it
-dynamically. Rules 1–4 do not apply on Jira — see the Jira adapter's **Pickup trigger**
-section (`trackers/jira.md`).
+On Jira, the pickup signal is the `AI-Implement Status` **field** (name with a space), not a
+label. The orchestrator finds the field by the exact name `AI-Implement Status`; the mapping
+holds an optional Status Field override with the field's `cf[NNNNN]` id — but the default name
+is `AI-Implement Status`. Skills do not resolve the field name dynamically; they discover the
+field's numeric id by name at runtime (see **Field discovery** in `trackers/jira.md`). Rules
+1–4 do not apply on Jira — see the Jira adapter's **Pickup trigger** section
+(`trackers/jira.md`).

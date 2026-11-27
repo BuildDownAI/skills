@@ -288,7 +288,7 @@ PR (`ai-implement/<mode>/<key> → base`) is open + green:
    top-of-tree PR for human review, and wait for explicit confirmation — in addition to the existing "never
    auto-merge" guardrail.
 
-(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement-Status` + matching Repo field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
+(Applies on **both** trackers — Linear via {{IMPLEMENT_LABEL}}, Jira via a non-empty `AI-Implement Status` + matching `AI-Implement Repo` field; "terminal" = Linear Done/Cancelled or Jira `statusCategory` = done. See `../bd-shared/feature-branch-grouping.md`.)
 
 ---
 
