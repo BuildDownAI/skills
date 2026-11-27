@@ -70,24 +70,25 @@ puts an issue into a group differs.
 
 | | **Linear** | **Jira** |
 |---|---|---|
-| **Group designation** (counts toward grouping: gates its parent, joins the ancestor chain, rolls up, can be an auto-merge parent) | carries the `{{IMPLEMENT_LABEL}}` **label** (resolved per `trackers/linear.md` → `pickup-label.md`) | `AI-Implement-Status` **set to any non-empty value** *and* Repo field = the mapping's `repoFieldValue` |
-| **Candidate dispatch** (worked *this* poll) | `state: Todo` + `{{IMPLEMENT_LABEL}}` label | `AI-Implement-Status` ∈ {`Ready`, `Plan Approved`} + Repo match |
+| **Group designation** (counts toward grouping: gates its parent, joins the ancestor chain, rolls up, can be an auto-merge parent) | carries the `{{IMPLEMENT_LABEL}}` **label** (resolved per `trackers/linear.md` → `pickup-label.md`) | `AI-Implement Status` **set to any non-empty value** *and* `AI-Implement Repo` field = the mapping's Repo Field Value |
+| **Candidate dispatch** (worked *this* poll) | `state: Todo` + `{{IMPLEMENT_LABEL}}` label | `AI-Implement Status` ∈ {`Ready`, `Plan Approved`} + Repo match |
 | **Hierarchy source** | native parent / children | `effectiveParentKey = native parent ?? Epic Link` |
 | **Terminal** | issue is Done or Cancelled | `fields.status.statusCategory.key === 'done'` (Done/Closed + Won't-Do/Cancelled) |
 
 **The Jira designation predicate is broader than dispatch.** A child that has already moved on to
 `Implementing` / `PR Ready` / `Done` is *still designated* for grouping — so a parent whose designated
 children are all terminal is **feature-node-ready**, not "no children designated → skip." A child left with
-`AI-Implement-Status` **unset** (or the wrong Repo value) is **invisible to the group**: it neither gates
-its parent nor rolls up — it just quietly PRs to the Default Branch on its own.
+`AI-Implement Status` **unset** (or the wrong `AI-Implement Repo` value) is **invisible to the group**: it
+neither gates its parent nor rolls up — it just quietly PRs to the Default Branch on its own.
 
 The broad read-side predicate is not license to *write* intermediate values: when designating by hand, set
-**`Ready`** and nothing else. `Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting one
-hides the issue from dispatch and burns a pipeline concurrency slot (it counts as in-flight work).
+**`Ready`** (or `Plan Approved` only on a mapping whose `autoApprovePlans` is `false`).
+`Planning`/`Implementing`/`PR Ready` are orchestrator-owned — hand-setting one hides the issue from
+dispatch and burns a pipeline concurrency slot (it counts as in-flight work).
 
 **Jira Epics stay un-designated.** A tracking Epic is a long-lived container, never a feature branch. The
 ancestor walk stops at the first un-designated ancestor, so an un-designated Epic halts the walk and the
-designated Story below it is the top of the tree. **Never set `AI-Implement-Status` on the container Epic** —
+designated Story below it is the top of the tree. **Never set `AI-Implement Status` on the container Epic** —
 doing so collapses the entire epic into one feature branch (anti-pattern).
 
 ## 2. What changes vs the flat model
@@ -105,7 +106,8 @@ independently mergeable, ordered only by `Blocked by:`. Under grouping:
 ## 3. Classification & the race guard
 
 Each poll, AI-Implement classifies every **designated**, non-terminal issue (designation per the table
-above — the `{{IMPLEMENT_LABEL}}` label on Linear, a non-empty `AI-Implement-Status` + Repo match on Jira):
+above — the `{{IMPLEMENT_LABEL}}` label on Linear, a non-empty `AI-Implement Status` + `AI-Implement Repo`
+match on Jira):
 
 - **Leaf** (no children) → dispatched; its PR targets the nearest feature-node ancestor branch (or base).
 - **Feature node, children not all terminal** → skipped; its branch is cut lazily when the first child
@@ -113,7 +115,7 @@ above — the `{{IMPLEMENT_LABEL}}` label on Linear, a non-empty `AI-Implement-S
 - **Feature node, all children terminal** → its own closing work dispatches onto its feature branch.
 - **Parent with children but none *designated* yet** → **race guard**: skipped, *not* worked as a leaf.
   This is why you can designate a whole tree in one pass, parent before children, without the parent being
-  implemented prematurely. ("Designate" = apply the `{{IMPLEMENT_LABEL}}` label on Linear, or set `AI-Implement-Status` + Repo
+  implemented prematurely. ("Designate" = apply the `{{IMPLEMENT_LABEL}}` label on Linear, or set `AI-Implement Status` + `AI-Implement Repo`
   on Jira.)
 
 "Terminal" means **Done or Cancelled** (on Jira, any status whose `statusCategory` is `done`) — a cancelled
@@ -165,7 +167,7 @@ step — merge the child feature branch into the parent yourself; don't `@agent`
 | **bd-build-down** | Recognize a **child PR** (base = a feature branch) vs the **top-of-tree PR** (human gate, merged last). Internal roll-ups aren't PRs. A roll-up conflict = manual merge. Conflict base = the feature branch, not the Default Branch. Merge bottom-up. |
 | **bd-super-build-down** | Same, plus: **never auto-merge the top-of-tree PR** — drive the children, let internal roll-ups happen, smoke-test the integrated branch, then surface the top PR for a human. |
 | **bd-summit-push** | Model the cascade (leaf → feature branch → roll-up → top PR); the critical path ends at the top-of-tree human gate. |
-| **bd-mega-build-up / bd-build-up** | Plan parent + children as a feature node; the parent's closing work is `Blocked by:` all children; whole-tree **designation** is race-guard-safe; children PR into the feature branch. Linear designates by label; Jira by `AI-Implement-Status` + Repo (canonical shape: a Story with sub-task children under an un-designated tracking Epic). |
+| **bd-mega-build-up / bd-build-up** | Plan parent + children as a feature node; the parent's closing work is `Blocked by:` all children; whole-tree **designation** is race-guard-safe; children PR into the feature branch. Linear designates by label; Jira by `AI-Implement Status` + `AI-Implement Repo` (canonical shape: a Story with sub-task children under an un-designated tracking Epic). |
 | **bd-smoke-jumper** | Child-PR previews reflect the feature-in-progress (on top of the feature branch); the integrated feature branch at the top PR is the highest-value smoke target. |
 
 **Driving a grouped tree to merge:** run under `bd-super-build-down` — it owns the autonomous driving loop (per-child rigor, completion checkpoint, and capstone discipline) that `bd-build-down` points to for unattended sessions.

@@ -16,28 +16,38 @@ The Atlassian connector is the one found by `../../bd-shared/session-start.md` s
 (the one tool whose name ends in `__getVisibleJiraProjects`); the project key is `tracker.team` from the binding.
 Discover the Jira tools at runtime with ToolSearch (`jira search jql`, `jira get issue`,
 `jira transition issue`, `jira edit issue`, `jira add comment`). Two distinct status concepts:
-`AI-Implement-Status` (the orchestrator's custom-field state machine: Ready →
-Planning → Plan Approved → Implementing → PR Ready) and the issue's **native
-workflow status** (whose `statusCategory` is `done` when complete). Completion
-means the native status, not the custom field. Of the state-machine values,
-**`Ready` is the only one you ever set by hand** — `Planning`/`Implementing`/
-`PR Ready` are orchestrator-owned; hand-setting them hides the issue from pickup
-and burns a concurrency slot (they count as in-flight work). To hold an issue,
-leave the field unset.
+`AI-Implement Status` (the orchestrator's custom-field state machine: `Ready →
+Planning → Awaiting Approval → Plan Approved → Implementing → PR Ready`) and the
+issue's **native workflow status** (whose `statusCategory` is `done` when
+complete). `Awaiting Approval` only appears when the mapping's `autoApprovePlans`
+is `false` (check `list_projects`); a person then sets `Plan Approved` to start
+implementation. Completion means the native status, not the custom field. The
+values a person ever sets by hand are **`Ready`** and **`Plan Approved`** (the
+latter only when `autoApprovePlans` is `false`) — `Planning`/`Implementing`/`PR
+Ready` are orchestrator-owned; hand-setting them hides the issue from pickup and
+burns a concurrency slot (they count as in-flight work). To hold an issue, leave
+the field unset.
 
 ## Issue scan & states
-Scan via JQL on `AI-Implement-Status`, within the mapping's scope JQL:
-- **Ready for triage** (PR posted, gap analysis ready): `AI-Implement-Status = "PR Ready"`.
-- **Pipeline working:** `AI-Implement-Status in (Planning, Implementing)`.
-- **Pickup queue:** `AI-Implement-Status = Ready`.
-Reference the field by its resolved `cf[NNNNN]` id (instance-specific — read from
-the orchestrator mapping), not the display name.
+Scan via JQL on `AI-Implement Status`, within the mapping's scope JQL. Use the
+field's `cf[NNNNN]` id (see **Field discovery** in
+`../../bd-shared/trackers/jira.md`) — some instances require `cf[N]` form and
+reject the display name. Find the numeric id by calling Jira's field-list tool,
+locating the entry whose `name` equals `AI-Implement Status`, and extracting the
+number from `customfield_NNNNN`. If no field has that name, ask the operator for
+the mapping's Status Field override id. Do **not** guess.
+
+- **Ready for triage** (PR posted, gap analysis ready): `cf[NNNNN] = "PR Ready"`.
+- **Pipeline working:** `cf[NNNNN] in (Planning, Implementing)`.
+- **Pickup queue:** `cf[NNNNN] = Ready`.
 
 ## Pickup trigger
-To release an issue for pickup: set `AI-Implement-Status = Ready`, set the Repo
-field to the mapping's `repoFieldValue`, and ensure the issue satisfies the
-mapping's scope JQL. The {{IMPLEMENT_LABEL}} alone does **not** trigger pickup —
-the Status field does. (Jira pickup is field-driven; labels are not the signal — see `../../bd-shared/pickup-label.md` rule 5.)
+To release an issue for pickup: set `AI-Implement Status = Ready`, set the
+`AI-Implement Repo` field to the mapping's Repo Field Value (a blank value means
+the project's own `owner/repo` — confirm with the operator if unsure), and ensure
+the issue satisfies the mapping's scope JQL. The {{IMPLEMENT_LABEL}} alone does
+**not** trigger pickup — the Status field does. (Jira pickup is field-driven;
+labels are not the signal — see `../../bd-shared/pickup-label.md` rule 5.)
 
 ## Post-merge completion
 After build-down merges a PR, complete the linked Jira issue explicitly:
@@ -65,17 +75,19 @@ After build-down merges a PR, complete the linked Jira issue explicitly:
 ## Unblock dependents
 For each issue that this one *blocks* (the outward side of its `Blocks` links) and
 that now has all its blockers in a `done` status category: release it via **Pickup trigger**
-(set `AI-Implement-Status = Ready`). The orchestrator's next poll will include it
+(set `AI-Implement Status = Ready`). The orchestrator's next poll will include it
 once `isBlockedByIncomplete` returns false.
 
 ## Follow-up filing
-File a new Jira issue with the Repo field set and the {{IMPLEMENT_LABEL}}. If
-this session has a build-up epic, parent the issue to it (`parent = <epic>`);
-a standalone build-down with no epic skips the parent. For a scoped fix that should be
-picked up now, set `AI-Implement-Status = Ready` (Pickup trigger). For planning
-or architect-routed work, leave `AI-Implement-Status` unset so the pipeline does
-not pick it up; assign the architect for architectural findings. Custom-field IDs
-are instance-specific — read them from the orchestrator mapping.
+File a new Jira issue with the `AI-Implement Repo` field set and the
+{{IMPLEMENT_LABEL}}. If this session has a build-up epic, parent the issue to it
+(`parent = <epic>`); a standalone build-down with no epic skips the parent. For a
+scoped fix that should be picked up now, set `AI-Implement Status = Ready`
+(Pickup trigger). For planning or architect-routed work, leave `AI-Implement
+Status` unset so the pipeline does not pick it up; assign the architect for
+architectural findings. Custom-field IDs are instance-specific — read them from
+the orchestrator mapping (see **Field discovery** in
+`../../bd-shared/trackers/jira.md`).
 
 ## Issue URL & key
 Issue key is resolved from the PR branch/title. User-facing URL is
@@ -84,7 +96,7 @@ Issue key is resolved from the PR branch/title. User-facing URL is
 ## Red flags (Jira-specific)
 - **Trusting the integration to complete the issue.** → It's unreliable; always
   transition explicitly and re-fetch to verify `done`.
-- **Treating `AI-Implement-Status` as completion.** → It is not; only a native
+- **Treating `AI-Implement Status` as completion.** → It is not; only a native
   status transition to a `done` category completes the issue and unblocks
   dependents.
 - **Generic "set status".** → Jira completes via a workflow *transition* resolved
