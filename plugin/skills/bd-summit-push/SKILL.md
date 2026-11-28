@@ -345,7 +345,7 @@ After the user approves the manifest:
 - Update issue descriptions in the tracker via `save_issue` with hardened versions
 - Only update the `description` field — preserve existing labels, state, assignee, estimate
 - If Wave 1 issues are held (no `{{IMPLEMENT_LABEL}}` label) and should now start → add `{{IMPLEMENT_LABEL}}`
-- Do NOT promote Wave 2+ to Todo yet — let Wave 1 land first to reveal conflicts and inform sequencing
+- Do NOT add `{{IMPLEMENT_LABEL}}` to Wave 2+ issues yet — let Wave 1 land first to reveal conflicts and inform sequencing
 
 ---
 
@@ -425,7 +425,7 @@ As of: {date/time}
 
 ## Hold
 
-(Queued issues that should NOT be promoted to Todo yet, with reason)
+(Queued issues that should NOT receive the `{{IMPLEMENT_LABEL}}` label yet, with reason)
 ```
 
 ---
