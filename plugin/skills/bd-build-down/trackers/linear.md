@@ -25,23 +25,25 @@ Pull current board state using three parallel `list_issues` calls:
 
 1. `list_issues` filtered by `state: "In Progress"` — agent is actively working; pipeline is running
 2. `list_issues` filtered by `label: "Ready for Review"` — PR is open and ready for triage
-3. `list_issues` filtered by `state: "Todo"` and label `{{IMPLEMENT_LABEL}}` — queued for agent pickup
+3. `list_issues` filtered by label `{{IMPLEMENT_LABEL}}`, excluding `AI-Planning`, `AI-Working`, and `Ready for Review` — queued for agent pickup (shows labeled issues in any open state, including `Backlog` and `Triage`)
 
 **State semantics:**
 - `In Progress` — agent has picked up the issue and is working; a PR branch exists or is being opened. Expected, not alarming.
 - `Ready for Review` (label) — the orchestrator has finished its pass, added this label alongside the PR link, and the PR is ready. This is the primary triage queue. (`In Review` is not set by the orchestrator; a workspace may use that state for its own work.)
-- `Todo` + `{{IMPLEMENT_LABEL}}` — in the agent queue; pickup happens within minutes of the label being present.
+- Open + `{{IMPLEMENT_LABEL}}` (excluding `AI-Planning`, `AI-Working`, `Ready for Review`) — in the agent queue; pickup happens within minutes of the label being present. A labeled issue in `Backlog` or `Triage` is in this queue.
 
 Any custom working state (e.g., a team-specific "Working" column) is treated the same as `In Progress`. Note it at orientation if present.
 
 ## Pickup trigger
 
-An issue is picked up by the AI coding agent when it has both:
+An issue is picked up by the AI coding agent when it carries the `{{IMPLEMENT_LABEL}}` label and
+is open (state type is not completed, canceled, or duplicate). An issue is held — not dispatched
+— by: no `{{IMPLEMENT_LABEL}}` label; a park (cleared with `unpark_issue`, not by re-adding the
+label); or a blocked-by relation to another open issue. The state alone does not hold or release
+an issue — a labeled issue in `Backlog` or `Triage` dispatches on the next poll.
 
-- `state: Todo` (set to `"Todo"` via `save_issue`)
-- label `{{IMPLEMENT_LABEL}}`
-
-Pickup happens within minutes. Do not manually move an issue to `In Progress` — the pipeline sets that state automatically when it starts work.
+Pickup happens within minutes of the label being present. Do not manually move an issue to `In
+Progress` — the pipeline sets that state automatically when it starts work.
 
 When releasing a previously blocked issue for pickup, set both conditions simultaneously via `save_issue`:
 

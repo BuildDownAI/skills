@@ -71,7 +71,7 @@ puts an issue into a group differs.
 | | **Linear** | **Jira** |
 |---|---|---|
 | **Group designation** (counts toward grouping: gates its parent, joins the ancestor chain, rolls up, can be an auto-merge parent) | carries the `{{IMPLEMENT_LABEL}}` **label** (resolved per `trackers/linear.md` → `pickup-label.md`) | `AI-Implement Status` **set to any non-empty value** *and* `AI-Implement Repo` field = the mapping's Repo Field Value |
-| **Candidate dispatch** (worked *this* poll) | `state: Todo` + `{{IMPLEMENT_LABEL}}` label | `AI-Implement Status` ∈ {`Ready`, `Plan Approved`} + Repo match |
+| **Candidate dispatch** (worked *this* poll) | `{{IMPLEMENT_LABEL}}` label (on an open issue) | `AI-Implement Status` ∈ {`Ready`, `Plan Approved`} + Repo match |
 | **Hierarchy source** | native parent / children | `effectiveParentKey = native parent ?? Epic Link` |
 | **Terminal** | issue is Done or Cancelled | `fields.status.statusCategory.key === 'done'` (Done/Closed + Won't-Do/Cancelled) |
 

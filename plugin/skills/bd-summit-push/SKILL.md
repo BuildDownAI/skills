@@ -344,8 +344,8 @@ After the user approves the manifest:
 **If post-filing (issues already in tracker):**
 - Update issue descriptions in the tracker via `save_issue` with hardened versions
 - Only update the `description` field — preserve existing labels, state, assignee, estimate
-- If Wave 1 issues are currently in Backlog and should now move → promote to Todo
-- Do NOT promote Wave 2+ to Todo yet — let Wave 1 land first to reveal conflicts and inform sequencing
+- If Wave 1 issues are held (no `{{IMPLEMENT_LABEL}}` label) and should now start → add `{{IMPLEMENT_LABEL}}`
+- Do NOT add `{{IMPLEMENT_LABEL}}` to Wave 2+ issues yet — let Wave 1 land first to reveal conflicts and inform sequencing
 
 ---
 
@@ -359,7 +359,7 @@ Pull state of everything in flight:
 
 - **Open PRs** via GitHub MCP (`list_pull_requests`, `get_pull_request`, `get_pull_request_status`, `get_pull_request_files`)
 - **Issues in `In Progress`** or carrying the `AI-Working` label, via tracker MCP
-- **Issues in `Todo`** with `{{IMPLEMENT_LABEL}}` (queued but not yet picked up)
+- **Open issues with `{{IMPLEMENT_LABEL}}`** (excluding `AI-Planning`, `AI-Working`, `Ready for Review`) — queued but not yet picked up; includes labeled issues in any open state
 
 ### Phase 2: Architectural Risk Scan
 
@@ -390,7 +390,7 @@ Given open PRs:
 **2d. Dependency gap detection**
 
 - Any in-progress issue working on something that depends on an unmerged PR?
-- Any queued issue about to be picked up by the agent before its dependency lands? (Should be held in Backlog until the blocker merges.)
+- Any queued issue about to be picked up by the agent before its dependency lands? (Should be held until the blocker merges — hold by removing the `{{IMPLEMENT_LABEL}}` label or by adding a blocked-by relation to the blocking issue.)
 
 **2e. Codebase drift detection**
 
@@ -425,7 +425,7 @@ As of: {date/time}
 
 ## Hold
 
-(Queued issues that should NOT be promoted to Todo yet, with reason)
+(Queued issues that should NOT receive the `{{IMPLEMENT_LABEL}}` label yet, with reason)
 ```
 
 ---
@@ -477,7 +477,7 @@ Two scorers using this rubric should land within 1 point of each other on the sa
 - Architect-routed → `state: Todo`, assigned to architect, no `{{IMPLEMENT_LABEL}}`
 - Exception: user explicitly says "stage only, don't start" → all → Backlog
 
-bd-summit-push respects these defaults when applying changes. Do not move issues to Todo that should be waiting.
+bd-summit-push respects these defaults when applying changes. Do not add `{{IMPLEMENT_LABEL}}` to issues that should be waiting.
 
 ---
 

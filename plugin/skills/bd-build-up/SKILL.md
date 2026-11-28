@@ -347,12 +347,14 @@ the adapter's **Dependencies** section for the exact call, then verify each link
 blocked issue back before filing anything that depends on it. This applies to a build-down or
 split that files follow-ups too, not only to a full build-up.
 
-**The pickup signal is tracker-specific.** Linear uses state plus a label; Jira uses the
-`AI-Implement Status` field, where setting only a label is a silent no-op. On Jira the values
-a person ever sets are `Ready` (dispatch now) and `Plan Approved` (start implementation after
-`Awaiting Approval`, only when the mapping's `autoApprovePlans` is `false`); the field stays
-unset for held issues. `Planning` and `Implementing` are orchestrator-owned states that hide the
-issue from pickup and burn a concurrency slot if set manually.
+**The pickup signal is tracker-specific.** For Linear, the signal is the `{{IMPLEMENT_LABEL}}`
+label on any open issue — an issue is held by: no label, a park, or a blocked-by relation to an
+open issue. For Jira, the signal is the `AI-Implement Status` field; setting only a label is a
+silent no-op. On Jira the values a person ever sets are `Ready` (dispatch now) and `Plan
+Approved` (start implementation after `Awaiting Approval`, only when the mapping's
+`autoApprovePlans` is `false`); the field stays unset for held issues. `Planning` and
+`Implementing` are orchestrator-owned states that hide the issue from pickup and burn a
+concurrency slot if set manually.
 
 **Exceptions, and the user must signal them:** *"stage only, don't start"* files everything
 parked; *"brief only"* (Mode 3) files nothing. If the signal is ambiguous, ask one clear
