@@ -60,10 +60,16 @@ goal is to surface every overlap and force a decision before any new issue gets 
 
 ## Pickup trigger
 
-- **Wave 1** (no `Blocked by`) → `state: Todo` + label `{{IMPLEMENT_LABEL}}` (resolved per `../pickup-label.md`). Pipeline picks up within minutes.
+The pipeline picks up an issue when it carries the `{{IMPLEMENT_LABEL}}` label (resolved per
+`../pickup-label.md`) and is open (state type is not completed, canceled, or duplicate). An
+issue is held — not dispatched — by any of three conditions: no `{{IMPLEMENT_LABEL}}` label;
+a park (the orchestrator parks after three counted failures — `unpark_issue` clears it,
+re-adding the label does not); or a blocked-by relation to another open issue. The state alone
+does not hold or release an issue — a labeled issue in `Backlog` or `Triage` dispatches on the
+next poll.
 
 **Linear MCP patterns:**
-- `state: Todo` + `{{IMPLEMENT_LABEL}}` label = pipeline pickup.
+- `{{IMPLEMENT_LABEL}}` label on an open issue = pipeline pickup.
 
 ## Wave staging
 
@@ -92,7 +98,7 @@ The issue body itself follows the shared template in `../issue-body.md`.
 **Linear MCP patterns:**
 - `save_issue` handles create + update (pass `id` to update).
 - Label arrays replace — always pass the full desired list.
-- `state: Todo` + `{{IMPLEMENT_LABEL}}` label = pipeline pickup.
+- `{{IMPLEMENT_LABEL}}` label on an open issue = pipeline pickup.
 - Documents attach to projects, not to individual issues. One project per bd-build-up.
 
 File via `save_issue` (or Linear MCP equivalent) after explicit approval of the issue manifest.

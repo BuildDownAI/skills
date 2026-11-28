@@ -80,7 +80,7 @@ Faster than bd-build-down's orient because bd-super-build-down trusts pipeline s
 **Resolve `{{IMPLEMENT_LABEL}}` (per `../bd-shared/pickup-label.md`):** Follow the procedure to resolve the pickup label — query the orchestrator MCP if bound, fall back to the project binding. Print the resolved value and its source before proceeding.
 
 **Tracker board scan (one batch):**
-- `list_issues`: state `In Progress`, label `Ready for Review`, and state `Todo` with `{{IMPLEMENT_LABEL}}`
+- `list_issues`: state `In Progress`, label `Ready for Review`, and label `{{IMPLEMENT_LABEL}}` (excluding `AI-Planning`, `AI-Working`, `Ready for Review`)
 
 **PR scan (one batch via GitHub MCP):**
 - `list_pull_requests` for `{{REPO}}`, state: open

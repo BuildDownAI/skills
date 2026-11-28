@@ -29,9 +29,13 @@ Backlog state that wave staging uses below.
 questions, so everything it needs is inline. Gap analysis only catches what the spec
 specified — a vague acceptance criterion produces a vague gap analysis and a bad PR.
 
-**The pickup signal is tracker-specific.** Linear uses state plus a label; Jira uses a status
-field. Read the active adapter's **Pickup trigger** section. On Jira, setting only a label is
-a silent no-op.
+**The pickup signal is tracker-specific.** For Linear, the signal is the `{{IMPLEMENT_LABEL}}`
+label on any open issue (open = state type is not completed, canceled, or duplicate). An issue
+is held — not dispatched — by: (1) no `{{IMPLEMENT_LABEL}}` label, (2) a park (the orchestrator
+parks after three counted failures — `unpark_issue` clears it, re-adding the label does not), or
+(3) a blocked-by relation to another open issue. For Jira, the signal is the `AI-Implement
+Status` field; setting only a label is a silent no-op. Read the active adapter's **Pickup
+trigger** section.
 
 ## Wave staging
 
@@ -124,7 +128,8 @@ surfaces** — *"enable pagination on `/employees/`"*, *"…on `/assignments/`"*
 `/calculations/`"*.
 
 File them all, but release only the **first** for pickup. Pick the pilot with the smallest or
-best-understood surface; it sets the pattern. Park the rest.
+best-understood surface; it sets the pattern. File the rest without the `{{IMPLEMENT_LABEL}}`
+label — they are held until their bodies are updated and the label is added.
 
 Then in bd-build-down, once the pilot's PR lands:
 
